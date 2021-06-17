@@ -1,0 +1,36 @@
+/* Disable results caching */
+set enable_result_cache_for_session to off;
+
+/* TPC_H  Query 8 - National Market Share */
+set query_group='RSPERF TPC-H 1.8';
+SELECT /* sql-8 */	TOP 100000 O_YEAR,
+	SUM(CASE	WHEN	NATION	= 'JAPAN'
+			THEN	VOLUME
+			ELSE	0
+			END) / SUM(VOLUME)	AS MKT_SHARE
+FROM	(	SELECT	
+                  	extract(year from o_orderdate) as o_year,
+			L_EXTENDEDPRICE * (1-L_DISCOUNT)	AS VOLUME,
+			N2.N_NAME				AS NATION
+		FROM	PART,
+			SUPPLIER,
+			LINEITEM,
+			ORDERS,
+			CUSTOMER,
+			NATION N1,
+			NATION N2,
+			REGION
+		WHERE	P_PARTKEY	= L_PARTKEY AND
+			S_SUPPKEY	= L_SUPPKEY AND
+			L_ORDERKEY	= O_ORDERKEY AND
+			O_CUSTKEY	= C_CUSTKEY AND
+			C_NATIONKEY	= N1.N_NATIONKEY AND
+			N1.N_REGIONKEY	= R_REGIONKEY AND
+			R_NAME		= 'ASIA' AND
+			S_NATIONKEY	= N2.N_NATIONKEY AND
+			O_ORDERDATE	BETWEEN '1995-01-01' AND '1996-12-31' AND
+			P_TYPE		= 'MEDIUM ANODIZED COPPER'
+	)	AS	ALL_NATIONS
+GROUP	BY	O_YEAR
+ORDER	BY	O_YEAR
+;
