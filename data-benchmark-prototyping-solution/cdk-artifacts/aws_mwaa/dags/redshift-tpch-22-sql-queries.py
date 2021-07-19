@@ -82,7 +82,7 @@ with DAG(
     dag_id='run-redshift-tpch-queries',
     default_args=default_args,
     dagrun_timeout=timedelta(hours=2),
-    start_date=datetime(2021, 4, 9, 15, 5, 00),
+    start_date=datetime(2021, 7, 15, 13, 50, 00),
     schedule_interval='*/10 * * * *',
     concurrency=etl_concurrency,
     max_active_runs=etl_max_active_runs,

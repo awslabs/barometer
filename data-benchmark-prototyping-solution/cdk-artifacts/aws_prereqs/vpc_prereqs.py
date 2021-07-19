@@ -10,7 +10,6 @@ class CdkVpcPrereqsStack(core.Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # VPC settings:
-        # input_vpc_id = 'vpc-36cdd450'
         self.vpc = ec2.Vpc.from_lookup(self, "VPC", vpc_id=input_vpc_id)
 
         # VPC Security Group:
