@@ -1,0 +1,41 @@
+{
+  "name": "cli-wizard-typescript",
+  "version": "1.0.0",
+  "description": "Command line wizard to define & run experiments for the benchmarking tool",
+  "author": {
+    "name": "Amazon Web Services",
+    "url": "https://aws.amazon.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "prototyping",
+    "aws",
+    "benchmarking",
+    "redshift"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "clean": "rm -rf dist/",
+    "wizard": "node dist/bin/wizard/index.js"
+  },
+  "devDependencies": {
+    "@aws-cdk/assert": "1.114.0",
+    "@types/jest": "^26.0.10",
+    "@types/node": "10.17.27",
+    "@types/prompts": "^2.0.13",
+    "aws-cdk": "1.114.0",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.2.0",
+    "ts-node": "^9.0.0",
+    "typescript": "~3.9.7"
+  },
+  "dependencies": {
+    "@aws-cdk/core": "1.114.0",
+    "joi": "^17.4.0",
+    "lodash": "^4.17.21",
+    "prompts": "^2.4.1",
+    "source-map-support": "^0.5.19"
+  }
+}
