@@ -9,7 +9,7 @@ from aws_cdk import (
 
 class RedshiftClusterStack(core.Stack):
 
-    def __init__(self, scope: core.Construct, construct_id: str, input_private_subnets, input_vpc_sg,
+    def __init__(self, scope: core.Construct, construct_id: str, input_subnets, input_vpc_sg,
                  input_rs_cluster_identifier, input_rs_node_type, input_rs_number_of_nodes, input_rs_region_full_name,
                  input_rs_service_code, input_rs_contract_service_term, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -37,7 +37,7 @@ class RedshiftClusterStack(core.Stack):
         # Redshift cluster subnet creation
         rs_subnet_group = rs.CfnClusterSubnetGroup(
             self, "redshift_benchmark_tool_subnet_grp",
-            subnet_ids=input_private_subnets.split(','),
+            subnet_ids=input_subnets.split(','),
             description="Redshift Subnet for Benchmark Tool cluster"
         )
 
