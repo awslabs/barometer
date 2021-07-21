@@ -10,7 +10,42 @@ class CdkVpcPrereqsStack(core.Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # VPC settings:
-        self.vpc = ec2.Vpc.from_lookup(self, "VPC", vpc_id=input_vpc_id)
+        if input_vpc_id:
+            # Using existing VPC
+            self.vpc = ec2.Vpc.from_lookup(self, "VPC", vpc_id=input_vpc_id)
+
+            # Fetching private subnets, from existing VPC.
+            # Follow-up note: Pending to query for possible Isolated subnets.
+            private_subnets_select = self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE).subnet_ids
+            self.vpc_subnets = ",".join(str(x) for x in private_subnets_select)
+        else:
+            # Create VPC if none provided
+            print('Creating new VPC')
+            self.vpc = ec2.Vpc(self, "VPC",
+                               max_azs=2,
+                               cidr="10.10.0.0/16",
+                               # configuration will create 3 groups in 2 AZs = 6 subnets.
+                               subnet_configuration=[ec2.SubnetConfiguration(
+                                   subnet_type=ec2.SubnetType.PUBLIC,
+                                   name="Public",
+                                   cidr_mask=24
+                               ), ec2.SubnetConfiguration(
+                                   subnet_type=ec2.SubnetType.PRIVATE,
+                                   name="Private",
+                                   cidr_mask=24
+                               ), ec2.SubnetConfiguration(
+                                   subnet_type=ec2.SubnetType.ISOLATED,
+                                   name="DB",
+                                   cidr_mask=24
+                               )
+                               ],
+                               # nat_gateway_provider=ec2.NatProvider.gateway(),
+                               nat_gateways=2,
+                               )
+
+            # Fetching Isolated subnets, from newly cerated VPC:
+            isolated_subnets_select = self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids
+            self.vpc_subnets = ",".join(str(x) for x in isolated_subnets_select)
 
         # VPC Security Group:
         self.sg_benchmark_tool_01 = ec2.SecurityGroup(
@@ -32,10 +67,6 @@ class CdkVpcPrereqsStack(core.Stack):
                                                    connection=ec2.Port.all_tcp(),
                                                    description="self-reference rule, to allow all TCP within same group")
 
-        # VPC Private Subnets, list as string:
-        private_subnets_select = self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE).subnet_ids
-        self.private_subnets = ",".join(str(x) for x in private_subnets_select)
-
         """
         @ Output begin
         """
@@ -47,4 +78,4 @@ class CdkVpcPrereqsStack(core.Stack):
         core.CfnOutput(self, "Output-2", value=self.sg_benchmark_tool_01.security_group_id)
 
         # Output: VPC Subnets
-        core.CfnOutput(self, "Output-3", value=self.private_subnets)
+        core.CfnOutput(self, "Output-3", value=self.vpc_subnets)
