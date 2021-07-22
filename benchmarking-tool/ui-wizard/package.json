@@ -1,0 +1,33 @@
+{
+  "name": "@aws-solution/ui-wizard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UI wizard to define & run experiments for the benchmarking tool",
+  "author": {
+    "name": "Amazon Web Services",
+    "url": "https://aws.amazon.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "prototyping",
+    "aws",
+    "benchmarking",
+    "redshift"
+  ],
+  "dependencies": {
+    "@aws-amplify/ui-react": "^1.2.6",
+    "@aws-solution/cli-wizard-typescript": "1.0.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  }
+}
