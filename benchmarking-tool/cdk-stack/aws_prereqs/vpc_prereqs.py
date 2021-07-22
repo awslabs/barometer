@@ -20,7 +20,6 @@ class CdkVpcPrereqsStack(core.Stack):
             self.vpc_subnets = ",".join(str(x) for x in private_subnets_select)
         else:
             # Create VPC if none provided
-            print('Creating new VPC')
             self.vpc = ec2.Vpc(self, "VPC",
                                max_azs=2,
                                cidr="10.10.0.0/16",
@@ -39,7 +38,9 @@ class CdkVpcPrereqsStack(core.Stack):
                                    cidr_mask=24
                                )
                                ],
-                               # nat_gateway_provider=ec2.NatProvider.gateway(),
+                               # Optional:
+                               #    Gateways
+                               #    e.g. nat_gateway_provider=ec2.NatProvider.gateway(),
                                nat_gateways=2,
                                )
 

@@ -23,7 +23,11 @@ class RedshiftClusterStack(core.Stack):
             removal_policy=core.RemovalPolicy.DESTROY
         )
 
-        # IAM Role to be attached to the RS cluster
+        """
+        IAM Role to be attached to the RS cluster
+        Security notes:
+        - To remove S3 read-only access. To limit access to data bucket.
+        """
         # noinspection PyTypeChecker
         self.rs_iam_role = iam.Role(
             self, "redshift_benchmark_tool_iam_role",

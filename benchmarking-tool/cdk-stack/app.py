@@ -47,7 +47,8 @@ rs_cluster_stack = RedshiftClusterStack(app, "cdk-redshift-cluster", env=env_ire
                                         input_rs_contract_service_term=user_input_rs_contract_service_term)
 
 # Load data to Amazon Redshift:
-# """
+"""
+# Commenting out, until this stack is built in Lambda
 rs_load_data = RedshiftDataLoad(app, "cdk-redshift-data-load", env=env_ireland,
                                 input_rs_cluster_name=rs_cluster_stack.rs_cluster.cluster_identifier,
                                 input_rs_db_name=rs_cluster_stack.rs_cluster.db_name,
@@ -55,5 +56,5 @@ rs_load_data = RedshiftDataLoad(app, "cdk-redshift-data-load", env=env_ireland,
                                 input_workload_type=user_input_workload_type,
                                 input_s3_dataset_path=user_input_dataset_s3_path)
 
-# """
+"""
 app.synth()
