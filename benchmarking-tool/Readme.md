@@ -1,6 +1,6 @@
 # Benchmarking Tool Project
 
 Benchmarking tool project composed of
-- [CDK Stack](./cdk-stack/Readme.md)
-- [Command line Wizard](./cli-wizard-typescript/Readme.md)
-- [UI Wizard](./ui-wizard/Readme.md)
+- [CDK Stack](./cdk-stack)
+- [Command line Wizard](./cli-wizard-typescript)
+- [UI Wizard](./ui-wizard)
