@@ -1,5 +1,5 @@
 {
-  "name": "cli-wizard-typescript",
+  "name": "@aws-solution/cli-wizard-typescript",
   "version": "1.0.0",
   "description": "Command line wizard to define & run experiments for the benchmarking tool",
   "author": {
