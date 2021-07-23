@@ -1,0 +1,20 @@
+{
+  "experiments": {},
+  "platforms": {
+    "redshift_cluster": {
+      "id": "97aab948-dc57-4b52-8770-ef6dfa9f5462",
+      "platformType": "REDSHIFT",
+      "name": "redshift_cluster",
+      "settings": {
+        "numberOfNodes": 2,
+        "features": {
+          "workloadManager": true,
+          "concurrencyScaling": true
+        },
+        "nodeType": "ra3.xlplus"
+      }
+    }
+  },
+  "workloads": {},
+  "tags": {}
+}

@@ -21,4 +21,4 @@
 .env.production.local
 
 **/benchmarking-tool-config.json
-
+**/benchmarking-config.json

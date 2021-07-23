@@ -1,77 +1,54 @@
 import * as inquirer from 'inquirer';
 
-import * as  Configuration from '../../validators/configuration';
+import { Configuration } from '../../impl/configuration';
+import { CLIModule } from '../common/cli-module';
 
-const CLISelectModuleQuestion = [{
-  type: 'list',
-  name: 'value',
-  message: 'Which platform would you like to configure ?',
-  hint: '- Use <space> to select and <return> to submit.',
-  choices: [
-    { 'name': 'Redshift DC Single Node Cluster', 'value': 'redshift-dc-single-node' },
-    { 'name': 'Redshift DC Multi Node Cluster', 'value': 'redshift-dc-multi-node' },
-    { 'name': 'Redshift RA3 Multi Node Cluster', 'value': 'redshift-ra-multi-node', disabled: 'Unavailable at this time', },
-    new inquirer.Separator(),
-    { 'name': 'Display current configuration', 'value': 'display' },
-    { 'name': 'Save current configuration', 'value': 'save' },
-    { 'name': 'Reset current configuration', 'value': 'reset' },
-    { 'name': 'Load existing configuration', 'value': 'load' },
-    new inquirer.Separator(),
-    { 'name': 'Return to the previous menu', 'value': 'exit-module' },
-    { 'name': 'Exit CLI', 'value': 'exit' },
-    new inquirer.Separator(),
-  ]
-}];
-
-export const runConfigurationModule = async (configuration: Configuration.IConfiguration): Promise<[string, Configuration.IConfiguration]> => {
-  // prompt to execute an action until the user decide to stop
-  let nextstep = "";
-  [nextstep, configuration] = await prompt(configuration);
-  while (nextstep !== "exit" && nextstep !== "exit-module") {
-    [nextstep, configuration] = await prompt(configuration);
+export class Module {
+  public static getInstance(): PlatformModule {
+      return new PlatformModule();
   }
-  return [nextstep, configuration];
-};
-
-
-const prompt = async (configuration: Configuration.IConfiguration): Promise<[string, Configuration.IConfiguration]> => {
-  const nextstep: string = await (inquirer.prompt(CLISelectModuleQuestion).then(async (answers) => {
-    if (answers.value) {
-      switch (answers.value) {
-        case 'redshift-dc-single-node':
-          // configuration = await runConfigurationWizardExperiment(configuration);
-          break;
-        case 'redshift-dc-multi-node':
-          // configuration = await runConfigurationWizardPlatform(configuration);
-          break;
-        case 'redshift-ra-multi-node':
-          // configuration = await runConfigurationWizardWorkload(configuration);
-          break;
-        case 'display':
-          configuration.displayConfiguration();
-          break;
-        case 'save':
-          await configuration.saveConfiguration();
-          break;
-        case 'load':
-          await configuration.loadConfiguration();
-          break;
-        case 'reset':
-          configuration = new Configuration.Configuration();
-          break;
-        case 'exit':
-          console.log("Exiting.");
-          break;
-        case 'exit-module':
-          break;
-        default:
-          console.log("Exiting.");
-          answers.value = "exit"
-          break;
-      }
-    }
-    return answers.value;
-  }));
-  return [nextstep, configuration];
 }
 
+export class PlatformModule extends CLIModule {
+  /**
+    * Questions to be prompted
+    */
+  prompts = {
+    "selectAction": [{
+      type: 'list',
+      name: 'value',
+      message: 'Which platform would you like to configure ?',
+      hint: '- Use <space> to select and <return> to submit.',
+      choices: [
+        { 'name': 'Redshift - New Instance', 'value': 'redshift/new' },
+        { 'name': 'Redshift - Existing Instance', 'value': 'redshift/existing', disabled: 'Unavailable at this time', },
+        new inquirer.Separator(),
+        { 'name': 'Return to the previous menu', 'value': 'exit-module' },
+        { 'name': 'Exit CLI', 'value': 'exit' },
+        new inquirer.Separator(),
+      ]
+    }]
+  };
+
+  async prompt(configuration: Configuration): Promise<[string, Configuration]> {
+    const nextstep: string = await (inquirer.prompt(this.prompts.selectAction).then(async (answers) => {
+      let conf_module;
+      if (answers.value) {
+        switch (answers.value) {
+          case 'exit':
+            console.log("Exiting.");
+            break;
+          case 'exit-module':
+            break;
+          default:
+            console.log("Execute Module : " + answers.value);
+            conf_module = require("./platforms/" + answers.value);
+            [answers.value, configuration] = await conf_module.Module.getInstance().run(configuration);
+            break;
+        }
+      }
+      return answers.value;
+    }));
+    return [nextstep, configuration];
+  }
+}
