@@ -88,12 +88,13 @@ export class RedshiftModule extends CLIModule {
     async prompt(configuration: Configuration): Promise<[string, Configuration]> {
         const nextstep: string = await (inquirer.prompt(this.prompts.configure).then(async (answers) => {
             if (answers) {
-                const entry = new RedshiftPlatformConfiguration();
-                entry.name = answers.name;
                 const settings = new RedshiftSettings();
                 settings.numberOfNodes = answers.numberOfNodes;
                 settings.features = answers.features;
                 settings.nodeType = answers.nodeType;
+                
+                const entry = new RedshiftPlatformConfiguration();
+                entry.name = answers.name;
                 entry.settings = settings;
 
                 configuration.platforms[answers.name] = entry;

@@ -5,7 +5,7 @@ import { CLIModule } from '../common/cli-module';
 
 export class Module {
   public static getInstance(): WorkloadModule {
-      return new WorkloadModule();
+    return new WorkloadModule();
   }
 }
 export class WorkloadModule extends CLIModule {
@@ -16,14 +16,13 @@ export class WorkloadModule extends CLIModule {
     "selectAction": [{
       type: 'list',
       name: 'value',
-      message: 'Which workload would you like to configure ?',
+      message: 'Which workload type would you like to configure ?',
       hint: '- Use <space> to select and <return> to submit.',
       choices: [
-        { 'name': 'TPC-DS Version 2', 'value': 'tpc-ds/v2', disabled: 'Unavailable at this time' },
-        { 'name': 'TPC-DS Version 3', 'value': 'tpc-ds/v3' },
-        { 'name': 'TPC-H Version 2', 'value': 'tpc-h/v2', disabled: 'Unavailable at this time' },
-        { 'name': 'TPC-H Version 3', 'value': 'tpc-h/v3' },
-         new inquirer.Separator(),
+        { 'name': 'Analytics / OLAP dataset', 'value': 'olap/new' },
+        { 'name': 'Transactional / OLTP dataset', 'value': 'oltp/new', disabled: 'Unavailable at this time', },
+        { 'name': 'Bring Your Own dataset', 'value': 'custom/new', disabled: 'Unavailable at this time', },
+        new inquirer.Separator(),
         { 'name': 'Return to the main menu', 'value': 'exit-module' },
         { 'name': 'Exit CLI', 'value': 'exit' },
         new inquirer.Separator(),
@@ -35,7 +34,7 @@ export class WorkloadModule extends CLIModule {
   async prompt(configuration: Configuration): Promise<[string, Configuration]> {
     const nextstep: string = await (inquirer.prompt(this.prompts.selectAction).then(async (answers) => {
       let conf_module;
-      if (answers.value) {
+      if (answers) {
         switch (answers.value) {
           case 'exit':
             console.log("Exiting.");
@@ -47,6 +46,9 @@ export class WorkloadModule extends CLIModule {
             conf_module = require("./workloads/" + answers.value);
             [answers.value, configuration] = await conf_module.Module.getInstance().run(configuration);
             break;
+        }
+        if (answers.workload_type === "exit-module") {
+          return "exit-module";
         }
       }
       return answers.value;

@@ -20,8 +20,7 @@ export class PlatformModule extends CLIModule {
       message: 'Which platform would you like to configure ?',
       hint: '- Use <space> to select and <return> to submit.',
       choices: [
-        { 'name': 'Redshift - New Instance', 'value': 'redshift/new' },
-        { 'name': 'Redshift - Existing Instance', 'value': 'redshift/existing', disabled: 'Unavailable at this time', },
+        { 'name': 'Redshift', 'value': 'redshift/new' },
         new inquirer.Separator(),
         { 'name': 'Return to the previous menu', 'value': 'exit-module' },
         { 'name': 'Exit CLI', 'value': 'exit' },
@@ -33,7 +32,7 @@ export class PlatformModule extends CLIModule {
   async prompt(configuration: Configuration): Promise<[string, Configuration]> {
     const nextstep: string = await (inquirer.prompt(this.prompts.selectAction).then(async (answers) => {
       let conf_module;
-      if (answers.value) {
+      if (answers) {
         switch (answers.value) {
           case 'exit':
             console.log("Exiting.");

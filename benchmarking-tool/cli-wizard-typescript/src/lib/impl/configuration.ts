@@ -1,22 +1,38 @@
 import * as fs from 'fs';
 import * as inquirer from 'inquirer';
 
-import { IConfiguration } from '../interface/configuration';
+import { IConfiguration, IConfigurationItem } from '../interface/configuration';
 
 
 export const DEFAULT_CONFG_FILE_NAME = process.cwd() + "/benchmarking-config.json";
 
-export class Configuration implements IConfiguration {
+export class ConfigurationItem implements IConfigurationItem {
+  id!: string;
+  name!: string;
+  description?: string | undefined;
+  tags?: { [key: string]: string; } | undefined;
+
+  constructor() {
+      const {
+          v4: uuidv4,
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+      } = require('uuid');
+      this.id = uuidv4();
+  }
+}
+
+export class Configuration extends ConfigurationItem implements IConfiguration {
   experiments: { [key: string]: any; };
   platforms: { [key: string]: any; };
   workloads: { [key: string]: any; };
-  tags?: { [key: string]: string; } | undefined;
+  
   entrycount: number;
 
   loaded = false;
   lastSavePath = DEFAULT_CONFG_FILE_NAME;
 
   constructor() {
+    super();
     this.experiments = {};
     this.platforms = {};
     this.workloads = {};

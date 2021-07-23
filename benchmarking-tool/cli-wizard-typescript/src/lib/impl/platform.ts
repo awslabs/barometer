@@ -1,20 +1,6 @@
 import { IPlatformConfiguration } from "../interface/platform";
+import { ConfigurationItem } from "./configuration";
 
-const PLATFORM_TYPE = "REDSHIFT"
-export class PlatformConfiguration implements IPlatformConfiguration {
+export class PlatformConfiguration extends ConfigurationItem implements IPlatformConfiguration {
     platformType!: string;
-    tags?: { [key: string]: string; } | undefined;
-    id: string;
-    name!: string;
-    description?: string | undefined;
-
-    constructor() {
-        const {
-            v4: uuidv4,
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-        } = require('uuid');
-        this.id = uuidv4();
-        this.platformType = PLATFORM_TYPE;
-    }
-
 }

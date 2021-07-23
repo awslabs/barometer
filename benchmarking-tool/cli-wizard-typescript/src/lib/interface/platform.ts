@@ -8,7 +8,4 @@ export interface IPlatformConfiguration extends IConfigurationItem {
 
   platformType: string;
 
-  tags?: {
-    [key: string]: string
-  };
 }

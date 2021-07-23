@@ -29,7 +29,7 @@ export abstract class CLIModule implements ICLIModule {
       choices: [
         { 'name': 'Load from default location ' + DEFAULT_CONFG_FILE_NAME, 'value': 'default' },
         { 'name': 'Load from custom location', 'value': 'custom' },
-        { 'name': 'Don\'t save', 'value': 'exit' },
+        { 'name': 'Don\'t load', 'value': 'exit' },
       ]
     },
     ],

@@ -5,7 +5,7 @@ import { IWorkloadConfiguration } from "./workload";
 /**
  * Describes a configuration
  */
-export interface IConfiguration {
+export interface IConfiguration extends IConfigurationItem {
   /**
    * This key contains all the data associated with
    * the experiments.
@@ -28,13 +28,6 @@ export interface IConfiguration {
    */
   workloads: {
     [key: string]: IWorkloadConfiguration
-  };
-
-  /**
-   * This key defines the mandatory tags to apply to the deployment.
-   */
-  tags?: {
-    [key: string]: string
   };
 
   /**
