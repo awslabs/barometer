@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { runConfigurationWizard } from './lib/helpers/config-generator';
+import { ConfigurationModule } from './lib/wizard/modules/configuration';
+import { Configuration } from './lib/impl/configuration';
 
 (async () => {
-  await runConfigurationWizard();
+  await new ConfigurationModule().run(new Configuration());
 })();
