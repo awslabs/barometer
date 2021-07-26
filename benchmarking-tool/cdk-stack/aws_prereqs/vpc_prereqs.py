@@ -18,8 +18,9 @@ class CdkVpcPrereqsStack(core.Stack):
             # Follow-up note: Pending to query for possible Isolated subnets.
             private_subnets_select = self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE).subnet_ids
             self.vpc_subnets = ",".join(str(x) for x in private_subnets_select)
+
         else:
-            # Create VPC if none provided
+            # Create VPC if none provided, including 2 subnets for Public, Private and Isolated.
             self.vpc = ec2.Vpc(self, "VPC",
                                max_azs=2,
                                cidr="10.10.0.0/16",
@@ -43,6 +44,7 @@ class CdkVpcPrereqsStack(core.Stack):
                                #    e.g. nat_gateway_provider=ec2.NatProvider.gateway(),
                                nat_gateways=2,
                                )
+            vpc_id = self.vpc.vpc_id
 
             # Fetching Isolated subnets, from newly cerated VPC:
             isolated_subnets_select = self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED).subnet_ids
