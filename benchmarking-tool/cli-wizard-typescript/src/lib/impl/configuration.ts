@@ -9,15 +9,16 @@ export const DEFAULT_CONFG_FILE_NAME = process.cwd() + "/benchmarking-config.jso
 export class ConfigurationItem implements IConfigurationItem {
   id!: string;
   name!: string;
+  configType!: string;
   description?: string | undefined;
   tags?: { [key: string]: string; } | undefined;
 
   constructor() {
-      const {
-          v4: uuidv4,
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-      } = require('uuid');
-      this.id = uuidv4();
+    const {
+      v4: uuidv4,
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+    } = require('uuid');
+    this.id = uuidv4();
   }
 }
 
@@ -25,7 +26,7 @@ export class Configuration extends ConfigurationItem implements IConfiguration {
   experiments: { [key: string]: any; };
   platforms: { [key: string]: any; };
   workloads: { [key: string]: any; };
-  
+
   entrycount: number;
 
   loaded = false;
@@ -70,13 +71,14 @@ export class Configuration extends ConfigurationItem implements IConfiguration {
   }
 
   print(): void {
-    console.log("---------------------------------------------------------------------------------")
-    console.log(this.toSaveFormat())
-    console.log("---------------------------------------------------------------------------------")
+    console.log("---------------------------------------------------------------------------------");
+    console.log(this.toSaveFormat());
+    console.log("---------------------------------------------------------------------------------");
   }
 
   async load(path: string): Promise<void> {
     try {
+      console.log(`Loading configuration file : ${path}`);
       const config = JSON.parse(fs.readFileSync(path, 'utf8'));
       this.buildFrom(config);
 
@@ -88,6 +90,7 @@ export class Configuration extends ConfigurationItem implements IConfiguration {
       await this.save(path);
       require(path);
     }
+    this.loaded = true;
   }
 
   async loadWithPrompt(): Promise<void> {

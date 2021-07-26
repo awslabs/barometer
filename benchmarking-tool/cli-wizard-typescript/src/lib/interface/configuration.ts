@@ -11,7 +11,7 @@ export interface IConfiguration extends IConfigurationItem {
    * the experiments.
    */
   experiments: {
-    [key: string]: IExperimentConfiguration
+    [key: string]: IExperimentConfiguration;
   };
 
   /**
@@ -19,7 +19,7 @@ export interface IConfiguration extends IConfigurationItem {
    * apply to the platform.
    */
   platforms: {
-    [key: string]: IPlatformConfiguration
+    [key: string]: IPlatformConfiguration;
   };
 
   /**
@@ -27,7 +27,7 @@ export interface IConfiguration extends IConfigurationItem {
    * apply to the workload.
    */
   workloads: {
-    [key: string]: IWorkloadConfiguration
+    [key: string]: IWorkloadConfiguration;
   };
 
   /**
@@ -49,6 +49,11 @@ export interface IConfigurationItem {
   name: string;
 
   /**
+ * This key defines the type of configurationitem.
+ */
+  configType: string;
+
+  /**
    * This key defines the description.
    */
   description?: string;
@@ -56,7 +61,7 @@ export interface IConfigurationItem {
    * This key defines the mandatory tags to apply to the deployment.
    */
   tags?: {
-    [key: string]: string
+    [key: string]: string;
   };
 
 }

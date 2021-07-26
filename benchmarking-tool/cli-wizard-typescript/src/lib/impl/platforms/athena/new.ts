@@ -1,9 +1,9 @@
 
 
-import { IAthenaPlatformConfiguration, IAthenaSettings, IAthenaFeatures } from '../../../interface/platforms/athena/existing';
+import { IAthenaPlatformConfiguration, IAthenaSettings } from '../../../interface/platforms/athena/new';
 import { PlatformConfiguration } from '../../platform';
 
-const PLATFORM_TYPE = "ATHENA"
+const PLATFORM_TYPE = "ATHENA";
 export class AthenaPlatformConfiguration extends PlatformConfiguration implements IAthenaPlatformConfiguration {
   settings!: AthenaSettings;
   constructor() {
@@ -13,15 +13,6 @@ export class AthenaPlatformConfiguration extends PlatformConfiguration implement
 }
 
 export class AthenaSettings implements IAthenaSettings {
-  description?: string | undefined;
-  numberOfNodes!: number;
-  features!: IAthenaFeatures;
+  enforceWorkgroupConfiguration!: boolean;
+  bytesScannedCutoffPerQuery!: number;
 }
-
-export class AthenaFeatures implements IAthenaFeatures {
-  workloadManager!: boolean;
-  concurrencyScaling!: boolean;
-  aqua!: boolean;
-  spectrum!: boolean;
-}
-
