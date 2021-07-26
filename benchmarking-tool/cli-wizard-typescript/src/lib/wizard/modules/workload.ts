@@ -1,6 +1,5 @@
 import * as inquirer from 'inquirer';
 
-import { Configuration } from '../../impl/configuration';
 import { CLIModule } from '../common/cli-module';
 
 export class Module {
