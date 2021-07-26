@@ -5,5 +5,6 @@ export interface IAthenaPlatformConfiguration extends IPlatformConfiguration {
 }
 
 export interface IAthenaSettings {
-
+    enforceWorkgroupConfiguration: boolean;
+    bytesScannedCutoffPerQuery: Number;
 }
