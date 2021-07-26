@@ -3,19 +3,15 @@ import * as inquirer from 'inquirer';
 import { Configuration, ConfigurationItem, DEFAULT_CONFG_FILE_NAME } from '../../impl/configuration';
 
 export interface ICLIModule {
-  prompt(configuration: Configuration): Promise<[string, Configuration]>;
-
   run(configuration: Configuration, module: string): Promise<[string, Configuration]>;
 
   nextstep: string;
-
-  prompts: Array<any>;
 }
 
 export abstract class CLIModule implements ICLIModule {
   nextstep!: string;
 
-  prompts!: Array<any>;
+  abstract getPrompts(): Array<any>;
 
   async run(configuration: Configuration, module_name: string): Promise<[string, Configuration]> {
     // prompt to execute an action until the user decide to stop
@@ -31,9 +27,9 @@ export abstract class CLIModule implements ICLIModule {
     return [this.nextstep, configuration];
   }
 
-  async prompt(configuration: Configuration): Promise<[string, Configuration]> {
+  protected async prompt(configuration: Configuration): Promise<[string, Configuration]> {
     const module_name = 'experiment';
-    return await inquirer.prompt(this.prompts).then(async (answers): Promise<[string, Configuration]> => {
+    return await inquirer.prompt(this.getPrompts()).then(async (answers): Promise<[string, Configuration]> => {
       let conf_module;
       if (answers.value) {
         switch (answers.value) {
@@ -50,7 +46,7 @@ export abstract class CLIModule implements ICLIModule {
   }
 
   protected CLIModuleQuestions = {
-    promptEntryName: {
+    entryName: {
       type: 'input',
       name: 'name',
       message: 'Please provide name for this entry (You will be able to use by this name later)',

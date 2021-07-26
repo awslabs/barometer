@@ -19,28 +19,30 @@ export class ConfigurationModule extends CLIModule implements ICLIModule {
     this.configuration.loadDefault();
   }
 
+  getPrompts(): Array<any> {
+    return [
+      {
+        type: 'list',
+        name: 'value',
+        message: 'Which action would you like to execute ?',
+        hint: '- Use <space> to select and <return> to submit.',
+        choices: [
+          { name: 'Manage platforms', value: './platform' },
+          { name: 'Manage workloads', value: './workload' },
+          { name: 'Manage experiments', value: './experiment' },
+          new inquirer.Separator(),
+          { name: 'Display current configuration', value: 'display' },
+          { name: 'Save current configuration', value: 'save' },
+          { name: 'Reset current configuration', value: 'reset' },
+          { name: 'Load existing configuration', value: 'load' },
+          new inquirer.Separator(),
+          { name: 'Exit CLI', value: 'exit' },
+          new inquirer.Separator(),
+        ],
+      },
+    ];
+  }
 
-  prompts = [
-    {
-      type: 'list',
-      name: 'value',
-      message: 'Which action would you like to execute ?',
-      hint: '- Use <space> to select and <return> to submit.',
-      choices: [
-        { name: 'Manage platforms', value: './platform' },
-        { name: 'Manage workloads', value: './workload' },
-        { name: 'Manage experiments', value: './experiment' },
-        new inquirer.Separator(),
-        { name: 'Display current configuration', value: 'display' },
-        { name: 'Save current configuration', value: 'save' },
-        { name: 'Reset current configuration', value: 'reset' },
-        { name: 'Load existing configuration', value: 'load' },
-        new inquirer.Separator(),
-        { name: 'Exit CLI', value: 'exit' },
-        new inquirer.Separator(),
-      ],
-    },
-  ];
   async runMainModule(): Promise<void> {
     // prompt to execute an action until the user decide to stop
     await this.promptMainModule();
@@ -57,7 +59,7 @@ export class ConfigurationModule extends CLIModule implements ICLIModule {
 
   async promptMainModule(): Promise<void> {
     const module_name = 'configuration';
-    await inquirer.prompt(this.prompts).then(async (answers) => {
+    await inquirer.prompt(this.getPrompts()).then(async (answers) => {
       let conf_module;
       if (answers.value) {
         this.nextstep = answers.value;

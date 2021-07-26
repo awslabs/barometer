@@ -15,9 +15,9 @@ export class AthenaModule extends CLIModule {
   /**
    * Questions to be prompted
    */
-  prompts =
-    [
-      this.CLIModuleQuestions.promptEntryName, {
+  getPrompts(): Array<any> {
+    return [
+      this.CLIModuleQuestions.entryName, {
         type: 'input',
         name: 'bytesScannedCutoffPerQuery',
         message: 'Maximum bytes in MB scan allowed for the workgroup?',
@@ -34,9 +34,10 @@ export class AthenaModule extends CLIModule {
         default: false,
       }
     ];
+  }
 
   async prompt(configuration: Configuration): Promise<[string, Configuration]> {
-    configuration = await inquirer.prompt(this.prompts).then(async (answers) => {
+    configuration = await inquirer.prompt(this.getPrompts()).then(async (answers) => {
       if (answers) {
         const settings = new AthenaSettings();
         settings.bytesScannedCutoffPerQuery = answers.bytesScannedCutoffPerQuery * 1000000;

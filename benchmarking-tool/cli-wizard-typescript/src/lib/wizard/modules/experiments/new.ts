@@ -14,12 +14,14 @@ export class ExpermientModule extends CLIModule {
   /**
    * Questions to be prompted
    */
-  prompts = [
-    this.CLIModuleQuestions.promptEntryName,
-  ];
+  getPrompts(): Array<any> {
+    return [
+      this.CLIModuleQuestions.entryName,
+    ];
+  }
 
   async prompt(configuration: Configuration): Promise<[string, Configuration]> {
-    await inquirer.prompt(this.prompts).then(async (answers) => {
+    await inquirer.prompt(this.getPrompts()).then(async (answers) => {
       if (answers) {
         // const settings = new ExperimentSetting();
 
