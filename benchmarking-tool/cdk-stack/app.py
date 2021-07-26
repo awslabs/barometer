@@ -35,10 +35,27 @@ env_ireland = core.Environment(account=user_input_aws_account_id, region=user_in
 vpc_prereqs_stack = CdkVpcPrereqsStack(app, "cdk-vpc-prereqs", env=env_ireland,
                                        input_vpc_id=user_input_vpc_id)
 
+# Function to load data to Amazon Redshift:
+"""
+Note:
+* if execution is required, to load data into the database, the minimum variables to use are:
+  - rs_cluster_stack.rs_cluster.cluster_identifier
+  - rs_cluster_stack.rs_cluster.db_name
+  - optional: rs_cluster_stack.rs_cluster.master_username, user_input_workload_type, user_input_dataset_s3_path
+  
+"""
+rs_load_data_function = RedshiftDataLoad(app, "cdk-redshift-data-load", env=env_ireland,
+                                         input_vpc=vpc_prereqs_stack.vpc,
+                                         input_vpc_sg=vpc_prereqs_stack.sg_benchmark_tool_01,
+                                         input_subnets=vpc_prereqs_stack.vpc_subnets)
+
 # Init Redshift cluster (e.g. DB param, cluster, etc) stack:
 rs_cluster_stack = RedshiftClusterStack(app, "cdk-redshift-cluster", env=env_ireland,
+                                        input_aws_account_id=user_input_aws_account_id,
+                                        input_aws_region=user_input_rs_region,
                                         input_subnets=vpc_prereqs_stack.vpc_subnets,
                                         input_vpc_sg=vpc_prereqs_stack.sg_benchmark_tool_01,
+                                        input_load_fn_role=rs_load_data_function.query_function_role,
                                         input_rs_cluster_identifier=user_input_rs_cluster_identifier,
                                         input_rs_node_type=user_input_rs_node_type,
                                         input_rs_number_of_nodes=user_input_rs_number_of_nodes,
@@ -46,15 +63,4 @@ rs_cluster_stack = RedshiftClusterStack(app, "cdk-redshift-cluster", env=env_ire
                                         input_rs_service_code=user_input_rs_service_code,
                                         input_rs_contract_service_term=user_input_rs_contract_service_term)
 
-# Load data to Amazon Redshift:
-"""
-# Commenting out, until this stack is built in Lambda
-rs_load_data = RedshiftDataLoad(app, "cdk-redshift-data-load", env=env_ireland,
-                                input_rs_cluster_name=rs_cluster_stack.rs_cluster.cluster_identifier,
-                                input_rs_db_name=rs_cluster_stack.rs_cluster.db_name,
-                                input_rs_username=rs_cluster_stack.rs_cluster.master_username,
-                                input_workload_type=user_input_workload_type,
-                                input_s3_dataset_path=user_input_dataset_s3_path)
-
-"""
 app.synth()
