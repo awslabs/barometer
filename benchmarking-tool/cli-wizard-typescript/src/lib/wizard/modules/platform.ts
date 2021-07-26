@@ -21,6 +21,7 @@ export class PlatformModule extends CLIModule {
       hint: '- Use <space> to select and <return> to submit.',
       choices: [
         { 'name': 'Redshift', 'value': 'redshift/new' },
+        { 'name': 'Athena', 'value': 'athena/new' },
         new inquirer.Separator(),
         { 'name': 'Return to the previous menu', 'value': 'exit-module' },
         { 'name': 'Exit CLI', 'value': 'exit' },
