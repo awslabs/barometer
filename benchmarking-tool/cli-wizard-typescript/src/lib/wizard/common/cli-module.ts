@@ -1,6 +1,6 @@
 import * as inquirer from 'inquirer';
-
 import { Configuration, ConfigurationItem, DEFAULT_CONFG_FILE_NAME } from '../../impl/configuration';
+
 
 export interface ICLIModule {
   run(configuration: Configuration, module: string): Promise<[string, Configuration]>;
@@ -33,10 +33,12 @@ export abstract class CLIModule implements ICLIModule {
       let conf_module;
       if (answers.value) {
         switch (answers.value) {
+          case 'exit':
+            break;
           case 'exit-module':
             break;
           default:
-            conf_module = require("" + answers.value);
+            conf_module = require('' + answers.value);
             [answers.value, configuration] = await conf_module.Module.getInstance().run(configuration, module_name);
             break;
         }
@@ -65,10 +67,7 @@ export abstract class CLIModule implements ICLIModule {
         message: 'How would you like to export your current configuration ?',
         hint: '- Use <space> to select and <return> to submit.',
         choices: [
-          {
-            name: 'Save to default location ' + DEFAULT_CONFG_FILE_NAME,
-            value: 'default',
-          },
+          { name: 'Save to default location ' + DEFAULT_CONFG_FILE_NAME, value: 'default' },
           { name: 'Save to custom location', value: 'custom' },
           { name: "Don't save", value: 'exit' },
         ],
@@ -190,12 +189,11 @@ export abstract class CLIModule implements ICLIModule {
     } else {
       configuration[entry.configType][entry.name] = entry;
     }
-
     return configuration;
   }
 
   async overrideEntry(configuration: Configuration, entry: ConfigurationItem): Promise<Configuration> {
-    this.CLIModulePrompts.overrideConfigurationItem[1]['validate'] = async (input: string | any[]): Promise<any> => {
+    this.CLIModulePrompts.overrideConfigurationItem[1]['validate'] = async (input: string): Promise<any> => {
       if (input.length === 0) {
         return 'Name can not be empty';
       }

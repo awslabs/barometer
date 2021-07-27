@@ -23,15 +23,13 @@ export class RedshiftModule extends CLIModule {
         name: 'nodeType',
         message: 'What node type you want to use?',
         hint: '- Use <space> to select and <return> to submit.',
-        choices: [
-          { name: NodeType.RA3_XLPLUS },
-          { name: NodeType.RA3_4XLARGE },
-          { name: NodeType.RA3_16XLARGE },
-          { name: NodeType.DC2_LARGE },
-          { name: NodeType.DC2_8XLARGE },
-          { name: NodeType.DS2_XLARGE },
-          { name: NodeType.DS2_8XLARGE }
-        ],
+        choices: async (answers): Promise<any> => {
+          const choices: Array<any> = [];
+          for (const _key in NodeType) {
+            choices.push({ 'name': NodeType[_key], 'value': _key });
+          }
+          return choices.sort();
+        },        
       },
       {
         type: 'input',

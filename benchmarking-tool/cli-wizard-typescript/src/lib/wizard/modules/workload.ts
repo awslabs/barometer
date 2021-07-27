@@ -1,4 +1,5 @@
 import * as inquirer from 'inquirer';
+import { WorkloadTypeName } from '../../interface/workload';
 
 import { CLIModule } from '../common/cli-module';
 
@@ -11,7 +12,7 @@ export class WorkloadModule extends CLIModule {
   /**
    * Questions to be prompted
    */
-  getPrompts(): Array<any>{
+  getPrompts(): Array<any> {
     return [
       {
         type: 'list',
@@ -19,9 +20,9 @@ export class WorkloadModule extends CLIModule {
         message: 'Which workload type would you like to configure ?',
         hint: '- Use <space> to select and <return> to submit.',
         choices: [
-          { name: 'Analytics / OLAP dataset', value: '../modules/workloads/olap/new' },
-          { name: 'Transactional / OLTP dataset', value: '../modules/workloads/oltp/new', disabled: 'Unavailable at this time' },
-          { name: 'Bring Your Own dataset', value: '../modules/workloads/custom/new', disabled: 'Unavailable at this time' },
+          { name: WorkloadTypeName.OLAP, value: '../modules/workloads/olap/new' },
+          { name: WorkloadTypeName.OLTP, value: '../modules/workloads/oltp/new', disabled: 'Unavailable at this time' },
+          // { name: WorkloadTypeName.CUSTOM, value: '../modules/workloads/custom/new', disabled: 'Unavailable at this time' },
           new inquirer.Separator(),
           { name: 'Return to the main menu', value: 'exit-module' },
           { name: 'Exit CLI', value: 'exit' },

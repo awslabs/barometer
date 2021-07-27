@@ -1,4 +1,3 @@
-import { NodeType } from '@aws-cdk/aws-redshift';
 import * as inquirer from 'inquirer';
 import { Configuration } from '../../../../impl/configuration';
 
@@ -18,7 +17,7 @@ export class AthenaModule extends CLIModule {
   getPrompts(): Array<any> {
     return [
       this.CLIModuleQuestions.entryName, {
-        type: 'input',
+        type: 'number',
         name: 'bytesScannedCutoffPerQuery',
         message: 'Maximum bytes in MB scan allowed for the workgroup?',
         default: 200,

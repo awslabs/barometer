@@ -1,4 +1,5 @@
 import * as inquirer from 'inquirer';
+import { PlatformTypeName } from '../../interface/platform';
 
 import { CLIModule } from '../common/cli-module';
 
@@ -19,9 +20,8 @@ export class PlatformModule extends CLIModule {
         message: 'Which platform would you like to configure ?',
         hint: '- Use <space> to select and <return> to submit.',
         choices: [
-          { name: 'Redshift', value: '../modules/platforms/redshift/new' },
-          { name: 'Athena', value: '../modules/platforms/athena/new' },
-
+          { name: PlatformTypeName.REDSHIFT, value: '../modules/platforms/redshift/new' },
+          { name: PlatformTypeName.ATHENA, value: '../modules/platforms/athena/new' },
           new inquirer.Separator(),
           { name: 'Return to the previous menu', value: 'exit-module' },
           { name: 'Exit CLI', value: 'exit' },

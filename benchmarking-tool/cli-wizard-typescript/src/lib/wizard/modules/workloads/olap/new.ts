@@ -24,9 +24,7 @@ export class RedshiftModule extends CLIModule {
         hint: '- Use <space> to select and <return> to submit.',
         choices: [
           { name: 'TPC-DS Version 3', value: 'tpc-ds/v3' },
-          { name: 'TPC-DS Version 2', value: 'tpc-ds/v2', disabled: 'Unavailable at this time' },
-          { name: 'TPC-H Version 3', value: 'tpc-h/v3' },
-          { name: 'TPC-H Version 2', value: 'tpc-h/v2', disabled: 'Unavailable at this time' },
+          { name: 'TPC-H Version 3', value: 'tpc-h/v3', disabled: 'Unavailable at this time' },
         ],
       },
       {
@@ -65,7 +63,7 @@ export class RedshiftModule extends CLIModule {
         type: 'confirm',
         name: 'usePartitioning',
         message: 'Do you want to partition the data whenever possible ?',
-        default: false,
+        default: true,
       },
       {
         type: 'list',

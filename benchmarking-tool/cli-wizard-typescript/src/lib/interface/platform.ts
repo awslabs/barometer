@@ -1,11 +1,17 @@
 import { IConfigurationItem } from './configuration';
+import { WorkloadType } from './workload';
 
-/**
- * A description of the platform configuration
- * in Typescript.
- */
+export enum PlatformType {
+  REDSHIFT = "redshift",
+  ATHENA = "athena",
+}
+export enum PlatformTypeName {
+  REDSHIFT = "Amazon Redshift",
+  ATHENA = "Amazon Athena",
+}
 export interface IPlatformConfiguration extends IConfigurationItem {
 
-  platformType: string;
+  platformType: PlatformType;
+  workloadType: Array<WorkloadType>;
 
 }

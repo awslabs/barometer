@@ -1,30 +1,109 @@
 {
-  "experiments": {},
-  "platforms": {
-    "redshift_cluster": {
-      "id": "4f22fa44-b246-4ef7-9fad-5672c39de211",
-      "configType": "platforms",
-      "platformType": "REDSHIFT",
-      "name": "redshift_cluster",
+  "experiments": {
+    "experiment-1": {
+      "id": "4942da4e-8eaf-4632-9bcd-1c9c74ebc4f2",
+      "configType": "experiments",
+      "name": "experiment-1",
+      "workloadType": "olap",
       "settings": {
-        "numberOfNodes": 2,
+        "platformConfig": {
+          "id": "d209ee3f-9da9-4f03-8132-081d7b0157d5",
+          "configType": "platforms",
+          "platformName": "athena",
+          "workloadType": [
+            "olap"
+          ],
+          "name": "platform-athena",
+          "settings": {
+            "bytesScannedCutoffPerQuery": 200000000,
+            "enforceWorkgroupConfiguration": false
+          }
+        },
+        "workloadConfig": {
+          "id": "5cba22fe-714e-4d72-9852-b0726cd46b8d",
+          "configType": "workloads",
+          "workloadType": "olap",
+          "name": "workload-tpc-ds/v3",
+          "settings": {
+            "scalingFactor": "100000",
+            "usePartitioning": true,
+            "loadMethod": "copy",
+            "dataset": "tpc-ds/v3"
+          }
+        },
+        "concurrentSessionCount": 1,
+        "executionMode": "concurrent",
+        "keepInfrastructure": false
+      }
+    }
+  },
+  "platforms": {
+    "platform-athena": {
+      "id": "d209ee3f-9da9-4f03-8132-081d7b0157d5",
+      "configType": "platforms",
+      "platformName": "athena",
+      "workloadType": [
+        "olap"
+      ],
+      "name": "platform-athena",
+      "settings": {
+        "bytesScannedCutoffPerQuery": 200000000,
+        "enforceWorkgroupConfiguration": false
+      }
+    },
+    "platform-redshift": {
+      "id": "37d9d4d9-4e6f-48a5-bb15-5a384e6fce35",
+      "configType": "platforms",
+      "platformName": "redshift",
+      "workloadType": [
+        "olap"
+      ],
+      "name": "platform-redshift",
+      "settings": {
+        "numberOfNodes": "5",
         "features": {
           "workloadManager": true,
           "concurrencyScaling": true
         },
-        "nodeType": "ra3.xlplus"
+        "nodeType": "ra3.4xlarge"
       }
     }
   },
   "workloads": {
-    "olap-tpc-ds/v3": {
-      "id": "a798f950-2978-4a68-8af0-ff069c9c899f",
-      "name": "olap-tpc-ds/v3",
-      "dataset": "tpc-ds/v3",
+    "workoad-tpc-ds/v3": {
+      "id": "5cba22fe-714e-4d72-9852-b0726cd46b8d",
+      "configType": "workloads",
+      "workloadType": "olap",
+      "name": "workoad-tpc-ds/v3",
       "settings": {
-        "scalingFactor": "10000",
-        "usePartitioning": false,
-        "loadMethod": "direct"
+        "scalingFactor": "100000",
+        "usePartitioning": true,
+        "loadMethod": "copy",
+        "dataset": "tpc-ds/v3"
+      }
+    },
+    "workoad-tpc-h/v3": {
+      "id": "5cba22fe-714e-4d72-9852-b0726cd46b8e",
+      "configType": "workloads",
+      "workloadType": "olap",
+      "name": "workoad-tpc-h/v3",
+      "settings": {
+        "scalingFactor": "100000",
+        "usePartitioning": true,
+        "loadMethod": "copy",
+        "dataset": "tpc-h/v3"
+      }
+    },
+    "workoad-oltp": {
+      "id": "5cba22fe-714e-4d72-9852-oltp",
+      "configType": "workloads",
+      "workloadType": "oltp",
+      "name": "workoad-oltp",
+      "settings": {
+        "scalingFactor": "100000",
+        "usePartitioning": true,
+        "loadMethod": "copy",
+        "dataset": "tpc-ds/v3"
       }
     }
   },

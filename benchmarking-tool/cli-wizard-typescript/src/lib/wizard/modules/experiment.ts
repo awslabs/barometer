@@ -9,23 +9,26 @@ export class Module {
 }
 export class ExperimentModule extends CLIModule {
   /**
-    * Questions to be prompted
-    */
+   * Questions to be prompted
+   */
   getPrompts(): Array<any> {
     return [
       {
         type: 'list',
         name: 'value',
-        message: 'Which platform would you like to configure ?',
+        message: 'Which action would you like to execute ?',
         hint: '- Use <space> to select and <return> to submit.',
         choices: [
-          { 'name': 'Add an experiment', 'value': '../modules/experiments/new' },
+          { name: 'Add an experiment', value: '../modules/experiments/new' },
+          { name: 'Deploy an experiment', value: '../modules/experiments/deploy', disabled: 'Unavailable at this time' },
+          { name: 'Run an experiment', value: '../modules/experiments/run', disabled: 'Unavailable at this time' },
+          { name: 'Tear down an experiment', value: '../modules/experiments/teardown', disabled: 'Unavailable at this time' },
           new inquirer.Separator(),
-          { 'name': 'Return to the previous menu', 'value': 'exit-module' },
-          { 'name': 'Exit CLI', 'value': 'exit' },
+          { name: 'Return to the previous menu', value: 'exit-module' },
+          { name: 'Exit CLI', value: 'exit' },
           new inquirer.Separator(),
-        ]
-      }
+        ],
+      },
     ];
   }
 }

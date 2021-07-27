@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as inquirer from 'inquirer';
 
-import { IConfiguration, IConfigurationItem } from '../interface/configuration';
+import { ConfigurationType, IConfiguration, IConfigurationItem } from '../interface/configuration';
 
 
 export const DEFAULT_CONFG_FILE_NAME = process.cwd() + "/benchmarking-config.json";
@@ -9,7 +9,7 @@ export const DEFAULT_CONFG_FILE_NAME = process.cwd() + "/benchmarking-config.jso
 export class ConfigurationItem implements IConfigurationItem {
   id!: string;
   name!: string;
-  configType!: string;
+  configType!: ConfigurationType;
   description?: string | undefined;
   tags?: { [key: string]: string; } | undefined;
 
@@ -62,7 +62,6 @@ export class Configuration extends ConfigurationItem implements IConfiguration {
       workloads: this.workloads,
       tags: this.tags
     };
-
     return JSON.stringify(config, null, 2);
   }
 
