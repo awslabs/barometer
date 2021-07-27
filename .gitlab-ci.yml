@@ -1,0 +1,34 @@
+stages: # List of stages for jobs, and their order of execution
+  - build
+
+build-cli-wizard: # Builds cli-wizard using latest nodejs image
+  stage: build
+  image: node:latest
+  script:
+    - echo "Compiling the code..."
+    - cd benchmarking-tool/cli-wizard-typescript
+    - npm install
+    - npx tsc
+    - npm link
+    - echo "Compile complete."
+  cache:
+    paths:
+      - benchmarking-tool/cli-wizard-typescript/node_modules/
+
+build-cdk:
+  stage: build
+  image: python:latest
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/benchmarking-tool/cdk-stack/.cache/pip"
+  before_script:
+    - cd benchmarking-tool/cdk-stack
+    - python -V
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+  script:
+    - pip install -r requirements.txt
+  cache:
+    paths:
+      - benchmarking-tool/cdk-stack/.cache/pip
+      - benchmarking-tool/cdk-stack/venv/
