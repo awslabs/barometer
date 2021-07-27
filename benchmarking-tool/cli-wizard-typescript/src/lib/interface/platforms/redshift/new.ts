@@ -6,14 +6,14 @@ export interface IRedshiftPlatformConfiguration extends IPlatformConfiguration {
 }
 
 export interface IRedshiftSettings {
-    nodeType: NodeType,
-    numberOfNodes: number,
-    features: IRedshiftFeatures
+    nodeType: NodeType;
+    numberOfNodes: number;
+    features: IRedshiftFeatures;
 }
 
 export interface IRedshiftFeatures {
-    workloadManager: boolean,
-    concurrencyScaling: boolean,
-    aqua: boolean,
-    spectrum: boolean
+    workloadManager: boolean;
+    concurrencyScaling: boolean;
+    aqua: boolean;
+    spectrum: boolean;
 }

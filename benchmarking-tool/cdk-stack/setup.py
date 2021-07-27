@@ -1,12 +1,12 @@
 import setuptools
 
 
-with open("README.md") as fp:
+with open("Readme.md") as fp:
     long_description = fp.read()
 
 
 setuptools.setup(
-    name="cdk_artifacts",
+    name="cdk-stack",
     version="0.0.1",
 
     description="An empty CDK Python app",
@@ -15,8 +15,8 @@ setuptools.setup(
 
     author="author",
 
-    package_dir={"": "cdk_artifacts"},
-    packages=setuptools.find_packages(where="cdk_artifacts"),
+    package_dir={"": "."},
+    packages=setuptools.find_packages(where="cdk-stack"),
 
     install_requires=[
         "aws-cdk.core==1.102.0",

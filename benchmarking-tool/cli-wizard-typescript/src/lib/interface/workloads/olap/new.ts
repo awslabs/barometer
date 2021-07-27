@@ -5,6 +5,7 @@ export interface IOLAPWorkloadConfiguration extends IWorkloadConfiguration {
 }
 
 export interface IOLAPWorkloadSettings {
+    dataset: string;
     scalingFactor: number;
     loadMethod: string;
     usePartitioning: boolean;

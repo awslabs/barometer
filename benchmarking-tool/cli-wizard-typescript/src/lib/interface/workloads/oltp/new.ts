@@ -5,5 +5,6 @@ export interface IOLTPWorkloadConfiguration extends IWorkloadConfiguration {
 }
 
 export interface IOLTPWorkloadSettings {
+    dataset: string;
     scalingFactor: number;
 }
