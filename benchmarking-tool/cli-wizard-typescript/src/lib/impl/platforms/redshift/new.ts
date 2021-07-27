@@ -3,7 +3,7 @@ import { NodeType } from '@aws-cdk/aws-redshift';
 import { IRedshiftFeatures, IRedshiftPlatformConfiguration, IRedshiftSettings } from '../../../interface/platforms/redshift/new';
 import { PlatformConfiguration } from '../../platform';
 
-const PLATFORM_TYPE = "REDSHIFT"
+const PLATFORM_TYPE = "REDSHIFT";
 export class RedshiftPlatformConfiguration extends PlatformConfiguration implements IRedshiftPlatformConfiguration {
   settings!: RedshiftSettings;
 

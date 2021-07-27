@@ -2,7 +2,8 @@
   "experiments": {},
   "platforms": {
     "redshift_cluster": {
-      "id": "97aab948-dc57-4b52-8770-ef6dfa9f5462",
+      "id": "4f22fa44-b246-4ef7-9fad-5672c39de211",
+      "configType": "platforms",
       "platformType": "REDSHIFT",
       "name": "redshift_cluster",
       "settings": {
@@ -15,6 +16,17 @@
       }
     }
   },
-  "workloads": {},
+  "workloads": {
+    "olap-tpc-ds/v3": {
+      "id": "a798f950-2978-4a68-8af0-ff069c9c899f",
+      "name": "olap-tpc-ds/v3",
+      "dataset": "tpc-ds/v3",
+      "settings": {
+        "scalingFactor": "10000",
+        "usePartitioning": false,
+        "loadMethod": "direct"
+      }
+    }
+  },
   "tags": {}
 }
