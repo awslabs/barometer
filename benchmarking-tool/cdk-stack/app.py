@@ -3,7 +3,7 @@
 from aws_cdk import core
 from aws_prereqs.vpc_prereqs import CdkVpcPrereqsStack
 from aws_redshift.redshift_cluster_main import RedshiftClusterStack
-from aws_redshift.redshift_load_tpc_data import RedshiftDataLoad
+from aws_redshift.redshift_data_functions import RedshiftData
 
 app = core.App()
 
@@ -44,10 +44,10 @@ Note:
   - optional: rs_cluster_stack.rs_cluster.master_username, user_input_workload_type, user_input_dataset_s3_path
   
 """
-rs_load_data_function = RedshiftDataLoad(app, "cdk-redshift-data-load", env=env_ireland,
-                                         input_vpc=vpc_prereqs_stack.vpc,
-                                         input_vpc_sg=vpc_prereqs_stack.sg_benchmark_tool_01,
-                                         input_subnets=vpc_prereqs_stack.vpc_subnets)
+rs_data_functions = RedshiftData(app, "cdk-redshift-data", env=env_ireland,
+                                 input_vpc=vpc_prereqs_stack.vpc,
+                                 input_vpc_sg=vpc_prereqs_stack.sg_benchmark_tool_01,
+                                 input_subnets=vpc_prereqs_stack.vpc_subnets)
 
 # Init Redshift cluster (e.g. DB param, cluster, etc) stack:
 rs_cluster_stack = RedshiftClusterStack(app, "cdk-redshift-cluster", env=env_ireland,
@@ -55,7 +55,7 @@ rs_cluster_stack = RedshiftClusterStack(app, "cdk-redshift-cluster", env=env_ire
                                         input_aws_region=user_input_rs_region,
                                         input_subnets=vpc_prereqs_stack.vpc_subnets,
                                         input_vpc_sg=vpc_prereqs_stack.sg_benchmark_tool_01,
-                                        input_load_fn_role=rs_load_data_function.query_function_role,
+                                        input_run_query_fn_role=rs_data_functions.query_function_role,
                                         input_rs_cluster_identifier=user_input_rs_cluster_identifier,
                                         input_rs_node_type=user_input_rs_node_type,
                                         input_rs_number_of_nodes=user_input_rs_number_of_nodes,

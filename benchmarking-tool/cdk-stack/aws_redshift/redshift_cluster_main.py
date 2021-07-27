@@ -10,7 +10,7 @@ from aws_cdk import (
 class RedshiftClusterStack(core.Stack):
 
     def __init__(self, scope: core.Construct, construct_id: str, input_subnets, input_vpc_sg,
-                 input_load_fn_role, input_aws_account_id, input_aws_region,
+                 input_run_query_fn_role, input_aws_account_id, input_aws_region,
                  input_rs_cluster_identifier, input_rs_node_type, input_rs_number_of_nodes, input_rs_region_full_name,
                  input_rs_service_code, input_rs_contract_service_term, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -68,9 +68,11 @@ class RedshiftClusterStack(core.Stack):
         rs_db_name_arn = 'arn:aws:redshift:{}:{}:dbname:{}/{}'.format(input_aws_region, input_aws_account_id, self.rs_cluster.cluster_identifier, self.rs_cluster.db_name)
         rs_db_user_arn = 'arn:aws:redshift:{}:{}:dbuser:{}/{}'.format(input_aws_region, input_aws_account_id, self.rs_cluster.cluster_identifier, self.rs_cluster.master_username)
 
-        # Grant Lambda function to query Redshift, using the RS cluster ARN built previously:
-        lambda_role = iam.Role.from_role_arn(self, "Role", input_load_fn_role)
-        lambda_role.add_to_policy(iam.PolicyStatement(
+        # Lambda functions definitions, to grant least privileges to each one:
+        fn_run_query_role = iam.Role.from_role_arn(self, "Role-1", input_run_query_fn_role)
+
+        # IAM Policy for role attached to run-query function:
+        fn_run_query_role.add_to_policy(iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             resources=[rs_cluster_arn],
             actions=["redshift-data:DescribeTable",
@@ -84,12 +86,12 @@ class RedshiftClusterStack(core.Stack):
         ))
 
         """
-        Grant Lambda to create temporary credentials, to connect securely against the database:
+        Grant run-query Lambda to create temporary credentials, to connect securely against the database:
         
         Follow-up: 
         - To change the ADMIN db user, for one with limited privileges. 
         """
-        lambda_role.add_to_policy(iam.PolicyStatement(
+        fn_run_query_role.add_to_policy(iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             resources=[rs_db_name_arn, rs_db_user_arn],
             actions=["redshift:GetClusterCredentials"]
@@ -99,11 +101,14 @@ class RedshiftClusterStack(core.Stack):
         Follow-up: 
         - To investigate why this extra action is needed on ALL resources. Otherwise, the Lambda function fails.
         """
-        lambda_role.add_to_policy(iam.PolicyStatement(
+        iam_describe_stmnt_policy = iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             resources=["*"],
             actions=["redshift-data:DescribeStatement"]
-        ))
+        )
+
+        # Adding DescribeStatement[*] to Lambda functions:
+        fn_run_query_role.add_to_policy(iam_describe_stmnt_policy)
 
         # Get pricing for cluster:
         self.price_products = get_products(region=input_rs_region_full_name,
