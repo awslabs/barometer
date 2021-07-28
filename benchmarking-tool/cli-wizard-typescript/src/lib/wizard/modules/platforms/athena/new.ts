@@ -3,10 +3,11 @@ import { Configuration } from '../../../../impl/configuration';
 
 import { AthenaPlatformConfiguration, AthenaSettings } from '../../../../impl/platforms/athena/new';
 import { CLIModule } from '../../../common/cli-module';
+import { CLIModuleQuestions } from '../../../common/cli-prompts';
 
 export class Module {
-  public static getInstance(): AthenaModule {
-    return new AthenaModule();
+  public static getInstance(configuration: Configuration): AthenaModule {
+    return new AthenaModule(configuration, 'AthenaModule');
   }
 }
 
@@ -14,29 +15,29 @@ export class AthenaModule extends CLIModule {
   /**
    * Questions to be prompted
    */
-  getPrompts(): Array<any> {
-    return [
-      this.CLIModuleQuestions.entryName, {
-        type: 'number',
-        name: 'bytesScannedCutoffPerQuery',
-        message: 'Maximum bytes in MB scan allowed for the workgroup?',
-        default: 200,
-        'validate': async (input: string): Promise<any> => {
-          if (parseInt(input) > 0)
-            return true;
-          return "Only numbers > 0 are allowed";
-        }
-      }, {
-        type: 'confirm',
-        name: 'enforceWorkgroupConfiguration',
-        message: 'Do you want to enforce workgroup configuration?',
-        default: false,
-      }
-    ];
+  setQuestions(): void {
+    this.questions = new Array<any>();
+    this.questions.push(CLIModuleQuestions.entryName);
+    this.questions.push({
+      type: 'number',
+      name: 'bytesScannedCutoffPerQuery',
+      message: 'Maximum bytes in MB scan allowed for the workgroup?',
+      default: 200,
+      validate: async (input: number): Promise<any> => {
+        if (input > 0) return true;
+        return 'Only numbers > 0 are allowed';
+      },
+    });
+    this.questions.push({
+      type: 'confirm',
+      name: 'enforceWorkgroupConfiguration',
+      message: 'Do you want to enforce workgroup configuration?',
+      default: false,
+    });
   }
 
-  async prompt(configuration: Configuration): Promise<[string, Configuration]> {
-    configuration = await inquirer.prompt(this.getPrompts()).then(async (answers) => {
+  async runModuleQuestions(): Promise<[string, Configuration]> {
+    await this.askQuestions(this.getQuestions()).then(async (answers) => {
       if (answers) {
         const settings = new AthenaSettings();
         settings.bytesScannedCutoffPerQuery = answers.bytesScannedCutoffPerQuery * 1000000;
@@ -46,14 +47,13 @@ export class AthenaModule extends CLIModule {
         entry.name = answers.name;
         entry.settings = settings;
 
-        configuration = await this.addEntry(configuration, entry);
+        await this.addEntry(entry);
       }
-      return configuration;
     });
-    let nextstep = 'continue';
-    if (!(await this.promptAddMoreEntry())) {
-      nextstep = 'exit-module';
+    this.nextstep = 'continue';
+    if (!(await this.askAddMoreEntry())) {
+      this.nextstep = 'exit-module';
     }
-    return [nextstep, configuration];
+    return [this.nextstep, this.configuration];
   }
 }

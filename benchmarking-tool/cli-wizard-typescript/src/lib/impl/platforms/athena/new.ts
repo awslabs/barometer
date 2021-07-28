@@ -11,7 +11,7 @@ export class AthenaPlatformConfiguration extends PlatformConfiguration implement
     super();
     this.platformType = PlatformType.ATHENA;
     this.workloadType = new Array<WorkloadType>();
-    this.workloadType .push(WorkloadType.OLAP);
+    this.workloadType.push(WorkloadType.OLAP);
   }
 }
 
