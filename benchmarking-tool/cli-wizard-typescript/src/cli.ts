@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-import { ConfigurationModule } from './lib/wizard/modules/configuration';
+
 import { Configuration } from './lib/impl/configuration';
 
 (async () => {
-  await new ConfigurationModule().runMainModule();
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const conf_module = require('./lib/wizard/modules/configuration');
+  await conf_module.Module.getInstance(new Configuration()).runConfigurationModule();
 })();

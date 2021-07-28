@@ -1,14 +1,14 @@
-import * as inquirer from 'inquirer';
 import { CLIModule } from '../../common/cli-module';
-
 import { Configuration } from '../../../impl/configuration';
 import { ExperimentConfiguration, ExperimentSettings } from '../../../impl/experiment';
 import { WorkloadType } from '../../../interface/workload';
 import { ExecutionMode } from '../../../interface/experiment';
+import { CLIModuleQuestions } from '../../common/cli-prompts';
 
 export class Module {
-  public static getInstance(): ExpermientModule {
-    return new ExpermientModule();
+  promptAddMoreEntry;
+  public static getInstance(configuration: Configuration): ExpermientModule {
+    return new ExpermientModule(configuration, 'ExpermientModule');
   }
 }
 
@@ -16,136 +16,131 @@ export class ExpermientModule extends CLIModule {
   /**
    * Questions to be prompted
    */
-  getPrompts(): Array<any> {
-    return [
-      this.CLIModuleQuestions.entryName,
-      {
-        type: 'list',
-        name: 'workloadType',
-        message: 'Please select the type of the workload you would like to use.',
-        choices: async (answers): Promise<any> => {
-          const choices: Array<any> = [];
-          for (const _key in WorkloadType) {
-            choices.push({ 'name': _key, 'value': WorkloadType[_key] });
-          }
-          return choices;
-        },
-      }, {
-        type: 'list',
-        name: 'workloadName',
-        message: 'Please select the name of the workload you would like to use.',
-
-      }, {
-        type: 'list',
-        name: 'platformName',
-        message: 'Please select the name of the platform you would like to use.',
-      }, {
-        type: 'number',
-        name: 'concurrentSessionCount',
-        message: 'Number of concurrent sessions?',
-        default: 1,
-        'validate': async (input: number): Promise<any> => {
-          if (input > 0)
-            return true;
-          return "Only positive numbers > 0 are allowed";
-        },
-      }, {
-        type: 'list',
-        name: 'executionMode',
-        message: 'Which query execution mode would you like to use ?',
-        choices: [
-          { name: 'Concurrently (all queries are started at the same time)', value: ExecutionMode.CONCURRENT },
-          { name: 'Sequentially (queries are started one after each other)', value: ExecutionMode.SEQUENTIAL },
-        ],
+  setQuestions(): void {
+    this.questions = new Array<any>();
+    this.questions.push(CLIModuleQuestions.entryName);
+    this.questions.push({
+      type: 'list',
+      name: 'workloadType',
+      message: 'Please select the type of the workload you would like to use.',
+      choices: async (): Promise<any> => {
+        const choices: Array<any> = [];
+        for (const _key in WorkloadType) {
+          choices.push({ name: _key, value: WorkloadType[_key] });
+        }
+        return choices;
       },
-      {
-        type: 'confirm',
-        name: 'keepInfrastructure',
-        message: 'Do you want to keep the infrastructure after the experiment?',
-        default: false,
-      }
-    ];
+    });
+    this.questions.push({
+      type: 'list',
+      name: 'workloadName',
+      message: 'Please select the name of the workload you would like to use.',
+    });
+    this.questions.push({
+      type: 'list',
+      name: 'platformName',
+      message: 'Please select the name of the platform you would like to use.',
+    });
+    this.questions.push({
+      type: 'number',
+      name: 'concurrentSessionCount',
+      message: 'Number of concurrent sessions?',
+      default: 1,
+      validate: async (input: number): Promise<any> => {
+        if (input > 0) return true;
+        return 'Only positive numbers > 0 are allowed';
+      },
+    });
+    this.questions.push({
+      type: 'list',
+      name: 'executionMode',
+      message: 'Which query execution mode would you like to use ?',
+      choices: [
+        {
+          name: 'Concurrently (all queries are started at the same time)',
+          value: ExecutionMode.CONCURRENT,
+        },
+        {
+          name: 'Sequentially (queries are started one after each other)',
+          value: ExecutionMode.SEQUENTIAL,
+        },
+      ],
+    });
+    this.questions.push({
+      type: 'confirm',
+      name: 'keepInfrastructure',
+      message: 'Do you want to keep the infrastructure after the experiment?',
+      default: false,
+    });
   }
 
-  getPromptByName(items : Array<any>, name :string): any {
-    for (const item of items) {
-      if(item['name'] === name){
-        return item;
-      }
-    }
-    return false;
-  }
-  async prompt(configuration: Configuration): Promise<[string, Configuration]> {
-    const prompts: Array<any> = this.getPrompts();
+  async runModuleQuestions(): Promise<[string, Configuration]> {
+    const _questions: Array<any> = this.getQuestions();
 
-    const workloadNamePrompt = this.getPromptByName(prompts, "workloadName");
-
+    const workloadNamePrompt = this.getQuestionByName(_questions, 'workloadName');
     workloadNamePrompt['choices'] = async (answers): Promise<Array<any>> => {
       const choices: Array<any> = [];
-      for (const _key in configuration.workloads) {
-        if (configuration.workloads[_key].workloadType === answers.workloadType) {
-          choices.push({ 'name': configuration.workloads[_key].name, 'value': _key });
+      for (const _key in this.configuration.workloads) {
+        if (this.configuration.workloads[_key].workloadType === answers.workloadType) {
+          choices.push({
+            name: this.configuration.workloads[_key].name,
+            value: _key,
+          });
         }
       }
       if (choices.length === 0) {
-        choices.push({ 'name': 'No entries found.', disabled: true });
-        choices.push(new inquirer.Separator());
-        choices.push({ 'name': 'Return to the previous menu', 'value': 'exit-module' });
+        choices.push({ name: 'No entries found.', disabled: true });
+        choices.push(this.getQuestionSeparator());
+        choices.push({ name: 'Return to the previous menu', value: 'exit-module' });
       }
       return choices;
     };
 
-    const platformNamePrompt = this.getPromptByName(prompts, "platformName");
+    const platformNamePrompt = this.getQuestionByName(_questions, 'platformName');
     platformNamePrompt['choices'] = async (answers): Promise<Array<any>> => {
       const choices: Array<any> = [];
-      for (const _key in configuration.platforms) {
-        if (configuration.platforms[_key].workloadType.includes(answers.workloadType)) {
-          choices.push({ 'name': configuration.platforms[_key].name, 'value': _key });
+      for (const _key in this.configuration.platforms) {
+        if (this.configuration.platforms[_key].workloadType.includes(answers.workloadType)) {
+          choices.push({
+            name: this.configuration.platforms[_key].name,
+            value: _key,
+          });
         }
       }
       if (choices.length === 0) {
-        choices.push({ 'name': 'No entries found.', disabled: true });
-        choices.push(new inquirer.Separator());
-        choices.push({ 'name': 'Return to the previous menu', 'value': 'exit-module' });
+        choices.push({ name: 'No entries found.', disabled: true });
+        choices.push(this.getQuestionSeparator());
+        choices.push({ name: 'Return to the previous menu', value: 'exit-module' });
       }
       return choices;
     };
 
-    // console.log(JSON.stringify(prompts, null, 2));
-
-    const answers = await inquirer.prompt(prompts).then(async (answers) => {
-      // console.log(JSON.stringify(answers, null, 2));   
+    const answers = await this.askQuestions(_questions).then(async (answers) => {
       for (const _key in answers) {
         if (answers[_key] === 'exit-module') {
           return answers;
         }
       }
       const settings = new ExperimentSettings();
-      settings.platformConfig = configuration.platforms[answers.platformName];
-      settings.workloadConfig = configuration.workloads[answers.workloadName];
+      settings.platformConfig = this.configuration.platforms[answers.platformName];
+      settings.workloadConfig = this.configuration.workloads[answers.workloadName];
       settings.concurrentSessionCount = answers.concurrentSessionCount;
       settings.executionMode = answers.executionMode;
       settings.keepInfrastructure = answers.keepInfrastructure;
-
-      // console.log(JSON.stringify(settings, null, 2));
 
       const entry = new ExperimentConfiguration();
       entry.name = answers.name;
       entry.platformType = settings.platformConfig.platformType;
       entry.workloadType = settings.workloadConfig.workloadType;
       entry.settings = settings;
-      // console.log(JSON.stringify(entry, null, 2));
 
-      configuration = await this.addEntry(configuration, entry);
+      await this.addEntry(entry);
       return answers;
-
     });
-    let nextstep = 'continue';
-    if (
-      answers.workloadName === 'exit-module' || answers.platformName === 'exit-module'
-      || !(await this.promptAddMoreEntry())) {
-      nextstep = 'exit-module';
+    this.nextstep = 'continue';
+    if (answers.workloadName === 'exit-module' || answers.platformName === 'exit-module' || !(await this.askAddMoreEntry())) {
+      this.nextstep = 'exit-module';
     }
-    return [nextstep, configuration];
+    return [this.nextstep, this.configuration];
   }
 }

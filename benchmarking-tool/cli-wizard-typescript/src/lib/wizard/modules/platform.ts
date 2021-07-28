@@ -1,33 +1,31 @@
-import * as inquirer from 'inquirer';
+import { Configuration } from '../../impl/configuration';
 import { PlatformTypeName } from '../../interface/platform';
 
 import { CLIModule } from '../common/cli-module';
 
 export class Module {
-  public static getInstance(): PlatformModule {
-    return new PlatformModule();
+  public static getInstance(configuration: Configuration): PlatformModule {
+    return new PlatformModule(configuration, 'PlatformModule');
   }
 }
 export class PlatformModule extends CLIModule {
   /**
    * Questions to be prompted
    */
-  getPrompts(): Array<any> {
-    return [
-      {
-        type: 'list',
-        name: 'value',
-        message: 'Which platform would you like to configure ?',
-        hint: '- Use <space> to select and <return> to submit.',
-        choices: [
-          { name: PlatformTypeName.REDSHIFT, value: '../modules/platforms/redshift/new' },
-          { name: PlatformTypeName.ATHENA, value: '../modules/platforms/athena/new' },
-          new inquirer.Separator(),
-          { name: 'Return to the previous menu', value: 'exit-module' },
-          { name: 'Exit CLI', value: 'exit' },
-          new inquirer.Separator()
-        ],
-      },
-    ];
+  setQuestions(): void {
+    this.questions = new Array<any>();
+    this.questions.push({
+      type: 'list',
+      name: 'value',
+      message: 'Which platform would you like to configure ?',
+      choices: [
+        { name: PlatformTypeName.REDSHIFT, value: '../modules/platforms/redshift/new' },
+        { name: PlatformTypeName.ATHENA, value: '../modules/platforms/athena/new' },
+        this.getQuestionSeparator(),
+        { name: 'Return to the previous menu', value: 'exit-module' },
+        { name: 'Exit CLI', value: 'exit' },
+        this.getQuestionSeparator(),
+      ],
+    });
   }
 }
