@@ -1,12 +1,12 @@
+import { WorkloadType } from '../../../interface/workload';
 import { IOLAPWorkloadConfiguration, IOLAPWorkloadSettings } from "../../../interface/workloads/olap/new";
 import { WorkloadConfiguration } from "../../workload";
 
-const WORKLOAD_TYPE = "olap";
 export class OLAPWorkloadConfiguration extends WorkloadConfiguration implements IOLAPWorkloadConfiguration {
     settings!: OLAPWorkloadSettings;
     constructor() {
         super();
-        this.workloadType = WORKLOAD_TYPE;
+        this.workloadType = WorkloadType.OLAP;
     }
 }
 

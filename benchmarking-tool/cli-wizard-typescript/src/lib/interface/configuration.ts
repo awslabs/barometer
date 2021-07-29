@@ -2,9 +2,12 @@ import { IExperimentConfiguration } from "./experiment";
 import { IPlatformConfiguration } from "./platform";
 import { IWorkloadConfiguration } from "./workload";
 
-/**
- * Describes a configuration
- */
+export enum ConfigurationType {
+  EXPERIMENT = "experiments",
+  PLATFORM = "platforms",
+  WORKLOAD = "workloads",
+}
+
 export interface IConfiguration extends IConfigurationItem {
   /**
    * This key contains all the data associated with

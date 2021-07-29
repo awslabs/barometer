@@ -1,15 +1,18 @@
 
 import { NodeType } from '@aws-cdk/aws-redshift';
+import { PlatformType } from '../../../interface/platform';
 import { IRedshiftFeatures, IRedshiftPlatformConfiguration, IRedshiftSettings } from '../../../interface/platforms/redshift/new';
+import { WorkloadType } from '../../../interface/workload';
 import { PlatformConfiguration } from '../../platform';
 
-const PLATFORM_TYPE = "REDSHIFT";
 export class RedshiftPlatformConfiguration extends PlatformConfiguration implements IRedshiftPlatformConfiguration {
   settings!: RedshiftSettings;
 
   constructor() {
     super();
-    this.platformType = PLATFORM_TYPE;
+    this.platformType = PlatformType.REDSHIFT;
+    this.workloadType = new Array<WorkloadType>();
+    this.workloadType.push(WorkloadType.OLAP);
   }
 }
 

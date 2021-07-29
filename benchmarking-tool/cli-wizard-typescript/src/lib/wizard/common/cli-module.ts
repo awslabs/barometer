@@ -1,211 +1,139 @@
 import * as inquirer from 'inquirer';
-
-import { Configuration, ConfigurationItem, DEFAULT_CONFG_FILE_NAME } from '../../impl/configuration';
+import Separator from 'inquirer/lib/objects/separator';
+import { Configuration, ConfigurationItem } from '../../impl/configuration';
+import { CLIModulePrompts } from './cli-prompts';
 
 export interface ICLIModule {
-  run(configuration: Configuration, module: string): Promise<[string, Configuration]>;
+  runModule(): Promise<[string, Configuration]>;
 
   nextstep: string;
 }
 
 export abstract class CLIModule implements ICLIModule {
-  nextstep!: string;
+  configuration: Configuration;
 
-  abstract getPrompts(): Array<any>;
+  modulename: string;
+  nextstep: string;
 
-  async run(configuration: Configuration, module_name: string): Promise<[string, Configuration]> {
+  questions!: Array<any>;
+
+  protected clipromptWrapper;
+
+  constructor(configuration: Configuration, modulename: string) {
+    this.configuration = configuration;
+    this.modulename = modulename;
+    this.nextstep = '';
+    this.setQuestions();
+
+    this.exit = this.exit.bind(this);
+    this.exitOnKeypress = this.exitOnKeypress.bind(this);
+
+    // Make sure new prompt start on a newline when closing
+    process.on('exit', this.exit);
+    process.stdin.on('keypress', this.exitOnKeypress);
+  }
+
+  exitOnKeypress(data: string, key: { name: string; ctrl: any }): void {
+    if (key && key.name === 'c' && key.ctrl) {
+      this.exit();
+    }
+  }
+
+  exit(): void {
+    this.clipromptWrapper.ui.close();
+  }
+
+  abstract setQuestions(): void;
+
+  getQuestions(): Array<any> {
+    return this.questions;
+  }
+
+  async runModule(): Promise<[string, Configuration]> {
     // prompt to execute an action until the user decide to stop
-    [this.nextstep, configuration] = await this.prompt(configuration);
+    [this.nextstep, this.configuration] = await this.runModuleQuestions();
     while (this.nextstep !== 'exit' && this.nextstep !== 'exit-module') {
-      [this.nextstep, configuration] = await this.prompt(configuration);
+      [this.nextstep, this.configuration] = await this.runModuleQuestions();
     }
 
     // we need to reset the next step to avoid full exit here
     if (this.nextstep === 'exit-module') {
       this.nextstep = 'continue-previous-menu';
     }
-    return [this.nextstep, configuration];
+    return [this.nextstep, this.configuration];
   }
 
-  protected async prompt(configuration: Configuration): Promise<[string, Configuration]> {
-    const module_name = 'experiment';
-    return await inquirer.prompt(this.getPrompts()).then(async (answers): Promise<[string, Configuration]> => {
+  async runModuleQuestions(): Promise<[string, Configuration]> {
+    await this.askQuestions(this.questions).then(async (answers): Promise<void> => {
       let conf_module;
       if (answers.value) {
+        this.nextstep = answers.value;
         switch (answers.value) {
+          case 'exit':
+            break;
           case 'exit-module':
             break;
           default:
-            conf_module = require("" + answers.value);
-            [answers.value, configuration] = await conf_module.Module.getInstance().run(configuration, module_name);
+            conf_module = require('' + answers.value);
+            [this.nextstep, this.configuration] = await conf_module.Module.getInstance(this.configuration).runModule();
             break;
         }
       }
-      return [answers.value, configuration];
     });
+    return [this.nextstep, this.configuration];
   }
 
-  protected CLIModuleQuestions = {
-    entryName: {
-      type: 'input',
-      name: 'name',
-      message: 'Please provide name for this entry (You will be able to use by this name later)',
-      validate: async (input: string | any[]): Promise<any> => {
-        if (input.length > 0) return true;
-        return 'Name can not be empty';
-      },
-    },
-  };
-
-  protected CLIModulePrompts = {
-    exportConfiguration: [
-      {
-        type: 'list',
-        name: 'value',
-        message: 'How would you like to export your current configuration ?',
-        hint: '- Use <space> to select and <return> to submit.',
-        choices: [
-          {
-            name: 'Save to default location ' + DEFAULT_CONFG_FILE_NAME,
-            value: 'default',
-          },
-          { name: 'Save to custom location', value: 'custom' },
-          { name: "Don't save", value: 'exit' },
-        ],
-      },
-    ],
-    importConfiguration: [
-      {
-        type: 'list',
-        name: 'value',
-        message: 'How would you like to import your configuration ?',
-        choices: [
-          {
-            name: 'Load from default location ' + DEFAULT_CONFG_FILE_NAME,
-            value: 'default',
-          },
-          { name: 'Load from custom location', value: 'custom' },
-          { name: "Don't load", value: 'exit' },
-        ],
-      },
-    ],
-    addMoreConfigurationItem: [
-      {
-        type: 'confirm',
-        name: 'value',
-        message: 'Do you want to add an additional entry?',
-        default: false,
-      },
-    ],
-    overrideConfigurationItem: [
-      {
-        type: 'list',
-        name: 'value',
-        message: 'An entry with the same name exist. How do you want to proceed ?',
-        choices: [
-          { name: 'Rename entry', value: 'rename' },
-          { name: 'Override existing entry', value: 'override' },
-          { name: 'Discard change', value: 'discard' },
-        ],
-      },
-      {
-        type: 'input',
-        name: 'name',
-        message: 'Please provide name for this entry.',
-        when: function (answers): boolean {
-          return answers.value === 'rename';
-        },
-      },
-    ],
-  };
-
-  async exitCLI(configuration: Configuration): Promise<void> {
-    console.log('Exiting.');
-    await this.exportConfigurationWizard(configuration);
+  askQuestions(questions: Array<any>): Promise<any> {
+    this.clipromptWrapper = inquirer.prompt(questions);
+    return this.clipromptWrapper;
   }
 
-  async importConfigurationWizard(): Promise<Configuration> {
-    const configuration: Configuration = new Configuration();
-    const answers = await inquirer.prompt(this.CLIModulePrompts.importConfiguration).then((answers) => {
-      return answers;
-    });
-    if (answers.value) {
-      switch (answers.value) {
-        case 'default':
-          await configuration.loadDefault();
-          break;
-        case 'custom':
-          await configuration.loadWithPrompt();
-          break;
-        case 'exit':
-          break;
-        case 'exit-module':
-          break;
-        default:
-          break;
+  getQuestionByName(items: Array<any>, name: string): any {
+    for (const item of items) {
+      if (item['name'] === name) {
+        return item;
       }
     }
-    return configuration;
+    return false;
   }
 
-  async exportConfigurationWizard(configuration: Configuration): Promise<Configuration> {
-    const answers = await inquirer.prompt(this.CLIModulePrompts.exportConfiguration).then((answers) => {
-      return answers;
-    });
-    if (answers.value) {
-      switch (answers.value) {
-        case 'default':
-          await configuration.saveDefault();
-          break;
-        case 'custom':
-          await configuration.saveWithPrompt();
-          break;
-        case 'exit':
-          break;
-        case 'exit-module':
-          break;
-        default:
-          break;
-      }
-    }
-    return configuration;
+  getQuestionSeparator(): Separator {
+    return new inquirer.Separator();
   }
 
-  async promptAddMoreEntry(): Promise<boolean> {
-    const answers = await inquirer.prompt(this.CLIModulePrompts.addMoreConfigurationItem).then((answers) => {
+  async askAddMoreEntry(): Promise<boolean> {
+    const answers = await this.askQuestions(CLIModulePrompts.addMoreConfigurationItem).then((answers) => {
       return answers;
     });
     return answers.value;
   }
 
-  async addEntry(configuration: Configuration, entry: ConfigurationItem): Promise<Configuration> {
+  async addEntry(entry: ConfigurationItem): Promise<void> {
     // add empty if not exists
-    if (!configuration[entry.configType]) {
-      configuration[entry.configType] = {};
+    if (!this.configuration[entry.configType]) {
+      this.configuration[entry.configType] = {};
     }
 
-    if (configuration[entry.configType][entry.name]) {
+    if (this.configuration[entry.configType][entry.name]) {
       // is entry exist, ask if override
-      configuration = await this.overrideEntry(configuration, entry);
+      await this.overrideEntry(entry);
     } else {
-      configuration[entry.configType][entry.name] = entry;
+      this.configuration[entry.configType][entry.name] = entry;
     }
-
-    return configuration;
   }
 
-  async overrideEntry(configuration: Configuration, entry: ConfigurationItem): Promise<Configuration> {
-    this.CLIModulePrompts.overrideConfigurationItem[1]['validate'] = async (input: string | any[]): Promise<any> => {
+  async overrideEntry(entry: ConfigurationItem): Promise<void> {
+    CLIModulePrompts.overrideConfigurationItem[1]['validate'] = async (input: string): Promise<any> => {
       if (input.length === 0) {
         return 'Name can not be empty';
       }
-      if (configuration[entry.configType][input]) {
+      if (this.configuration[entry.configType][input]) {
         return 'Entry name already exists. Select a different name.';
       }
       return true;
     };
 
-    const answers = await inquirer.prompt(this.CLIModulePrompts.overrideConfigurationItem).then((answers) => {
+    const answers = await this.askQuestions(CLIModulePrompts.overrideConfigurationItem).then((answers) => {
       return answers;
     });
     if (answers) {
@@ -213,16 +141,15 @@ export abstract class CLIModule implements ICLIModule {
         case 'discard':
           break;
         case 'override':
-          configuration[entry.configType][entry.name] = entry;
+          this.configuration[entry.configType][entry.name] = entry;
           break;
         case 'rename':
           entry.name = answers.name;
-          configuration[entry.configType][entry.name] = entry;
+          this.configuration[entry.configType][entry.name] = entry;
           break;
         default:
           break;
       }
     }
-    return configuration;
   }
 }
