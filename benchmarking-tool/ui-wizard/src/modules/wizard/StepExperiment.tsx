@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Form} from "react-bootstrap";
+import {Button, Form} from "react-bootstrap";
 
 
 interface StepExperimentProps {
@@ -29,6 +29,9 @@ export default class StepExperiment extends Component<StepExperimentProps, StepE
                     <Form.Group controlId="numberOfUsers">
                         <Form.Label>How many queries each user will run concurrently?</Form.Label>
                         <Form.Control required type="number" step={1} min={1} max={22} value={1}/>
+                    </Form.Group>
+                    <Form.Group>
+                        <Button className="btn btn-prev btn-amzn btn-lg">Run Experiment</Button>
                     </Form.Group>
                 </Form>
             </div>
