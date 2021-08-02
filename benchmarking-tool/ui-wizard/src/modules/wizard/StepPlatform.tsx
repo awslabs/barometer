@@ -1,77 +1,60 @@
 import React, {Component} from 'react'
-import {WizardProps, WizardState} from "./Wizard";
+import {Form} from "react-bootstrap";
 
-export default class StepPlatform extends Component<WizardProps, WizardState> {
+
+interface StepPlatformProps {
+}
+
+interface StepPlatformState {
+
+}
+
+export default class StepPlatform extends Component<StepPlatformProps, StepPlatformState> {
 
     render() {
         return (
-            <div className="step step1">
-                <div className="row">
-                    <form id="Form" className="form-horizontal">
-                        <div className="form-group">
-                            <label className="col-md-12 control-label">
-                                <h1>Step 2: Define Your Platform</h1>
-                                <h3>Benchmarking tool UI Wizard will help you define your experiment</h3>
-                            </label>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label htmlFor="name" className="form-label">Name</label>
-                                            <input type="input" className="form-control" id="name" required
-                                                   aria-describedby="nameHelp" placeholder={"My Platform 1"}/>
-                                            <div id="nameHelp" className="form-text">
-                                                Please provide name for this entry (You will be able to use by this name
-                                                later)
-                                            </div>
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="dataset"
-                                                   className="form-label"> Which platform would you like to
-                                                configure?</label>
-                                            <select className="form-select">
-                                                <option selected>Redshift</option>
-                                                <option>Athena</option>
-                                            </select>
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="nodeType"
-                                                   className="form-label"> Select the node type</label>
-                                            <select className="form-select">
-                                                <option selected>ra3.xplus</option>
-                                                <option selected>ra3.4xlarge</option>
-                                                <option selected>ra3.16xlarge</option>
-                                                <option selected>dc2.large</option>
-                                            </select>
-                                        </div>
-                                        <div className="mb-3">
-                                            <label htmlFor="nodes" className="form-label">Number of Nodes</label>
-                                            <input type="number" className="form-control" id="nodes" value="2"/>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input className="form-check-input" type="checkbox" id="f1"/>
-                                            <label className="form-check-label" htmlFor="f1">Workload manager
-                                                (WLM)</label>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input className="form-check-input" type="checkbox" id="f2"/>
-                                            <label className="form-check-label" htmlFor="f1">Advanced Query Accelerator
-                                                (AQUA)</label>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input className="form-check-input" type="checkbox" id="f3"/>
-                                            <label className="form-check-label" htmlFor="f1">Concurrency Scaling</label>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input className="form-check-input" type="checkbox" id="f4"/>
-                                            <label className="form-check-label" htmlFor="f1">Redshift Spectrum</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+            <div className="step step2">
+                <Form className="form-horizontal">
+                    <Form.Group>
+                        <Form.Label>
+                            <h5>Step 2: Define Your Platform</h5>
+                            <h6>Benchmarking tool UI Wizard will help you define your experiment</h6>
+                        </Form.Label>
+                        <Form.Group controlId="name">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control type="input" required placeholder="My platform"/>
+                            <Form.Text>
+                                You will be able to use by this name later
+                            </Form.Text>
+                        </Form.Group>
+                        <Form.Group controlId="platformType">
+                            <Form.Label>Which platform would you like to configure?</Form.Label>
+                            <Form.Control as="select" custom>
+                                <option selected>Redshift</option>
+                                <option>Athena</option>
+                            </Form.Control>
+                        </Form.Group>
+                        <Form.Group controlId="nodeType">
+                            <Form.Label> Select the node type</Form.Label>
+                            <Form.Control as="select">
+                                <option selected>ra3.xplus</option>
+                                <option>ra3.4xlarge</option>
+                                <option>ra3.16xlarge</option>
+                                <option>dc2.large</option>
+                            </Form.Control>
+                        </Form.Group>
+                        <Form.Group controlId="numberOfNodes">
+                            <Form.Label htmlFor="nodes">Number of Nodes</Form.Label>
+                            <Form.Control type="number" value="2"/>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Check type="switch" label="Workload manager(WLM)"/>
+                            <Form.Check type="switch" label="Advanced Query Accelerator (AQUA)"/>
+                            <Form.Check type="switch" label="Concurrency Scaling"/>
+                            <Form.Check type="switch" label="Redshift Spectrum"/>
+                        </Form.Group>
+                    </Form.Group>
+                </Form>
             </div>
         )
     }
