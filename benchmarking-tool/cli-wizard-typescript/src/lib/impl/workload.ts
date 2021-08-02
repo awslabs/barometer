@@ -1,12 +1,12 @@
-import { IWorkloadConfiguration } from "../interface/workload";
+import { ConfigurationType } from '../interface/configuration';
+import { IWorkloadConfiguration, WorkloadType } from "../interface/workload";
 import { ConfigurationItem } from "./configuration";
 
-const CONFIG_TYPE = "workloads";
 export class WorkloadConfiguration extends ConfigurationItem implements IWorkloadConfiguration {
-    workloadType!: string;
+    workloadType!: WorkloadType;
 
     constructor() {
         super();
-        this.configType = CONFIG_TYPE;
+        this.configType = ConfigurationType.WORKLOAD;
     }
 }
