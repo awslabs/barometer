@@ -1,11 +1,9 @@
-import React, {Component} from 'react'
+import React from 'react'
 import {Form} from "react-bootstrap";
+import WizardStep, {StepInput} from "./WizardStep";
 
 
-interface StepPlatformProps {
-}
-
-interface StepPlatformState {
+export interface StepPlatformState {
     // Common
     name: string;
     platformType: string;
@@ -21,45 +19,18 @@ interface StepPlatformState {
     bytesScannedCutoffPerQuery: number;
 }
 
-export default class StepPlatform extends Component<StepPlatformProps, StepPlatformState> {
+export default class StepPlatform extends WizardStep<StepPlatformState> {
 
-    constructor(props: StepPlatformProps) {
+    constructor(props: StepInput<StepPlatformState>) {
         super(props);
-
-        this.state = {
-            name: "My platform",
-            platformType: "Redshift",
-            nodeType: "ra3.xplus",
-            numberOfNodes: 2,
-            workloadManager: false,
-            concurrencyScaling: false,
-            aqua: false,
-            spectrum: false,
-            enforceWorkgroupConfiguration: false,
-            bytesScannedCutoffPerQuery: 20 * 1000000
-        }
+        this.state = props.state;
     }
 
-    handleChange = (event: React.FormEvent) => {
-        const target = event.target as HTMLInputElement
-        let value: any = target.value;
-        if (target.id === "bytesScannedCutoffPerQuery") value = value * 1000000;
-        this.setState({
-            ...this.state,
-            [target.id as any]: value
-        });
-        console.log(this.state);
-    }
-
-    handleSwitch = (event: React.FormEvent) => {
-        const target = event.target as HTMLInputElement
-        let value: any = target.value === "on";
-        this.setState({
-            ...this.state,
-            [target.id as any]: value
-        });
-        console.log(this.state);
-    }
+    mapValue = (target: HTMLInputElement, value: any) => {
+        if (target.id === "bytesScannedCutoffPerQuery")
+            return value * 1000000;
+        return value;
+    };
 
     render() {
         return (
@@ -105,16 +76,16 @@ export default class StepPlatform extends Component<StepPlatformProps, StepPlatf
                                               onChange={this.handleChange}/>
                             </Form.Group>
                             <Form.Group>
-                                <Form.Check checked={this.state.workloadManager} onChange={this.handleSwitch}
+                                <Form.Check id="workloadManager" checked={this.state.workloadManager} onChange={this.handleChange}
                                             type="switch"
                                             label="Workload manager(WLM)"/>
-                                <Form.Check checked={this.state.workloadManager} onChange={this.handleSwitch}
+                                <Form.Check id="aqua" checked={this.state.aqua} onChange={this.handleChange}
                                             type="switch"
                                             label="Advanced Query Accelerator (AQUA)"/>
-                                <Form.Check checked={this.state.workloadManager} onChange={this.handleSwitch}
+                                <Form.Check id="concurrencyScaling" checked={this.state.concurrencyScaling} onChange={this.handleChange}
                                             type="switch"
                                             label="Concurrency Scaling"/>
-                                <Form.Check checked={this.state.workloadManager} onChange={this.handleSwitch}
+                                <Form.Check id="spectrum" checked={this.state.spectrum} onChange={this.handleChange}
                                             type="switch"
                                             label="Redshift Spectrum"/>
                             </Form.Group>
@@ -122,7 +93,7 @@ export default class StepPlatform extends Component<StepPlatformProps, StepPlatf
                         : <div>
                             <Form.Group controlId="enforceWorkgroupConfiguration">
                                 <Form.Check checked={this.state.enforceWorkgroupConfiguration}
-                                            onChange={this.handleSwitch}
+                                            onChange={this.handleChange}
                                             type="switch"
                                             label="Enforce Workgroup Configuration"/>
                             </Form.Group>

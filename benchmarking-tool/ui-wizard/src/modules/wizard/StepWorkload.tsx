@@ -1,10 +1,8 @@
-import React, {Component} from 'react'
+import React from 'react'
 import {Form} from "react-bootstrap";
+import WizardStep, {StepInput} from "./WizardStep";
 
-interface StepWorkloadProps {
-}
-
-interface StepWorkloadState {
+export interface StepWorkloadState {
     name: string;
     dataset: string;
     loadMethod: string;
@@ -12,32 +10,11 @@ interface StepWorkloadState {
     scalingFactor: number;
 }
 
-export default class StepWorkload extends Component<StepWorkloadProps, StepWorkloadState> {
+export default class StepWorkload extends WizardStep<StepWorkloadState> {
 
-    constructor(props: StepWorkloadProps) {
+    constructor(props: StepInput<StepWorkloadState>) {
         super(props);
-
-        this.state = {
-            name: "My workload",
-            dataset: "tpc-ds/v3",
-            loadMethod: "copy",
-            usePartitioning: true,
-            scalingFactor: 10000
-        }
-    }
-
-    handleChange = (event: React.FormEvent) => {
-        const target = event.target as HTMLInputElement
-        let value: any = target.value;
-        if (target.id === "usePartitioning")
-            value = value === "on"
-        if (target.id === "scalingFactor")
-            value = parseInt(value)
-        this.setState({
-            ...this.state,
-            [target.id as any]: value
-        });
-        console.log(this.state)
+        this.state = props.state;
     }
 
     render() {

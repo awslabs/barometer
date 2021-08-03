@@ -1,37 +1,18 @@
-import React, {Component} from 'react'
+import React from 'react'
 import {Button, Form} from "react-bootstrap";
+import WizardStep, {StepInput} from "./WizardStep";
 
-
-interface StepExperimentProps {
-
-}
-
-interface StepExperimentState {
+export interface StepExperimentState {
     executionMode: string;
     concurrentSessionCount: number;
     keepInfrastructure: boolean;
 }
 
-export default class StepExperiment extends Component<StepExperimentProps, StepExperimentState> {
+export default class StepExperiment extends WizardStep<StepExperimentState> {
 
-    constructor(props: StepExperimentProps) {
+    constructor(props: StepInput<StepExperimentState>) {
         super(props);
-
-        this.state = {
-            concurrentSessionCount: 1,
-            executionMode: "sequential",
-            keepInfrastructure: false
-        }
-    }
-
-    handleChange = (event: React.FormEvent) => {
-        const target = event.target as HTMLInputElement
-        let value: any = target.value;
-        this.setState({
-            ...this.state,
-            [target.id as any]: value
-        });
-        console.log(this.state)
+        this.state = props.state;
     }
 
     render() {
@@ -62,7 +43,8 @@ export default class StepExperiment extends Component<StepExperimentProps, StepE
                                     label="Keep infrastructure after experiment run"/>
                     </Form.Group>
                     <Form.Group>
-                        <Button className="btn btn-prev btn-amzn btn-lg">Run Experiment</Button>
+                        <Button className="btn btn-prev btn-amzn btn-lg" onClick={this.finishWizard}>Run
+                            Experiment</Button>
                     </Form.Group>
                 </Form>
             </div>
