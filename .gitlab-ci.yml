@@ -14,12 +14,13 @@ build-cli-wizard: # Builds cli-wizard using latest nodejs image
     paths:
       - benchmarking-tool/cli-wizard-typescript/node_modules/
 
-build-ui-wizard: # Builds cli-wizard using latest nodejs image
+build-ui-wizard: # Builds ui-wizard using latest nodejs image
   stage: build
   image: node:latest
   script:
     - echo "Compiling the code..."
     - cd benchmarking-tool/ui-wizard
+    - touch src/aws-exports.js # File created by Amplify pull in future
     - npm install
     - npm run build
     - echo "Compile complete."
