@@ -8,12 +8,24 @@ build-cli-wizard: # Builds cli-wizard using latest nodejs image
     - echo "Compiling the code..."
     - cd benchmarking-tool/cli-wizard-typescript
     - npm install
-    - npx tsc
-    - npm link
+    - npx run build
     - echo "Compile complete."
   cache:
     paths:
       - benchmarking-tool/cli-wizard-typescript/node_modules/
+
+build-ui-wizard: # Builds cli-wizard using latest nodejs image
+  stage: build
+  image: node:latest
+  script:
+    - echo "Compiling the code..."
+    - cd benchmarking-tool/ui-wizard
+    - npm install
+    - npx run build
+    - echo "Compile complete."
+  cache:
+    paths:
+      - benchmarking-tool/ui-wizard/node_modules/
 
 build-cdk:
   stage: build
