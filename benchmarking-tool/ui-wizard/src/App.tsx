@@ -4,6 +4,11 @@ import {Nav, Navbar, NavItem} from "react-bootstrap";
 import {LinkContainer} from "react-router-bootstrap";
 import {Link, withRouter} from "react-router-dom";
 import {Routes} from "./Routes";
+import {withAuthenticator} from '@aws-amplify/ui-react';
+import Amplify, {Auth} from 'aws-amplify';
+import awsconfig from './aws-exports';
+
+Amplify.configure(awsconfig);
 
 interface AppProps {
     history: any;
@@ -20,6 +25,11 @@ class App extends Component<AppProps, AppState> {
         document.title = "Benchmarking Tool Home"
     }
 
+    handleLogout = async () => {
+        await Auth.signOut();
+        window.location.reload();
+    }
+
     render() {
         return (
             <div className="App container">
@@ -29,16 +39,15 @@ class App extends Component<AppProps, AppState> {
                             <span className="orange">Benchmarking Tool</span>
                         </Link>
                     </Navbar.Brand>
-                    <Navbar.Toggle/>
-                    <Navbar.Collapse>
-                        <Nav>
-                            <Fragment>
-                                <LinkContainer to="/wizard">
-                                    <NavItem><span className="orange line-height-24">Wizard</span></NavItem>
-                                </LinkContainer>
-                            </Fragment>
-                        </Nav>
-                    </Navbar.Collapse>
+                    <Nav>
+                        <Fragment>
+                            <LinkContainer to="/wizard">
+                                <NavItem><span className="orange line-height-24">Wizard</span></NavItem>
+                            </LinkContainer>
+                        </Fragment>
+                        <NavItem onClick={this.handleLogout}><span
+                            className="orange line-height-24 ml-2">Log out</span></NavItem>
+                    </Nav>
                 </Navbar>
                 <Routes/>
             </div>
@@ -46,4 +55,4 @@ class App extends Component<AppProps, AppState> {
     }
 }
 
-export default withRouter(App as any);
+export default withAuthenticator(withRouter(App as any));

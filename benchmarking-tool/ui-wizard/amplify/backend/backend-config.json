@@ -1,6 +1,6 @@
 {
   "auth": {
-    "auth": {
+    "uiwizardbdd3ea08": {
       "service": "Cognito",
       "providerPlugin": "awscloudformation",
       "dependsOn": [],
@@ -16,7 +16,7 @@
           "defaultAuthentication": {
             "authenticationType": "AMAZON_COGNITO_USER_POOLS",
             "userPoolConfig": {
-              "userPoolId": "authauth"
+              "userPoolId": "authuiwizardbdd3ea08"
             }
           },
           "additionalAuthenticationProviders": []

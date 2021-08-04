@@ -1,8 +1,10 @@
 {
-    "resourceNameTruncated": "uiwiza253e9731",
-    "userPoolName": "benchmarking_auth_userpool",
+    "identityPoolName": "uiwizardbdd3ea08_identitypool_bdd3ea08",
+    "allowUnauthenticatedIdentities": false,
+    "resourceNameTruncated": "uiwizabdd3ea08",
+    "userPoolName": "uiwizardbdd3ea08_userpool_bdd3ea08",
     "autoVerifiedAttributes": [
-        "phone_number"
+        "email"
     ],
     "mfaConfiguration": "OFF",
     "mfaTypes": [
@@ -26,11 +28,11 @@
     "userpoolClientReadAttributes": [
         "email"
     ],
-    "userpoolClientLambdaRole": "auth253e9731_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "uiwizabdd3ea08_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "253e9731",
-    "resourceName": "auth",
-    "authSelections": "userPoolOnly",
+    "sharedId": "bdd3ea08",
+    "resourceName": "uiwizardbdd3ea08",
+    "authSelections": "identityPoolAndUserPool",
     "authRoleArn": {
         "Fn::GetAtt": [
             "AuthRole",
@@ -43,21 +45,12 @@
             "Arn"
         ]
     },
-    "useDefault": "manual",
+    "useDefault": "default",
     "usernameAttributes": [
         "email"
     ],
-    "userPoolGroups": false,
-    "adminQueries": false,
-    "triggers": "{}",
-    "hostedUI": false,
     "userPoolGroupList": [],
     "serviceName": "Cognito",
     "usernameCaseSensitive": false,
-    "parentStack": {
-        "Ref": "AWS::StackId"
-    },
-    "breakCircularDependency": true,
-    "permissions": [],
     "dependsOn": []
 }
