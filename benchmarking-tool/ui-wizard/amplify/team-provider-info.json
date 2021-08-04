@@ -10,6 +10,11 @@
       "StackName": "amplify-uiwizard-dev-94015",
       "StackId": "arn:aws:cloudformation:eu-west-1:215004874051:stack/amplify-uiwizard-dev-94015/0fe15c60-eac0-11eb-b28a-0a68d6404d3d",
       "AmplifyAppId": "d1v6jxb4ho9fqy"
+    },
+    "categories": {
+      "auth": {
+        "uiwizardbdd3ea08": {}
+      }
     }
   }
 }
