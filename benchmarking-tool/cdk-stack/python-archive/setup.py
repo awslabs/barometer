@@ -18,10 +18,6 @@ setuptools.setup(
     package_dir={"": "."},
     packages=setuptools.find_packages(where="cdk-stack"),
 
-    install_requires=[
-        "aws-cdk.core==1.102.0",
-    ],
-
     python_requires=">=3.6",
 
     classifiers=[
