@@ -1,0 +1,26 @@
+{
+  "name": "TPC-H v3",
+  "description": "TPC-H v3 dataset",
+  "type": "OLAP",
+  "volumes": [
+    {
+      "name": "100 GB",
+      "path": "s3://datalab-bucket/tpc/tpc-h/v3/100g/pipe-separated/"
+    },
+    {
+      "name": "3 TB",
+      "path": "s3://datalab-bucket/tpc/tpc-h/v3/3t/pipe-separated/"
+    }
+  ],
+  "ddl": {
+    "path": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/"
+  },
+  "queries": {
+    "path": "s3://benchmarking-tool-shared/tpc/tpc-h/benchmarking-queries/"
+  },
+  "supportedPlatforms": [
+    "Redshift",
+    "Redshift Spectrum",
+    "Athena"
+  ]
+}
