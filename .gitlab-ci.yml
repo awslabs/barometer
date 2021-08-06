@@ -1,6 +1,18 @@
 stages: # List of stages for jobs, and their order of execution
   - build
 
+build-cdk: # Builds cdk using latest nodejs image
+  stage: build
+  image: node:latest
+  script:
+    - echo "Compiling the code..."
+    - cd benchmarking-tool/cdk-stack
+    - npm install
+    - echo "Compile complete."
+  cache:
+    paths:
+      - benchmarking-tool/cdk-stack/node_modules/
+
 build-cli-wizard: # Builds cli-wizard using latest nodejs image
   stage: build
   image: node:latest
