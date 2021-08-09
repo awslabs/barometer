@@ -2,6 +2,8 @@ import * as cdk from '@aws-cdk/core';
 import {BlockPublicAccess, Bucket, BucketEncryption} from "@aws-cdk/aws-s3";
 import {Key} from "@aws-cdk/aws-kms";
 import {CommonFunctions} from "./common/common-functions";
+import {ExperimentRunner} from "./common/experiment-runner";
+import {BenchmarkRunner} from "./common/benchmark-runner";
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
@@ -22,6 +24,11 @@ export class BenchmarkingStack extends cdk.Stack {
             bucketKeyEnabled: true // Save costs by providing bucket hint that all objects will be encrypted by given key only
         });
 
-        new CommonFunctions(this, 'CommonFunctions');
+        let commonFunctions = new CommonFunctions(this, 'CommonFunctions');
+        let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {commonFunctions: commonFunctions});
+        new ExperimentRunner(this, 'ExperimentRunner', {
+            commonFunctions: commonFunctions,
+            benchmarkRunnerWorkflow: benchmarkRunner.workflow
+        });
     }
 }

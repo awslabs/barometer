@@ -15,10 +15,52 @@ This project deploys [Benchmarking Stack](./lib/benchmarking-stack.ts) infrastru
 1. User deploys [Benchmarking Stack](./lib/benchmarking-stack.ts) to create above components
 2. Prepares experiment configuration using [CLI](../../cli-wizard) & [benchmarking ui wizard](../../ui-wizard).
 3. User runs experiment via CLI or UI which internally starts `experiment runner` step function execution defined in
-   step 4 of above infrastructure
+   step 4 of above infrastructure by passing parameter defined below
+
+```json
+{
+  "concurrentSessionCount": 1,
+  "executionMode": "concurrent",
+  "keepInfrastructure": false,
+  "platformConfig": {
+    "name": "redshift",
+    "settings": {
+      "numberOfNodes": "5",
+      "features": {
+        "workloadManager": true,
+        "concurrencyScaling": true
+      },
+      "nodeType": "ra3.4xlarge"
+    }
+  },
+  "workloadConfig": {
+    "name": "tpc-h/v3",
+    "settings": {
+      "volume": {
+        "name": "3 TB",
+        "path": "s3://datalab-bucket/tpc/tpc-h/v3/3t/pipe-separated/"
+      },
+      "ddl": {
+        "path": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/"
+      },
+      "queries": {
+        "path": "s3://benchmarking-tool-shared/tpc/tpc-h/benchmarking-queries/"
+      },
+      "supportedPlatforms": [
+        "Redshift",
+        "Redshift Spectrum",
+        "Athena"
+      ],
+      "usePartitioning": true,
+      "loadMethod": "copy"
+    }
+  }
+}
+```
+
 4. Step function flow `experiment runner`
     1. Invokes [create-destory-platform](./common-functions/create-destory-platform) lambda (if it doesn't exist) which
-       runs cloudformation `template.json`with user provided options
+       runs cloudformation `template.json` with user provided options
     2. Invokes [jdbc-query-runner](./common-functions/jdbc-query-runner) lambda which connects to platform using JDBC
        driver & runs all DDL statements read from S3 bucket as per [workload](./workloads) config
     3. Invokes [data-copier](./common-functions/data-copier) lambda function which optionally copies workload dataset
