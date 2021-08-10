@@ -1,5 +1,6 @@
 stages: # List of stages for jobs, and their order of execution
   - build
+  - deploy
 
 build-cdk: # Builds cdk using latest nodejs image
   stage: build
@@ -39,3 +40,18 @@ build-ui-wizard: # Builds ui-wizard using latest nodejs image
   cache:
     paths:
       - benchmarking-tool/ui-wizard/node_modules/
+
+deploy-analytics-004:
+  stage: deploy
+  image: node:latest
+  script:
+    - echo "Deploy to analytics account 004 server"
+    - cd benchmarking-tool/cdk-stack
+    - npm install
+    - npm install aws-cdk
+    - ./node_modules/aws-cdk/bin/cdk deploy BenchmarkingStack
+  environment:
+    name: staging
+    url: https://isengard.amazon.com/federate?account=$ANALYTICS_ACCOUNT&role=Admin
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
