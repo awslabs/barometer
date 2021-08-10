@@ -1,7 +1,7 @@
 import {Construct} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
 import {LambdaInvoke, StepFunctionsStartExecution} from "@aws-cdk/aws-stepfunctions-tasks";
-import {JsonPath, Map, StateMachine} from "@aws-cdk/aws-stepfunctions";
+import {Choice, Condition, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
 import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
 
 
@@ -20,38 +20,94 @@ export class ExperimentRunner extends Construct {
     constructor(scope: Construct, id: string, props: ExperimentRunnerProps) {
         super(scope, id);
 
-        const experimentRunnerDefinition = new LambdaInvoke(this, 'CreatePlatform', {
-            lambdaFunction: props.commonFunctions.createDestroyPlatform,
-            payload: TaskInput.fromJsonPathAt("$.platformConfig"), // pass platform config from state input to lambda
-            comment: "Create new platform based on input from caller CLI/UI",
-            outputPath: "$.platformLambdaOutput"
-        }).next(new LambdaInvoke(this, 'RunDDLs', {
-            lambdaFunction: props.commonFunctions.jdbcQueryRunner,
-            payload: TaskInput.fromJsonPathAt("$.workloadConfig"), // pass workload config from state input to lambda
-            comment: "Run all DDLs on platform",
-            resultPath: JsonPath.DISCARD,
-        })).next(new LambdaInvoke(this, 'Copy dataset if required', {
-            lambdaFunction: props.commonFunctions.dataCopier,
-            comment: "Copy dataset from workload config path to the platform",
-            resultPath: JsonPath.DISCARD,
-        })).next(new LambdaInvoke(this, 'Get users times session items', {
+        // Define final end of workflow state
+        let endState = new Pass(this, 'End', {comment: "Final end state"});
+
+        // Step function helper lambda to fetch Map state items form userSecrets & sessionCount
+        let getUserSessionAsMapItems = new LambdaInvoke(this, 'Get users times session items', {
             lambdaFunction: props.commonFunctions.stepFunctionHelpers,
             payload: TaskInput.fromObject({
-                "method": "usersTimesItems",
+                "method": "getUserSessionAsMapItems",
                 "parameters": {
-                    "concurrentSessionCount.$": "$.concurrentSessionCount",
-                    "platform.$": "$.platformLambdaOutput"
+                    "sessionCount.$": "$.concurrentSessionCount",
+                    "userSecrets.$": "$.platformLambdaOutput"
                 }
             }),
             comment: "Prepare Map items for users defined in platform times user sessions defined in experiment",
-            resultPath: "$.userSessions",
-        })).next(new Map(this, 'User sessions', {
-            maxConcurrency: 2, // TODO: Find a way to pass this dynamically based on $.concurrentSessionCount
+            resultPath: "$.userSessionsOutput",
+        });
+
+        // Get user sessions & run benchmarking queries for each of them
+        const runBenchmarkingForUsers = getUserSessionAsMapItems
+            .next(new Map(this, 'User sessions', {
+                maxConcurrency: 2, // TODO: Find a way to pass this dynamically based on $.concurrentSessionCount
+                resultPath: JsonPath.DISCARD,
+                itemsPath: "$.userSessionsOutput.userSessions"
+            }).iterator(new StepFunctionsStartExecution(this, 'Run Benchmarking', {
+                stateMachine: props.benchmarkRunnerWorkflow,
+                resultPath: JsonPath.DISCARD
+            }))).next(new LambdaInvoke(this, 'Prepare Dashboards', {
+                lambdaFunction: props.commonFunctions.dashboardBuilder,
+                comment: "Prepares cloudwatch/quicksight dashboard to show recorded data to the user",
+                resultPath: JsonPath.DISCARD,
+            })).next(new Choice(this, 'Keep infrastructure?', {
+                comment: "Take decision based on user's choice of keeping infrastructure after experiment run"
+            }).when(Condition.booleanEquals("$.keepInfrastructure", false), new LambdaInvoke(this, 'No, Destroy platform', {
+                lambdaFunction: props.commonFunctions.createDestroyPlatform,
+                payload: TaskInput.fromObject({
+                    "platformConfig.$": "$.platformConfig",
+                    "destroy": true
+                }),
+                comment: "Destroy platform based on user choice",
+                resultPath: JsonPath.DISCARD
+            }).next(endState))
+                .otherwise(endState));
+
+        // Full workflow step function definition
+        const experimentRunnerDefinition = new LambdaInvoke(this, "Create platform if it doesn't exists", {
+            lambdaFunction: props.commonFunctions.createDestroyPlatform,
+            payload: TaskInput.fromObject({
+                "platformConfig.$": "$.platformConfig",
+                "destroy": false
+            }),
+            comment: "Create new platform based on input from caller CLI/UI",
+            outputPath: "$.platformLambdaOutput"
+        }).next(new LambdaInvoke(this, 'Fetch DDL SQL scripts S3 paths', {
+            lambdaFunction: props.commonFunctions.stepFunctionHelpers,
+            payload: TaskInput.fromObject({
+                "method": "listS3Paths",
+                "parameters": {
+                    "basePath.$": "$.workloadConfig.settings.ddl.path",
+                    "extension": ".sql"
+                }
+            }),
+            comment: "Fetch DDL SQL scripts from S3 path as Map items",
+            resultPath: "$.ddlScripts",
+        })).next(new Map(this, 'Run all DDLs', {
+            comment: "Runs all DDL scripts",
+            itemsPath: "$.ddlScripts.paths",
+            parameters: {"platformLambdaOutput.$": "$.platformLambdaOutput"},
+            resultPath: JsonPath.DISCARD
+        }).iterator(new LambdaInvoke(this, 'Run DDL Query', {
+            lambdaFunction: props.commonFunctions.jdbcQueryRunner,
+            payload: TaskInput.fromObject({
+                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                "scriptPath.$": "$$.Map.Item.Value"
+            }),
+            comment: "Run DDL Query on platform",
             resultPath: JsonPath.DISCARD,
-            itemsPath: "$.userSessions"
-        }).iterator(new StepFunctionsStartExecution(this, 'Run Benchmarking', {
-            stateMachine: props.benchmarkRunnerWorkflow
-        })));
+        }))).next(new Choice(this, 'Copy dataset to the platform?', {
+            comment: "Evaluate user choice of copying dataset to the platform"
+        }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new LambdaInvoke(this, 'Yes, Run data copier', {
+            lambdaFunction: props.commonFunctions.dataCopier,
+            comment: "Copy dataset from workload config path to the platform",
+            payload: TaskInput.fromObject({
+                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                "dataset.$": "$.workloadConfig.settings.volume"
+            }),
+            resultPath: JsonPath.DISCARD,
+        }).next(runBenchmarkingForUsers))
+            .otherwise(runBenchmarkingForUsers));
 
         // Define step function flow
         this.workflow = new StateMachine(this, 'Workflow', {

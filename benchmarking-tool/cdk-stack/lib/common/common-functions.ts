@@ -1,7 +1,12 @@
 import {Construct} from "@aws-cdk/core";
 import {Code, Function, Runtime} from "@aws-cdk/aws-lambda";
+import {Bucket} from "@aws-cdk/aws-s3";
 
 const path = require('path');
+
+interface CommonFunctionsProps {
+    dataBucket: Bucket
+}
 
 
 /**
@@ -15,7 +20,7 @@ export class CommonFunctions extends Construct {
     public readonly jdbcQueryRunner: Function;
     public readonly stepFunctionHelpers: Function;
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, props: CommonFunctionsProps) {
         super(scope, id);
         // Path to common-functions root folder
         const directoryPath: string = path.join(__dirname, '../../common-functions/');

@@ -24,7 +24,7 @@ export class BenchmarkingStack extends cdk.Stack {
             bucketKeyEnabled: true // Save costs by providing bucket hint that all objects will be encrypted by given key only
         });
 
-        let commonFunctions = new CommonFunctions(this, 'CommonFunctions');
+        let commonFunctions = new CommonFunctions(this, 'CommonFunctions', {dataBucket: dataBucket});
         let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {commonFunctions: commonFunctions});
         new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
