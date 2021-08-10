@@ -39,16 +39,16 @@ structure under [this](.) folder.
 
 | Value          | Export.Name                        | LogicalId | Description | Example Export.Name            | Notes                                                                                                 |
 |----------------|------------------------------------|-----------|-------------|--------------------------------|-------------------------------------------------------------------------------------------------------|
-| secretId.user1 | AWS::StackName +":"+secretId.user1 | Any       | Any         | my-stack:secretId.dataengineer | Should export secretId name of secret having user `dataengineer` credentials stored in secretsmanager |
+| secretId.user1 | AWS::StackName +":"+secretId.user1 | AdminUser | Any         | my-stack:secretId.dataengineer | Should export secretId name of secret having user `dataengineer` credentials stored in secretsmanager |
 | secretId.user2 | AWS::StackName +":"+secretId.user2 | Any       | Any         | my-stack:secretId.bi-user      | Should export secretId name of secret having user  `bi-user`  credentials stored in secretsmanager    |
 
 Requirements
 
 1. Secrets manager secret should be stored as json string in regular json string format encrypted
    using [Benchmarking::KMSKey](../README.md#exported-params) `Imported Parameter` passed while
-   executing `template.json`. (*
-   Note:* [Benchmarking stack](..) will grant `secretsmanager:GetSecretValue` permission to
-   the [lambda function executing benchmarking queries](../common-functions/jdbc-query-runner) for all exported secrets)
+   executing `template.json`. (*Note:* [Benchmarking stack](..) will grant `secretsmanager:GetSecretValue` permission to
+   the [lambda function executing benchmarking queries](../common-functions/jdbc-query-runner) for all exported secrets.
+   All DDL scripts will be executed using user with `LogicalId = AdminUser`)
 
 2. Platform `template.json` must allow incoming network traffic on platform port
    from [Benchmarking::Exec::SecurityGroup](../README.md#exported-params) `Imported Parameter`
