@@ -49,7 +49,8 @@ deploy-analytics-004:
     - cd benchmarking-tool/cdk-stack
     - npm install
     - npm install aws-cdk
-    - ./node_modules/aws-cdk/bin/cdk deploy BenchmarkingStack
+    - export AWS_REGION=$AWS_DEFAULT_REGION
+    - ./node_modules/aws-cdk/bin/cdk deploy BenchmarkingStack --require-approval never
   environment:
     name: staging
     url: https://isengard.amazon.com/federate?account=$ANALYTICS_ACCOUNT&role=Admin
