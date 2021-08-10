@@ -1,11 +1,13 @@
 import {Construct} from "@aws-cdk/core";
 import {Code, Function, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
+import {Vpc} from "@aws-cdk/aws-ec2";
 
 const path = require('path');
 
 interface CommonFunctionsProps {
-    dataBucket: Bucket
+    dataBucket: Bucket;
+    vpc: Vpc;
 }
 
 
@@ -46,7 +48,8 @@ export class CommonFunctions extends Construct {
         this.jdbcQueryRunner = new Function(this, "jdbcQueryRunner", {
             code: Code.fromAsset(directoryPath + "jdbc-query-runner"),
             handler: "app.lambda_handler",
-            runtime: Runtime.PYTHON_3_8
+            runtime: Runtime.PYTHON_3_8,
+            vpc: props.vpc
         });
 
         this.stepFunctionHelpers = new Function(this, "helpers", {

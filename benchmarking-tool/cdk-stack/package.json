@@ -23,6 +23,7 @@
   "dependencies": {
     "@aws-cdk/core": "1.117.0",
     "@aws-cdk/aws-s3": "1.117.0",
+    "@aws-cdk/aws-ec2": "1.117.0",
     "@aws-cdk/aws-kms": "1.117.0",
     "@aws-cdk/aws-lambda": "1.117.0",
     "@aws-cdk/aws-stepfunctions": "1.117.0",
