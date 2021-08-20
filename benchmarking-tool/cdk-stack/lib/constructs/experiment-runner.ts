@@ -42,9 +42,19 @@ export class ExperimentRunner extends Construct {
             .next(new Map(this, 'User sessions', {
                 maxConcurrency: 2, // TODO: Find a way to pass this dynamically based on $.concurrentSessionCount
                 resultPath: JsonPath.DISCARD,
-                itemsPath: "$.userSessionsOutput.userSessions"
+                itemsPath: "$.userSessionsOutput.Payload.userSessions",
+                parameters: {
+                    "workloadConfig.$": "$.workloadConfig",
+                    "secretId.$": "$$.Map.Item.Value.secretId",
+                    "sessionId.$": "$$.Map.Item.Value.sessionId"
+                }
             }).iterator(new StepFunctionsStartExecution(this, 'Run Benchmarking', {
                 stateMachine: props.benchmarkRunnerWorkflow,
+                input: TaskInput.fromObject({
+                    "workloadConfig.$": "$.workloadConfig",
+                    "secretId.$": "$.secretId",
+                    "sessionId.$": "$.sessionId"
+                }),
                 resultPath: JsonPath.DISCARD
             }))).next(new LambdaInvoke(this, 'Prepare Dashboards', {
                 lambdaFunction: props.commonFunctions.dashboardBuilder,
@@ -71,7 +81,7 @@ export class ExperimentRunner extends Construct {
                 "destroy": false
             }),
             comment: "Create new platform based on input from caller CLI/UI",
-            outputPath: "$.platformLambdaOutput"
+            resultPath: "$.platformLambdaOutput"
         }).next(new LambdaInvoke(this, 'Fetch DDL SQL scripts S3 paths', {
             lambdaFunction: props.commonFunctions.stepFunctionHelpers,
             payload: TaskInput.fromObject({
@@ -85,14 +95,17 @@ export class ExperimentRunner extends Construct {
             resultPath: "$.ddlScripts",
         })).next(new Map(this, 'Run all DDLs', {
             comment: "Runs all DDL scripts",
-            itemsPath: "$.ddlScripts.paths",
-            parameters: {"platformLambdaOutput.$": "$.platformLambdaOutput"},
+            itemsPath: "$.ddlScripts.Payload.paths",
+            parameters: {
+                "platformLambdaOutput.$": "$.platformLambdaOutput",
+                "scriptPath.$": "$$.Map.Item.Value"
+            },
             resultPath: JsonPath.DISCARD
         }).iterator(new LambdaInvoke(this, 'Run DDL Query', {
             lambdaFunction: props.commonFunctions.jdbcQueryRunner,
             payload: TaskInput.fromObject({
-                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                "scriptPath.$": "$$.Map.Item.Value"
+                "secretId.$": "$.platformLambdaOutput.Payload.secretIds[0]",
+                "scriptPath.$": "$.scriptPath"
             }),
             comment: "Run DDL Query on platform",
             resultPath: JsonPath.DISCARD,
@@ -102,7 +115,7 @@ export class ExperimentRunner extends Construct {
             lambdaFunction: props.commonFunctions.dataCopier,
             comment: "Copy dataset from workload config path to the platform",
             payload: TaskInput.fromObject({
-                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                "secretId.$": "$.platformLambdaOutput.Payload.secretIds[0]",
                 "dataset.$": "$.workloadConfig.settings.volume"
             }),
             resultPath: JsonPath.DISCARD,

@@ -59,12 +59,16 @@ export class BenchmarkingStack extends cdk.Stack {
             value: vpc.vpcId,
             exportName: "Benchmarking::VpcId"
         });
+        new CfnOutput(this, 'SubnetIds', {
+            value: vpc.isolatedSubnets.map(sub => sub.subnetId).join(","),
+            exportName: "Benchmarking::SubnetIds"
+        });
         new CfnOutput(this, 'KMSKeyArn', {
             value: key.keyArn,
             exportName: "Benchmarking::KMSKey"
         });
         new CfnOutput(this, 'QueryRunnerSG', {
-            value: commonFunctions.jdbcQueryRunner.connections.securityGroups.join(","),
+            value: commonFunctions.jdbcQueryRunner.connections.securityGroups.map(sg => sg.securityGroupId).join(","),
             exportName: "Benchmarking::Exec::SecurityGroup"
         });
     }
