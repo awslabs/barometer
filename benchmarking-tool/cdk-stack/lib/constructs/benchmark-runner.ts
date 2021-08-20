@@ -32,11 +32,12 @@ export class BenchmarkRunner extends Construct {
             resultPath: "$.queries",
         }).next(new Map(this, 'Run all queries', {
             comment: "Runs all benchmarking queries",
-            itemsPath: "$.queries.paths",
+            itemsPath: "$.queries.Payload.paths",
             maxConcurrency: 1, // TODO set 1 to run one by one, 0 to run all at a time
             parameters: {
                 "secretId.$": "$.secretId",
-                "sessionId.$": "$.sessionId"
+                "sessionId.$": "$.sessionId",
+                "scriptPath.$": "$$.Map.Item.Value"
             },
             resultPath: JsonPath.DISCARD
         }).iterator(new LambdaInvoke(this, 'Run benchmarking query', {
@@ -44,7 +45,7 @@ export class BenchmarkRunner extends Construct {
             payload: TaskInput.fromObject({
                 "secretId.$": "$.secretId",
                 "sessionId.$": "$.sessionId",
-                "scriptPath.$": "$$.Map.Item.Value"
+                "scriptPath.$": "$.scriptPath"
             }),
             comment: "Run benchmarking query on platform",
             resultPath: JsonPath.DISCARD,
