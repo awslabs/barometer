@@ -12,19 +12,45 @@
     "ClusterType": {
       "Description": "The type of the cluster",
       "Type": "String",
-      "Default": "single-node",
+      "Default": "multi-node",
       "AllowedValues": [
         "single-node",
         "multi-node"
       ],
       "ConstraintDescription": "must be single-node or multi-node."
     },
-    "NumberOfNodes": {
-      "Description": "The number of compute nodes in the redshift cluster.  When cluster type is specified as: 1) single-node, the NumberOfNodes parameter should be specified as 1, 2) multi-node, the NumberOfNodes parameter should be greater than 1",
+    "numberOfNodes": {
+      "Description": "The number of compute nodes in the redshift cluster.  When cluster type is specified as: 1) single-node, the numberOfNodes parameter should be specified as 1, 2) multi-node, the numberOfNodes parameter should be greater than 1",
       "Type": "Number",
-      "Default": "1"
+      "Default": "2"
     },
-    "NodeType": {
+    "featuresAqua": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "featuresWorkloadmanager": {
+      "Description": "Workload manager (WLM)",
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "featuresConcurrencyscaling": {
+      "Description": "Concurrency Scaling",
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "nodeType": {
       "Description": "The node type to be provisioned for the redshift cluster",
       "Type": "String",
       "Default": "dc1.large",
@@ -41,22 +67,6 @@
         "ds2.8xlarge"
       ],
       "ConstraintDescription": "must be a valid RedShift node type."
-    },
-    "MasterUsername": {
-      "Description": "The user name associated with the master user account for the redshift cluster that is being created",
-      "Type": "String",
-      "AllowedPattern": "([a-z])([a-z]|[0-9])*",
-      "NoEcho": "true",
-      "ConstraintDescription": "must start with a-z and contain only a-z or 0-9."
-    },
-    "MasterUserPassword": {
-      "Description": "The password associated with the aster user account for the redshift cluster that is being created. ",
-      "Type": "String",
-      "NoEcho": "true",
-      "MinLength": "1",
-      "MaxLength": "41",
-      "AllowedPattern": "[a-zA-Z0-9]*",
-      "ConstraintDescription": "must contain only alphanumeric characters."
     }
   },
   "Conditions": {
@@ -67,9 +77,32 @@
         },
         "multi-node"
       ]
+    },
+    "IsAquaEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "featuresAqua"
+        },
+        "true"
+      ]
     }
   },
   "Resources": {
+    "AdminUserSecret": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "KmsKeyId": {
+          "Fn::ImportValue": "Benchmarking::KMSKey"
+        },
+        "Description": "Redshift admin user",
+        "GenerateSecretString": {
+          "SecretStringTemplate": "{\"username\": \"admin\"}",
+          "GenerateStringKey": "password",
+          "PasswordLength": 16,
+          "ExcludeCharacters": "\"'@/\\"
+        }
+      }
+    },
     "RedshiftCluster": {
       "Type": "AWS::Redshift::Cluster",
       "Properties": {
@@ -80,35 +113,58 @@
           "Fn::If": [
             "IsMultiNodeCluster",
             {
-              "Ref": "NumberOfNodes"
+              "Ref": "numberOfNodes"
             },
             {
               "Ref": "AWS::NoValue"
             }
           ]
         },
+        "Encrypted": true,
+        "KmsKeyId": {
+          "Fn::ImportValue": "Benchmarking::KMSKey"
+        },
+        "AquaConfigurationStatus": {
+          "Fn::If": [
+            "IsAquaEnabled",
+            "enabled",
+            "disabled"
+          ]
+        },
         "NodeType": {
-          "Ref": "NodeType"
+          "Ref": "nodeType"
         },
         "DBName": {
           "Ref": "DatabaseName"
         },
         "MasterUsername": {
-          "Ref": "MasterUsername"
+          "Fn::Sub": "{{resolve:secretsmanager:${AdminUserSecret}::username}}"
         },
         "MasterUserPassword": {
-          "Ref": "MasterUserPassword"
+          "Fn::Sub": "{{resolve:secretsmanager:${AdminUserSecret}::password}}"
         },
         "ClusterParameterGroupName": {
           "Ref": "RedshiftClusterParameterGroup"
         }
       },
-      "DeletionPolicy": "Snapshot"
+      "DeletionPolicy": "Delete"
+    },
+    "SecretRedshiftAttachment": {
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+      "Properties": {
+        "SecretId": {
+          "Ref": "AdminUserSecret"
+        },
+        "TargetId": {
+          "Ref": "RedshiftCluster"
+        },
+        "TargetType": "AWS::Redshift::Cluster"
+      }
     },
     "RedshiftClusterParameterGroup": {
       "Type": "AWS::Redshift::ClusterParameterGroup",
       "Properties": {
-        "Description": "Cluster paraeter group",
+        "Description": "Cluster parameter group",
         "ParameterGroupFamily": "redshift-1.0",
         "Parameters": [
           {
@@ -120,26 +176,10 @@
     }
   },
   "Outputs": {
-    "ClusterEndpoint": {
-      "Description": "Endpoint for the newly created RedShift cluster",
+    "SecretIdAdminUser": {
+      "Description": "The admin user to use for benchmarking queries",
       "Value": {
-        "Fn::Join": [
-          ":",
-          [
-            {
-              "Fn::GetAtt": [
-                "RedshiftCluster",
-                "Endpoint.Address"
-              ]
-            },
-            {
-              "Fn::GetAtt": [
-                "RedshiftCluster",
-                "Endpoint.Port"
-              ]
-            }
-          ]
-        ]
+        "Fn::Sub": "${AdminUserSecret}"
       }
     }
   }

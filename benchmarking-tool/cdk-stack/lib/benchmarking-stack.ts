@@ -65,8 +65,8 @@ export class BenchmarkingStack extends cdk.Stack {
             value: vpc.isolatedSubnets.map(sub => sub.subnetId).join(","),
             exportName: "Benchmarking::SubnetIds"
         });
-        new CfnOutput(this, 'KMSKeyArn', {
-            value: key.keyArn,
+        new CfnOutput(this, 'KMSKeyId', {
+            value: key.keyId,
             exportName: "Benchmarking::KMSKey"
         });
         new CfnOutput(this, 'QueryRunnerSG', {
