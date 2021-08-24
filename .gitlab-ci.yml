@@ -54,5 +54,6 @@ deploy-analytics-004:
   environment:
     name: staging
     url: https://isengard.amazon.com/federate?account=$ANALYTICS_ACCOUNT&role=Admin
+  when: manual
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
