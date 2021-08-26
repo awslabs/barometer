@@ -15,5 +15,4 @@ export interface IRedshiftFeatures {
     workloadManager: boolean;
     concurrencyScaling: boolean;
     aqua: boolean;
-    spectrum: boolean;
 }
