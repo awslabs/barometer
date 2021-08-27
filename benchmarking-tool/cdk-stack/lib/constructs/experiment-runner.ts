@@ -140,7 +140,7 @@ export class ExperimentRunner extends Construct {
         policy.addStatements(
             new PolicyStatement({
                 actions: ["states:SendTaskSuccess"],
-                resources: [this.workflow.stateMachineArn]
+                resources: ["*"]
             }));
         props.commonFunctions.createDestroyPlatform.role?.attachInlinePolicy(policy);
     }

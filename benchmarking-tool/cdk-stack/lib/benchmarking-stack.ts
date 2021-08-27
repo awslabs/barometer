@@ -61,7 +61,8 @@ export class BenchmarkingStack extends cdk.Stack {
             dataBucket: dataBucket,
             vpc: vpc,
             stackUpdateTopic: sns,
-            dataTable: dataTable
+            dataTable: dataTable,
+            key: key
         });
         let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {commonFunctions: commonFunctions});
         new ExperimentRunner(this, 'ExperimentRunner', {
