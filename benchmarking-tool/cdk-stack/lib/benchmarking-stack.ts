@@ -6,6 +6,8 @@ import {CommonFunctions} from "./constructs/common-functions";
 import {ExperimentRunner} from "./constructs/experiment-runner";
 import {BenchmarkRunner} from "./constructs/benchmark-runner";
 import {GatewayVpcEndpointAwsService, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
+import {Topic} from "@aws-cdk/aws-sns";
+import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
@@ -44,7 +46,24 @@ export class BenchmarkingStack extends cdk.Stack {
             bucketKeyEnabled: true // Save costs by providing bucket hint that all objects will be encrypted by given key only
         });
 
-        let commonFunctions = new CommonFunctions(this, 'CommonFunctions', {dataBucket: dataBucket, vpc: vpc});
+        let sns = new Topic(this, 'StackUpdate', {masterKey: key});
+        // DynamoDB table to store task token values for async integrations
+        let dataTable = new Table(this, 'DataTable', {
+            partitionKey: {
+                name: "PK",
+                type: AttributeType.STRING
+            },
+            encryption: TableEncryption.CUSTOMER_MANAGED,
+            encryptionKey: key,
+            billingMode: BillingMode.PAY_PER_REQUEST
+        });
+        let commonFunctions = new CommonFunctions(this, 'CommonFunctions', {
+            dataBucket: dataBucket,
+            vpc: vpc,
+            stackUpdateTopic: sns,
+            dataTable: dataTable,
+            key: key
+        });
         let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {commonFunctions: commonFunctions});
         new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
@@ -65,8 +84,8 @@ export class BenchmarkingStack extends cdk.Stack {
             value: vpc.isolatedSubnets.map(sub => sub.subnetId).join(","),
             exportName: "Benchmarking::SubnetIds"
         });
-        new CfnOutput(this, 'KMSKeyArn', {
-            value: key.keyArn,
+        new CfnOutput(this, 'KMSKeyId', {
+            value: key.keyId,
             exportName: "Benchmarking::KMSKey"
         });
         new CfnOutput(this, 'QueryRunnerSG', {

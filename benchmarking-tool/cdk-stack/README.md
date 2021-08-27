@@ -25,7 +25,7 @@ This project deploys [Benchmarking Stack](./lib/benchmarking-stack.ts) infrastru
   "platformConfig": {
     "name": "redshift",
     "settings": {
-      "numberOfNodes": "5",
+      "numberOfNodes": "2",
       "features": {
         "workloadManager": true,
         "concurrencyScaling": true

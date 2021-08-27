@@ -1,0 +1,56 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "redshift:CreateClusterParameterGroup",
+        "redshift:CreateTags",
+        "secretsmanager:CreateSecret",
+        "secretsmanager:TagResource",
+        "secretsmanager:DeleteSecret"
+      ],
+      "Resource": [
+        "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
+        "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
+        "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/CreatedBy": "BenchmarkingStack"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "redshift:CreateCluster",
+        "redshift:ModifyCluster",
+        "redshift:DeleteCluster",
+        "redshift:ModifyClusterParameterGroup",
+        "redshift:DeleteClusterParameterGroup",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:PutSecretValue"
+      ],
+      "Resource": [
+        "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
+        "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
+        "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetRandomPassword",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeInternetGateways",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeSecurityGroups",
+        "redshift:DescribeClusters"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,9 @@
-import {Construct} from "@aws-cdk/core";
+import {Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
 import {LambdaInvoke, StepFunctionsStartExecution} from "@aws-cdk/aws-stepfunctions-tasks";
-import {Choice, Condition, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
+import {Choice, Condition, IntegrationPattern, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
 import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
+import {Policy, PolicyStatement} from "@aws-cdk/aws-iam";
 
 
 interface ExperimentRunnerProps {
@@ -66,8 +67,12 @@ export class ExperimentRunner extends Construct {
                 lambdaFunction: props.commonFunctions.createDestroyPlatform,
                 payload: TaskInput.fromObject({
                     "platformConfig.$": "$.platformConfig",
-                    "destroy": true
+                    "destroy": true,
+                    "token": JsonPath.taskToken
                 }),
+                timeout: Duration.minutes(15),
+                retryOnServiceExceptions: false,
+                integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
                 comment: "Destroy platform based on user choice",
                 resultPath: JsonPath.DISCARD
             }).next(endState))
@@ -78,8 +83,12 @@ export class ExperimentRunner extends Construct {
             lambdaFunction: props.commonFunctions.createDestroyPlatform,
             payload: TaskInput.fromObject({
                 "platformConfig.$": "$.platformConfig",
-                "destroy": false
+                "destroy": false,
+                "token": JsonPath.taskToken
             }),
+            retryOnServiceExceptions: false,
+            timeout: Duration.minutes(15),
+            integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             comment: "Create new platform based on input from caller CLI/UI",
             resultPath: "$.platformLambdaOutput"
         }).next(new LambdaInvoke(this, 'Fetch DDL SQL scripts S3 paths', {
@@ -104,7 +113,7 @@ export class ExperimentRunner extends Construct {
         }).iterator(new LambdaInvoke(this, 'Run DDL Query', {
             lambdaFunction: props.commonFunctions.jdbcQueryRunner,
             payload: TaskInput.fromObject({
-                "secretId.$": "$.platformLambdaOutput.Payload.secretIds[0]",
+                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
                 "scriptPath.$": "$.scriptPath"
             }),
             comment: "Run DDL Query on platform",
@@ -115,7 +124,7 @@ export class ExperimentRunner extends Construct {
             lambdaFunction: props.commonFunctions.dataCopier,
             comment: "Copy dataset from workload config path to the platform",
             payload: TaskInput.fromObject({
-                "secretId.$": "$.platformLambdaOutput.Payload.secretIds[0]",
+                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
                 "dataset.$": "$.workloadConfig.settings.volume"
             }),
             resultPath: JsonPath.DISCARD,
@@ -126,5 +135,13 @@ export class ExperimentRunner extends Construct {
         this.workflow = new StateMachine(this, 'Workflow', {
             definition: experimentRunnerDefinition
         });
+
+        let policy = new Policy(this, 'TaskStatusUpdatePolicy');
+        policy.addStatements(
+            new PolicyStatement({
+                actions: ["states:SendTaskSuccess"],
+                resources: ["*"]
+            }));
+        props.commonFunctions.createDestroyPlatform.role?.attachInlinePolicy(policy);
     }
 }

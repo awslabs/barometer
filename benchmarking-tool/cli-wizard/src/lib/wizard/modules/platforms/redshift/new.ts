@@ -48,7 +48,6 @@ export class RedshiftModule extends CLIModule {
         { name: 'Work load manager (WLM)' }, // keep this comment to keep the formatting in Prettier
         { name: 'Advanced Query Accelerator (AQUA)' },
         { name: 'Concurrency Scaling' },
-        { name: 'Redshift Spectrum' },
       ],
       filter: async (input: string | any[]): Promise<any> => {
         const features: RedshiftFeatures = new RedshiftFeatures();
@@ -56,7 +55,6 @@ export class RedshiftModule extends CLIModule {
           if (input[i].indexOf('WLM') >= 0) features.workloadManager = true;
           if (input[i].indexOf('AQUA') >= 0) features.aqua = true;
           if (input[i].indexOf('Concurrency') >= 0) features.concurrencyScaling = true;
-          if (input[i].indexOf('Spectrum') >= 0) features.spectrum = true;
         }
         return features;
       },
