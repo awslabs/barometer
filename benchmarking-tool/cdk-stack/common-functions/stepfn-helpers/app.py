@@ -1,40 +1,34 @@
 import boto3
+from urllib.parse import urlparse
+
+s3 = boto3.client("s3")
+
+
+def list_s3_paths(params):
+    base_path = params["basePath"]
+    extension = params["extension"]
+    s3_path = urlparse(base_path, allow_fragments=False)
+    response = {"paths": []}
+    object_paths = s3.list_objects_v2(Bucket=s3_path.netloc, Prefix=s3_path.path.lstrip('/'))
+    for obj in object_paths["Contents"]:
+        if obj["Key"].endswith(extension):
+            response["paths"].append("s3://" + s3_path.netloc + "/" + obj["Key"])
+    return response
+
+
+def get_user_session_as_map_items(params):
+    session_count = params["sessionCount"]
+    user_secrets = params["userSecrets"]["secretIds"]
+    response = {"userSessions": []}
+    for secret in user_secrets:
+        for i in range(session_count):
+            response["userSessions"].append({"secretId": secret, "sessionId": str(i + 1)})
+    return response
 
 
 def lambda_handler(event, context):
     if event["method"] == "listS3Paths":
-        return {
-                 "paths": [
-                   "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/1.sql",
-                   "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/2.sql"
-                 ]
-               }
+        return list_s3_paths(event["parameters"])
+
     if event["method"] == "getUserSessionAsMapItems":
-        return {
-                 "userSessions": [
-                   {
-                     "secretId": "secretId.user1",
-                     "sessionId": "1"
-                   },
-                   {
-                     "secretId": "secretId.user1",
-                     "sessionId": "2"
-                   },
-                   {
-                     "secretId": "secretId.user1",
-                     "sessionId": "3"
-                   },
-                   {
-                     "secretId": "secretId.user2",
-                     "sessionId": "1"
-                   },
-                   {
-                     "secretId": "secretId.user2",
-                     "sessionId": "2"
-                   },
-                   {
-                     "secretId": "secretId.user2",
-                     "sessionId": "3"
-                   }
-                 ]
-               }
+        return get_user_session_as_map_items(event["parameters"])
