@@ -1,4 +1,4 @@
-import {Aws, Construct, Stack} from "@aws-cdk/core";
+import {Aws, Construct} from "@aws-cdk/core";
 import {Code, Function, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
@@ -95,6 +95,7 @@ export class CommonFunctions extends Construct {
             handler: "app.lambda_handler",
             runtime: Runtime.PYTHON_3_8
         });
+        props.dataBucket.grantRead(this.stepFunctionHelpers);
     }
 }
 
