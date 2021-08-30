@@ -49,7 +49,7 @@ def create_stack(platform_config, stack_name, token):
                     Parameters=parameters,
                     Capabilities=['CAPABILITY_IAM'],
                     NotificationARNs=[os.environ["StackUpdateTopicArn"]],
-                    Tags=[{"Key": "CreatedBy", "Value": "BenchmarkingStack"}])
+                    Tags=[{"Key": "ManagedBy", "Value": "BenchmarkingStack"}])
 
 
 def handle_stack_delete_complete(record):

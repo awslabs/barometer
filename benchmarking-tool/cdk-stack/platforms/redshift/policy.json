@@ -6,6 +6,7 @@
       "Action": [
         "redshift:CreateClusterParameterGroup",
         "redshift:CreateTags",
+        "redshift:CreateClusterSubnetGroup",
         "secretsmanager:CreateSecret",
         "secretsmanager:TagResource",
         "secretsmanager:DeleteSecret"
@@ -13,11 +14,12 @@
       "Resource": [
         "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
         "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
+        "arn:aws:redshift:eu-west-1:215004874051:subnetgroup:redshift-*",
         "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*"
       ],
       "Condition": {
         "StringEquals": {
-          "aws:ResourceTag/CreatedBy": "BenchmarkingStack"
+          "aws:ResourceTag/ManagedBy": "BenchmarkingStack"
         }
       }
     },
@@ -29,13 +31,18 @@
         "redshift:DeleteCluster",
         "redshift:ModifyClusterParameterGroup",
         "redshift:DeleteClusterParameterGroup",
+        "redshift:DeleteClusterSubnetGroup",
         "secretsmanager:GetSecretValue",
-        "secretsmanager:PutSecretValue"
+        "secretsmanager:PutSecretValue",
+        "ec2:DeleteSecurityGroup",
+        "ec2:createTags"
       ],
       "Resource": [
         "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
         "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
-        "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*"
+        "arn:aws:redshift:eu-west-1:215004874051:subnetgroup:redshift-*",
+        "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*",
+        "arn:aws:ec2:eu-west-1:215004874051:security-group/*"
       ]
     },
     {
@@ -46,6 +53,8 @@
         "ec2:DescribeInternetGateways",
         "ec2:DescribeSubnets",
         "ec2:DescribeSecurityGroups",
+        "ec2:CreateSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
         "redshift:DescribeClusters"
       ],
       "Resource": [

@@ -103,12 +103,55 @@
         }
       }
     },
+    "RedshiftSubnetGroup": {
+      "Type": "AWS::Redshift::ClusterSubnetGroup",
+      "Properties": {
+        "Description": "Redshift cluster subnet group",
+        "SubnetIds": {
+          "Fn::Split": [
+            ",",
+            {
+              "Fn::ImportValue": "Benchmarking::SubnetIds"
+            }
+          ]
+        }
+      }
+    },
+    "RedshiftSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Fn::ImportValue": "Benchmarking::VpcId"
+        },
+        "GroupDescription": "Redshift SecurityGroup",
+        "SecurityGroupIngress": [
+          {
+            "Description": "Allow benchmarking lambda to connect to Redshift",
+            "SourceSecurityGroupId": {
+              "Fn::ImportValue": "Benchmarking::Exec::SecurityGroup"
+            },
+            "IpProtocol": "tcp",
+            "FromPort": 5439,
+            "ToPort": 5439
+          }
+        ]
+      }
+    },
     "RedshiftCluster": {
       "Type": "AWS::Redshift::Cluster",
       "Properties": {
         "ClusterType": {
           "Ref": "ClusterType"
         },
+        "PubliclyAccessible": false,
+        "ClusterSubnetGroupName": {
+          "Ref": "RedshiftSubnetGroup"
+        },
+        "VpcSecurityGroupIds": [
+          {
+            "Ref": "RedshiftSG"
+          }
+        ],
         "NumberOfNodes": {
           "Fn::If": [
             "IsMultiNodeCluster",
