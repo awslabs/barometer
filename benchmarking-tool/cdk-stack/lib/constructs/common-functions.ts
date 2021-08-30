@@ -1,4 +1,4 @@
-import {Aws, Construct} from "@aws-cdk/core";
+import {Aws, Construct, Duration} from "@aws-cdk/core";
 import {Code, Function, LayerVersion, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
@@ -50,16 +50,18 @@ export class CommonFunctions extends Construct {
             }
         });
         // Allow lambda function to create cloudformation stack
-        let resources = [props.key.keyArn];
+        let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json"];
         let platforms = listPaths(platformDirPath, true);
         let zip = new AdmZip();
 
         for (let i = 0; i < platforms.length; i++) {
             resources.push("arn:aws:cloudformation:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":stack/" + platforms[i] + "-*/*");
             // Zip all platform driver jars
-            let driverJars = listPaths(platformDirPath + platforms[i] + "/driver/");
-            for (let j = 0; j < driverJars.length; j++) {
-                zip.addLocalFile(platformDirPath + platforms[i] + "/driver/" + driverJars[j], "", driverJars[j]);
+            if (fs.existsSync(platformDirPath + platforms[i] + "/driver/")) {
+                let driverJars = listPaths(platformDirPath + platforms[i] + "/driver/");
+                for (let j = 0; j < driverJars.length; j++) {
+                    zip.addLocalFile(platformDirPath + platforms[i] + "/driver/" + driverJars[j], "java/lib/", driverJars[j]);
+                }
             }
             if (fs.existsSync(platformDirPath + platforms[i] + "/policy.json")) {
                 let policyText = fs.readFileSync(platformDirPath + platforms[i] + "/policy.json", 'utf-8');
@@ -71,13 +73,11 @@ export class CommonFunctions extends Construct {
         zip.writeZip(platformDriverZipPath);
 
         this.createDestroyPlatform.addToRolePolicy(new PolicyStatement({
-            actions: ["cloudformation:CreateStack", "cloudformation:DeleteStack", "cloudformation:DescribeStacks", "kms:CreateGrant"],
+            actions: ["cloudformation:CreateStack", "cloudformation:DeleteStack", "cloudformation:DescribeStacks", "kms:CreateGrant", "dynamodb:PutItem", "dynamodb:DeleteItem", "s3:GetObject", "s3:ListBucket"],
             resources: resources
         }));
-        // Allow lambda function to read templates from S3 bucket
-        props.dataBucket.grantRead(this.createDestroyPlatform);
         // Allow platform lambda function to R/W on DataTable
-        props.dataTable.grantReadWriteData(this.createDestroyPlatform);
+        props.key.grantEncryptDecrypt(this.createDestroyPlatform);
         // Allow lambda to forward publish permit to Cloudformation
         props.stackUpdateTopic.grantPublish(this.createDestroyPlatform);
         // Subscribe to stack create/delete progress events
@@ -108,15 +108,34 @@ export class CommonFunctions extends Construct {
             handler: "com.aws.benchmarking.jdbcqueryrunner.Handler",
             runtime: Runtime.JAVA_8_CORRETTO,
             vpc: props.vpc,
-            layers: [platformDriverLayer]
+            layers: [platformDriverLayer],
+            timeout: Duration.minutes(1),
+            memorySize: 256
         });
+        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
+            actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
+            resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn]
+        }));
+        // Allow lambda function to read secrets from platform stacks
+        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
+            actions: ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"],
+            resources: ["arn:" + Aws.PARTITION + ":secretsmanager:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":secret:*"],
+            // conditions: {
+            //     "StringEquals": {
+            //         "secretsmanager:ResourceTag/ManagedBy": "BenchmarkingStack"
+            //     }
+            // }
+        }));
 
         this.stepFunctionHelpers = new Function(this, "helpers", {
             code: Code.fromAsset(commonFunctionsDirPath + "stepfn-helpers"),
             handler: "app.lambda_handler",
             runtime: Runtime.PYTHON_3_8
         });
-        props.dataBucket.grantRead(this.stepFunctionHelpers);
+        this.stepFunctionHelpers.addToRolePolicy(new PolicyStatement({
+            actions: ["s3:ListBucket"],
+            resources: [props.dataBucket.bucketArn]
+        }));
     }
 }
 
