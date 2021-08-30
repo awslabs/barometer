@@ -14,6 +14,7 @@
     "@aws-cdk/assert": "1.117.0",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
+    "@types/adm-zip": "^0.4.34",
     "aws-cdk": "^1.117.0",
     "jest": "^26.4.2",
     "ts-jest": "^26.2.0",
@@ -32,6 +33,7 @@
     "@aws-cdk/aws-sns": "1.117.0",
     "@aws-cdk/aws-sns-subscriptions": "1.117.0",
     "@aws-cdk/aws-dynamodb": "1.117.0",
+    "adm-zip": "^0.5.5",
     "source-map-support": "^0.5.16"
   }
 }
