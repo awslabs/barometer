@@ -120,11 +120,11 @@ export class CommonFunctions extends Construct {
         this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
             actions: ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"],
             resources: ["arn:" + Aws.PARTITION + ":secretsmanager:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":secret:*"],
-            // conditions: {
-            //     "StringEquals": {
-            //         "secretsmanager:ResourceTag/ManagedBy": "BenchmarkingStack"
-            //     }
-            // }
+            conditions: {
+                "StringEquals": {
+                    "secretsmanager:ResourceTag/ManagedBy": "BenchmarkingStack"
+                }
+            }
         }));
 
         this.stepFunctionHelpers = new Function(this, "helpers", {
