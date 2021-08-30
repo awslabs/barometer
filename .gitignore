@@ -1,4 +1,4 @@
-.idea/
+**/.idea/
 .vscode/
 
 # dependencies
@@ -9,6 +9,7 @@
 
 # production
 **/build
+**/target
 **/dist
 **/.pnp
 **/.pnp.js

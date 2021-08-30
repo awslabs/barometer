@@ -5,7 +5,13 @@ import {Key} from "@aws-cdk/aws-kms";
 import {CommonFunctions} from "./constructs/common-functions";
 import {ExperimentRunner} from "./constructs/experiment-runner";
 import {BenchmarkRunner} from "./constructs/benchmark-runner";
-import {GatewayVpcEndpointAwsService, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
+import {
+    GatewayVpcEndpointAwsService,
+    InterfaceVpcEndpoint, InterfaceVpcEndpointAwsService,
+    InterfaceVpcEndpointService,
+    SubnetType,
+    Vpc
+} from "@aws-cdk/aws-ec2";
 import {Topic} from "@aws-cdk/aws-sns";
 import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
 
@@ -32,6 +38,12 @@ export class BenchmarkingStack extends cdk.Stack {
                     subnets: [{subnetType: SubnetType.ISOLATED}]
                 }
             }
+        });
+
+        new InterfaceVpcEndpoint(this, 'SecretsManagerEndpoint', {
+            service: InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.ISOLATED}
         });
 
         // Define new KMS Key. Used for all enc/dec for Benchmarking framework
