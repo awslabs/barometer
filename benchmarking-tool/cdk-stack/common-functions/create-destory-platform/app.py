@@ -93,8 +93,8 @@ def fetch_and_delete_task_token(stack_name):
 
 
 def handle_stack_create_complete(record):
-    secret_ids = {"secretIds": []}
     stack_name = extract_stack_name(record)
+    secret_ids = {"secretIds": [], "stackName": stack_name}
     token = fetch_and_delete_task_token(stack_name)
     if token is not None:
         stack_response = cf.describe_stacks(StackName=stack_name)

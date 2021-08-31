@@ -109,12 +109,21 @@ export class CommonFunctions extends Construct {
             runtime: Runtime.JAVA_8_CORRETTO,
             vpc: props.vpc,
             layers: [platformDriverLayer],
-            timeout: Duration.minutes(1),
+            timeout: Duration.minutes(15),
             memorySize: 256
         });
         this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
             resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn]
+        }));
+        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
+            actions: ["cloudwatch:PutMetricData"],
+            resources: ["*"],
+            conditions: {
+                "StringEquals": {
+                    "cloudwatch:namespace": "Benchmarking"
+                }
+            }
         }));
         // Allow lambda function to read secrets from platform stacks
         this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({

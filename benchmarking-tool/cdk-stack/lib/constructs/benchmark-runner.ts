@@ -37,6 +37,7 @@ export class BenchmarkRunner extends Construct {
             parameters: {
                 "secretId.$": "$.secretId",
                 "sessionId.$": "$.sessionId",
+                "stackName.$": "$.stackName",
                 "scriptPath.$": "$$.Map.Item.Value"
             },
             resultPath: JsonPath.DISCARD
@@ -45,7 +46,8 @@ export class BenchmarkRunner extends Construct {
             payload: TaskInput.fromObject({
                 "secretId.$": "$.secretId",
                 "sessionId.$": "$.sessionId",
-                "scriptPath.$": "$.scriptPath"
+                "scriptPath.$": "$.scriptPath",
+                "stackName.$": "$.stackName"
             }),
             comment: "Run benchmarking query on platform",
             resultPath: JsonPath.DISCARD,

@@ -46,6 +46,12 @@ export class BenchmarkingStack extends cdk.Stack {
             subnets: {subnetType: SubnetType.ISOLATED}
         });
 
+        new InterfaceVpcEndpoint(this, 'MonitoringEndpoint', {
+            service: InterfaceVpcEndpointAwsService.CLOUDWATCH,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.ISOLATED}
+        });
+
         // Define new KMS Key. Used for all enc/dec for Benchmarking framework
         let key = new Key(this, "Key", {enableKeyRotation: true});
 

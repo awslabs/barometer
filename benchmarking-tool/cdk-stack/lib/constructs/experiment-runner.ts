@@ -46,6 +46,7 @@ export class ExperimentRunner extends Construct {
                 itemsPath: "$.userSessionsOutput.Payload.userSessions",
                 parameters: {
                     "workloadConfig.$": "$.workloadConfig",
+                    "platformLambdaOutput.$": "$.platformLambdaOutput",
                     "secretId.$": "$$.Map.Item.Value.secretId",
                     "sessionId.$": "$$.Map.Item.Value.sessionId"
                 }
@@ -54,12 +55,16 @@ export class ExperimentRunner extends Construct {
                 input: TaskInput.fromObject({
                     "workloadConfig.$": "$.workloadConfig",
                     "secretId.$": "$.secretId",
-                    "sessionId.$": "$.sessionId"
+                    "sessionId.$": "$.sessionId",
+                    "stackName.$": "$.platformLambdaOutput.stackName"
                 }),
                 resultPath: JsonPath.DISCARD
             }))).next(new LambdaInvoke(this, 'Prepare Dashboards', {
                 lambdaFunction: props.commonFunctions.dashboardBuilder,
                 comment: "Prepares cloudwatch/quicksight dashboard to show recorded data to the user",
+                payload: TaskInput.fromObject({
+                    "stackName.$": "$.platformLambdaOutput.stackName"
+                }),
                 resultPath: JsonPath.DISCARD,
             })).next(new Choice(this, 'Keep infrastructure?', {
                 comment: "Take decision based on user's choice of keeping infrastructure after experiment run"
@@ -114,7 +119,9 @@ export class ExperimentRunner extends Construct {
             lambdaFunction: props.commonFunctions.jdbcQueryRunner,
             payload: TaskInput.fromObject({
                 "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                "scriptPath.$": "$.scriptPath"
+                "scriptPath.$": "$.scriptPath",
+                "sessionId": "DDL",
+                "stackName.$": "$.platformLambdaOutput.stackName"
             }),
             comment: "Run DDL Query on platform",
             resultPath: JsonPath.DISCARD,
@@ -125,7 +132,9 @@ export class ExperimentRunner extends Construct {
             comment: "Copy dataset from workload config path to the platform",
             payload: TaskInput.fromObject({
                 "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                "dataset.$": "$.workloadConfig.settings.volume"
+                "dataset.$": "$.workloadConfig.settings.volume",
+                "sessionId": "COPY",
+                "stackName.$": "$.platformLambdaOutput.stackName"
             }),
             resultPath: JsonPath.DISCARD,
         }).next(runBenchmarkingForUsers))

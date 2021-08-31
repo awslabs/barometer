@@ -1,5 +1,11 @@
 package com.aws.benchmarking.jdbcqueryrunner;
 
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
+import com.amazonaws.services.cloudwatch.model.Dimension;
+import com.amazonaws.services.cloudwatch.model.MetricDatum;
+import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
+import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -10,13 +16,13 @@ import com.amazonaws.util.IOUtils;
 
 import java.io.InputStream;
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaResponse> {
 
-    AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+    final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
+    final AmazonCloudWatch cloudWatch = AmazonCloudWatchClientBuilder.defaultClient();
 
     static {
         // Load all the driver classes
@@ -37,9 +43,14 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         LambdaLogger logger = context.getLogger();
         String secretId = event.get("secretId");
         String scriptPath = event.get("scriptPath");
+        String stackName = event.get("stackName");
+        String sessionId = event.get("sessionId");
+
         JdbcLambdaResponse response = new JdbcLambdaResponse();
         response.setScriptPath(scriptPath);
         response.setSecretId(secretId);
+        response.setSessionId(sessionId);
+        response.setStackName(stackName);
         response.setMetrics(new HashMap<>());
 
         // Set secret id as user
@@ -59,15 +70,16 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
                 // Execute query
                 long startTimeMillis = System.currentTimeMillis();
                 boolean hasResults = statement.execute(query);
-                long timeTaken = System.currentTimeMillis() - startTimeMillis;
+                double timeTaken = System.currentTimeMillis() - startTimeMillis;
                 response.getMetrics().put("runTimeMillis", timeTaken);
-                response.getMetrics().put("hasResults", (hasResults ? 1L : 0L));
+                response.getMetrics().put("hasResults", (hasResults ? 1d : 0d));
                 if (hasResults) {
                     ResultSet resultSet = statement.getResultSet();
-                    response.getMetrics().put("rowDeleted", (resultSet.rowDeleted() ? 1L : 0L));
-                    response.getMetrics().put("rowInserted", (resultSet.rowInserted() ? 1L : 0L));
-                    response.getMetrics().put("rowUpdated", (resultSet.rowUpdated() ? 1L : 0L));
+                    response.getMetrics().put("rowDeleted", (resultSet.rowDeleted() ? 1d : 0d));
+                    response.getMetrics().put("rowInserted", (resultSet.rowInserted() ? 1d : 0d));
+                    response.getMetrics().put("rowUpdated", (resultSet.rowUpdated() ? 1d : 0d));
                 }
+                publishMetrics(response);
                 logger.log("Time taken by the script " + scriptPath + " is " + timeTaken + " ms.");
             }
         } catch (Exception e) {
@@ -77,5 +89,24 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         }
 
         return response;
+    }
+
+    private void publishMetrics(JdbcLambdaResponse response) {
+        List<Dimension> dimensions = new ArrayList<>();
+        dimensions.add(new Dimension().withName("SESSION_ID").withValue(response.getSessionId()));
+        dimensions.add(new Dimension().withName("SECRET_ID").withValue(response.getSecretId()));
+        dimensions.add(new Dimension().withName("STACK_NAME").withValue(response.getStackName()));
+        dimensions.add(new Dimension().withName("SCRIPT_PATH").withValue(response.getScriptPath()));
+
+        PutMetricDataRequest request = new PutMetricDataRequest()
+                .withNamespace("Benchmarking")
+                .withMetricData(response.getMetrics().entrySet().stream().map(entry -> new MetricDatum()
+                                .withMetricName(entry.getKey())
+                                .withUnit(StandardUnit.Milliseconds)
+                                .withValue(entry.getValue())
+                                .withDimensions(dimensions))
+                        .collect(Collectors.toList()));
+
+        cloudWatch.putMetricData(request);
     }
 }

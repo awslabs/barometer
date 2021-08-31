@@ -5,7 +5,9 @@ import java.util.Map;
 public class JdbcLambdaResponse {
     private String secretId;
     private String scriptPath;
-    private Map<String, Long> metrics;
+    private String sessionId;
+    private String stackName;
+    private Map<String, Double> metrics;
 
     public String getSecretId() {
         return secretId;
@@ -23,11 +25,27 @@ public class JdbcLambdaResponse {
         this.scriptPath = scriptPath;
     }
 
-    public Map<String, Long> getMetrics() {
+    public Map<String, Double> getMetrics() {
         return metrics;
     }
 
-    public void setMetrics(Map<String, Long> metrics) {
+    public void setMetrics(Map<String, Double> metrics) {
         this.metrics = metrics;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getStackName() {
+        return stackName;
+    }
+
+    public void setStackName(String stackName) {
+        this.stackName = stackName;
     }
 }
