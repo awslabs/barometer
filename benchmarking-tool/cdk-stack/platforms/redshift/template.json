@@ -9,16 +9,6 @@
       "AllowedPattern": "([a-z]|[0-9])+",
       "ConstraintDescription": "must contain a-z or 0-9 only."
     },
-    "ClusterType": {
-      "Description": "The type of the cluster",
-      "Type": "String",
-      "Default": "multi-node",
-      "AllowedValues": [
-        "single-node",
-        "multi-node"
-      ],
-      "ConstraintDescription": "must be single-node or multi-node."
-    },
     "numberOfNodes": {
       "Description": "The number of compute nodes in the redshift cluster.  When cluster type is specified as: 1) single-node, the numberOfNodes parameter should be specified as 1, 2) multi-node, the numberOfNodes parameter should be greater than 1",
       "Type": "Number",
@@ -53,29 +43,28 @@
     "nodeType": {
       "Description": "The node type to be provisioned for the redshift cluster",
       "Type": "String",
-      "Default": "dc1.large",
+      "Default": "dc2.large",
       "AllowedValues": [
-        "dw1.xlarge",
-        "dw1.8xlarge",
-        "dw2.large",
-        "dw2.8xlarge",
+        "ra3.xlplus",
+        "ra3.4xlarge",
+        "ra3.16xlarge",
+        "ds2.xlarge",
+        "ds2.8xlarge",
         "dc1.large",
         "dc1.8xlarge",
-        "ds1.xlarge",
-        "ds1.8xlarge",
-        "ds2.xlarge",
-        "ds2.8xlarge"
+        "dc2.large",
+        "dc2.8xlarge"
       ],
       "ConstraintDescription": "must be a valid RedShift node type."
     }
   },
   "Conditions": {
-    "IsMultiNodeCluster": {
+    "IsSingleNodeCluster": {
       "Fn::Equals": [
         {
-          "Ref": "ClusterType"
+          "Ref": "numberOfNodes"
         },
-        "multi-node"
+        "1"
       ]
     },
     "IsAquaEnabled": {
@@ -141,8 +130,20 @@
       "Type": "AWS::Redshift::Cluster",
       "Properties": {
         "ClusterType": {
-          "Ref": "ClusterType"
+          "Fn::If": [
+            "IsSingleNodeCluster",
+            "single-node",
+            "multi-node"
+          ]
         },
+        "IamRoles": [
+          {
+            "Fn::GetAtt": [
+              "RedshiftCopyRole",
+              "Arn"
+            ]
+          }
+        ],
         "PubliclyAccessible": false,
         "ClusterSubnetGroupName": {
           "Ref": "RedshiftSubnetGroup"
@@ -154,12 +155,12 @@
         ],
         "NumberOfNodes": {
           "Fn::If": [
-            "IsMultiNodeCluster",
-            {
-              "Ref": "numberOfNodes"
-            },
+            "IsSingleNodeCluster",
             {
               "Ref": "AWS::NoValue"
+            },
+            {
+              "Ref": "numberOfNodes"
             }
           ]
         },
@@ -216,6 +217,156 @@
           }
         ]
       }
+    },
+    "RedshiftCopyRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  {
+                    "Fn::Sub": "redshift.${AWS::Region}.amazonaws.com"
+                  }
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "RedshiftS3ReadPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::ImportValue": "Benchmarking::DataBucketArn"
+                    },
+                    {
+                      "Fn::Join": [
+                        "/",
+                        [
+                          {
+                            "Fn::ImportValue": "Benchmarking::DataBucketArn"
+                          },
+                          "*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "DataCopierLambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "DataCopierLambdaPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:ListBucket",
+                    "lambda:InvokeFunction"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::ImportValue": "Benchmarking::DataBucketArn"
+                    },
+                    {
+                      "Fn::ImportValue": "Benchmarking::Exec::FunctionArn"
+                    },
+                    {
+                      "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "DataCopier": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Description": "Lambda function to copy data from S3 to Redshift cluster",
+        "Code": {
+          "S3Bucket": {
+            "Fn::ImportValue": "Benchmarking::DataBucketName"
+          },
+          "S3Key": "platforms/redshift/functions/data-copier/code.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "DataCopierLambdaRole",
+            "Arn"
+          ]
+        },
+        "Handler": "app.lambda_handler",
+        "Runtime": "python3.8",
+        "Timeout": 900,
+        "Environment": {
+          "Variables": {
+            "StackName": {
+              "Ref": "AWS::StackName"
+            },
+            "ProxyFunctionArn": {
+              "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
+            },
+            "QueryFunctionArn": {
+              "Fn::ImportValue": "Benchmarking::Exec::FunctionArn"
+            }
+          }
+        }
+      }
     }
   },
   "Outputs": {
@@ -223,6 +374,15 @@
       "Description": "The admin user to use for benchmarking queries",
       "Value": {
         "Fn::Sub": "${AdminUserSecret}"
+      }
+    },
+    "DataCopierLambdaArn": {
+      "Description": "Redshift data copier lambda function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "DataCopier",
+          "Arn"
+        ]
       }
     }
   }

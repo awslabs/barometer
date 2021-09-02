@@ -43,6 +43,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         LambdaLogger logger = context.getLogger();
         String secretId = event.get("secretId");
         String scriptPath = event.get("scriptPath");
+        String query = event.get("query");
         String stackName = event.get("stackName");
         String sessionId = event.get("sessionId");
 
@@ -57,12 +58,12 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         Properties userInfo = new Properties();
         userInfo.setProperty("user", secretId);
 
-        String query;
         try {
-            AmazonS3URI uri = new AmazonS3URI(scriptPath);
-            InputStream inputStream = amazonS3.getObject(uri.getBucket(), uri.getKey()).getObjectContent();
-            query = IOUtils.toString(inputStream);
-
+            if (scriptPath != null) {
+                AmazonS3URI uri = new AmazonS3URI(scriptPath);
+                InputStream inputStream = amazonS3.getObject(uri.getBucket(), uri.getKey()).getObjectContent();
+                query = IOUtils.toString(inputStream);
+            }
             logger.log("Fetched script: " + scriptPath);
             logger.log("Executing using user: " + secretId);
             try (Connection connection = DriverManager.getConnection(secretId, userInfo);

@@ -5,6 +5,7 @@ import java.util.Map;
 public class JdbcLambdaResponse {
     private String secretId;
     private String scriptPath;
+    private String query;
     private String sessionId;
     private String stackName;
     private Map<String, Double> metrics;
@@ -47,5 +48,13 @@ public class JdbcLambdaResponse {
 
     public void setStackName(String stackName) {
         this.stackName = stackName;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
     }
 }

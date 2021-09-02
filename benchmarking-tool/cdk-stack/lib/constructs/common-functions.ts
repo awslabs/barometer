@@ -28,7 +28,7 @@ export class CommonFunctions extends Construct {
 
     public readonly createDestroyPlatform: Function;
     public readonly dashboardBuilder: Function;
-    public readonly dataCopier: Function;
+    public readonly platformLambdaProxy: Function;
     public readonly jdbcQueryRunner: Function;
     public readonly stepFunctionHelpers: Function;
 
@@ -50,7 +50,7 @@ export class CommonFunctions extends Construct {
             }
         });
         // Allow lambda function to create cloudformation stack
-        let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json"];
+        let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json", props.dataBucket.bucketArn + "/platforms/*/functions/*/code.zip"];
         let platforms = listPaths(platformDirPath, true);
         let zip = new AdmZip();
 
@@ -89,12 +89,28 @@ export class CommonFunctions extends Construct {
             runtime: Runtime.PYTHON_3_8
         });
 
-        this.dataCopier = new Function(this, "dataCopier", {
-            code: Code.fromAsset(commonFunctionsDirPath + "data-copier"),
+        this.platformLambdaProxy = new Function(this, "platformLambdaProxy", {
+            code: Code.fromAsset(commonFunctionsDirPath + "platform-lambda-proxy"),
             handler: "app.lambda_handler",
-            runtime: Runtime.PYTHON_3_8
+            runtime: Runtime.PYTHON_3_8,
+            environment: {
+                DataTableName: props.dataTable.tableName,
+                DataBucketName: props.dataBucket.bucketName
+            }
         });
-
+        this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
+            actions: ["lambda:InvokeFunction"],
+            resources: ["arn:aws:lambda:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":function:*"],
+            conditions: {
+                "StringEquals": {
+                    "aws:ResourceTag/ManagedBy": "BenchmarkingStack"
+                }
+            }
+        }));
+        this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
+            actions: ["dynamodb:PutItem", "dynamodb:DeleteItem", "kms:Decrypt"],
+            resources: [props.dataTable.tableArn, props.key.keyArn]
+        }));
 
         // Create lambda layer with all platform drivers
         let platformDriverLayer = new LayerVersion(this, 'PlatformDrivers', {

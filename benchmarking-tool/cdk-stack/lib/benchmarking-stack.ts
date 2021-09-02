@@ -94,6 +94,10 @@ export class BenchmarkingStack extends cdk.Stack {
             value: dataBucket.bucketName,
             exportName: "Benchmarking::DataBucketName"
         });
+        new CfnOutput(this, 'DataBucketArn', {
+            value: dataBucket.bucketArn,
+            exportName: "Benchmarking::DataBucketArn"
+        });
         new CfnOutput(this, 'VpcId', {
             value: vpc.vpcId,
             exportName: "Benchmarking::VpcId"
@@ -110,8 +114,16 @@ export class BenchmarkingStack extends cdk.Stack {
             value: commonFunctions.jdbcQueryRunner.connections.securityGroups.map(sg => sg.securityGroupId).join(","),
             exportName: "Benchmarking::Exec::SecurityGroup"
         });
+        new CfnOutput(this, 'QueryRunnerLambdaArn', {
+            value: commonFunctions.jdbcQueryRunner.functionArn,
+            exportName: "Benchmarking::Exec::FunctionArn"
+        });
+        new CfnOutput(this, 'ProxyLambdaArn', {
+            value: commonFunctions.platformLambdaProxy.functionArn,
+            exportName: "Benchmarking::Exec::ProxyFunctionArn"
+        });
         new CfnOutput(this, 'CostExplorer', {
             value: "https://console.aws.amazon.com/cost-management/home?#/custom?groupBy=Service&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&excludeCategorizedResources=false&excludeForecast=false&timeRangeOption=Custom&granularity=Daily&reportName=&reportType=CostUsage&isTemplate=true&startDate=" + today + "&endDate=" + today + "&filter=%5B%7B%22dimension%22:%22TagKeyValue%22,%22values%22:null,%22include%22:true,%22children%22:%5B%7B%22dimension%22:%22aws:cloudformation:stack-name%22,%22values%22:%5B%22BenchmarkingStack%22%5D,%22include%22:true,%22children%22:null%7D%5D%7D,%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack"
-        })
+        });
     }
 }

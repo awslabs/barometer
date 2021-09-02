@@ -128,14 +128,20 @@ export class ExperimentRunner extends Construct {
         }))).next(new Choice(this, 'Copy dataset to the platform?', {
             comment: "Evaluate user choice of copying dataset to the platform"
         }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new LambdaInvoke(this, 'Yes, Run data copier', {
-            lambdaFunction: props.commonFunctions.dataCopier,
+            lambdaFunction: props.commonFunctions.platformLambdaProxy,
             comment: "Copy dataset from workload config path to the platform",
             payload: TaskInput.fromObject({
-                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                "dataset.$": "$.workloadConfig.settings.volume",
-                "sessionId": "COPY",
-                "stackName.$": "$.platformLambdaOutput.stackName"
+                "stackName.$": "$.platformLambdaOutput.stackName",
+                "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
+                "proxyPayload": {
+                    "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                    "dataset.$": "$.workloadConfig.settings.volume",
+                    "sessionId": "COPY"
+                },
+                "token": JsonPath.taskToken
             }),
+            timeout: Duration.minutes(30),
+            integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             resultPath: JsonPath.DISCARD,
         }).next(runBenchmarkingForUsers))
             .otherwise(runBenchmarkingForUsers));
@@ -148,9 +154,10 @@ export class ExperimentRunner extends Construct {
         let policy = new Policy(this, 'TaskStatusUpdatePolicy');
         policy.addStatements(
             new PolicyStatement({
-                actions: ["states:SendTaskSuccess"],
+                actions: ["states:SendTaskSuccess", "states:SendTaskFailure"],
                 resources: ["*"]
             }));
         props.commonFunctions.createDestroyPlatform.role?.attachInlinePolicy(policy);
+        props.commonFunctions.platformLambdaProxy.role?.attachInlinePolicy(policy);
     }
 }
