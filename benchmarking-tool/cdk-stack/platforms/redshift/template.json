@@ -304,13 +304,9 @@
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "s3:ListBucket",
                     "lambda:InvokeFunction"
                   ],
                   "Resource": [
-                    {
-                      "Fn::ImportValue": "Benchmarking::DataBucketArn"
-                    },
                     {
                       "Fn::ImportValue": "Benchmarking::Exec::FunctionArn"
                     },
@@ -324,7 +320,8 @@
                   "Action": [
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
-                    "logs:PutLogEvents"
+                    "logs:PutLogEvents",
+                    "s3:ListBucket"
                   ],
                   "Resource": "*"
                 }
@@ -357,6 +354,12 @@
           "Variables": {
             "StackName": {
               "Ref": "AWS::StackName"
+            },
+            "RedshiftCopyRoleArn": {
+              "Fn::GetAtt": [
+                "RedshiftCopyRole",
+                "Arn"
+              ]
             },
             "ProxyFunctionArn": {
               "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"

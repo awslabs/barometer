@@ -51,11 +51,13 @@ export class CommonFunctions extends Construct {
         });
         // Allow lambda function to create cloudformation stack
         let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json", props.dataBucket.bucketArn + "/platforms/*/functions/*/code.zip"];
+        let invokeFunctionResources = []
         let platforms = listPaths(platformDirPath, true);
         let zip = new AdmZip();
 
         for (let i = 0; i < platforms.length; i++) {
             resources.push("arn:aws:cloudformation:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":stack/" + platforms[i] + "-*/*");
+            invokeFunctionResources.push("arn:aws:lambda:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":function:" + platforms[i] + "-*");
             // Zip all platform driver jars
             if (fs.existsSync(platformDirPath + platforms[i] + "/driver/")) {
                 let driverJars = listPaths(platformDirPath + platforms[i] + "/driver/");
@@ -100,12 +102,7 @@ export class CommonFunctions extends Construct {
         });
         this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
             actions: ["lambda:InvokeFunction"],
-            resources: ["arn:aws:lambda:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":function:*"],
-            conditions: {
-                "StringEquals": {
-                    "aws:ResourceTag/ManagedBy": "BenchmarkingStack"
-                }
-            }
+            resources: invokeFunctionResources
         }));
         this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
             actions: ["dynamodb:PutItem", "dynamodb:DeleteItem", "kms:Decrypt"],

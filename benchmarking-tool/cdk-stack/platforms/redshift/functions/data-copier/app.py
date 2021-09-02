@@ -1,6 +1,7 @@
 import os
 import boto3
 import json
+import traceback
 from urllib.parse import urlparse
 
 fn = boto3.client("lambda")
@@ -18,26 +19,49 @@ def lambda_handler(event, context):
 
     # List tables to load
     s3_path = urlparse(dataset, allow_fragments=False)
-    object_paths = s3.list_objects_v2(Bucket=s3_path.netloc, Prefix=s3_path.path.lstrip('/'))
+    print("Querying folders from dataset: " + dataset)
+
     folders = []
-    for obj in object_paths["Contents"]:
-        folder = os.path.dirname(obj["Key"])
-        if folder not in folders:
-            # Remember folder & prepare the query
-            folders.append(folder)
-            query = "COPY " + folder + " FROM s3://" + s3_path.netloc + "/" + obj[
-                "Key"] + " iam_role '" + redshift_copy_role_arn + "' region '" + os.environ["AWS_REGION"] + "'"
+    paginator = s3.get_paginator('list_objects')
+    for result in paginator.paginate(Bucket=s3_path.netloc, Delimiter='/', Prefix=s3_path.path.lstrip('/')):
+        for prefix in result.get('CommonPrefixes'):
+            print("Processing: " + prefix.get('Prefix'))
+            dirs = prefix.get('Prefix').split('/')
+            folder = dirs[-2]
+            if folder not in folders:
+                # Remember folder & prepare the query
+                folders.append(folder)
+                query = "COPY " + folder + " FROM 's3://" + s3_path.netloc + "/" + prefix.get(
+                    'Prefix') + "' iam_role '" + redshift_copy_role_arn + "' region '" + os.environ[
+                            "AWS_REGION"] + "'"
 
-            payload = {
-                "secretId": secret_id,
-                "stackName": stack_name,
-                "sessionId": session_id,
-                "query": query
-            }
-            # Execute the query
-            fn.invoke(FunctionName=query_function_arn, Payload=bytes(json.dumps(payload), 'utf-8'))
+                print("Submitting query: " + query + " User: " + secret_id)
+                payload = {
+                    "secretId": secret_id,
+                    "stackName": stack_name,
+                    "sessionId": session_id,
+                    "query": query
+                }
+                # Execute the query
+                fn_response = fn.invoke(FunctionName=query_function_arn, Payload=bytes(json.dumps(payload), 'utf-8'))
+                query_resp = json.loads(fn_response["Payload"].read().decode('utf-8'))
+                print("Query response: " + json.dumps(query_resp) + " User: " + secret_id)
 
-    fn.invoke(FunctionName=query_function_arn, Payload=bytes(
-        json.dumps(
-            {"status": "SUCCESS", "stackName": stack_name, "lambdaFunction": os.environ["AWS_LAMBDA_FUNCTION_NAME"]}),
-        'utf-8'))
+                if "errorMessage" in query_resp:
+                    print("Notifying FAILURE - " + proxy_function_arn + " Copy task failed.")
+                    fn.invoke(FunctionName=proxy_function_arn, InvocationType='Event',
+                              Payload=bytes(
+                                  json.dumps(
+                                      {"status": "FAILURE", "stackName": stack_name,
+                                       "error": query_resp["errorMessage"], "cause": json.dumps(query_resp["cause"]),
+                                       "lambdaFunction": os.environ["AWS_LAMBDA_FUNCTION_NAME"]}),
+                                  'utf-8'))
+                    return
+
+    print("Notifying SUCCESS - " + proxy_function_arn + " Copy task completed.")
+    fn.invoke(FunctionName=proxy_function_arn, InvocationType='Event',
+              Payload=bytes(
+                  json.dumps(
+                      {"status": "SUCCESS", "stackName": stack_name,
+                       "lambdaFunction": os.environ["AWS_LAMBDA_FUNCTION_NAME"]}),
+                  'utf-8'))

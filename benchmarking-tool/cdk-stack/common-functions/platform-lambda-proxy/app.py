@@ -17,8 +17,10 @@ def lambda_handler(event, context):
     if "status" in event:
         token = fetch_and_delete_task_token(stack_name, proxy_lambda)
         if event["status"] == "SUCCESS":
+            print("Notifying task success to step function payload: " + json.dumps(event))
             sfn.send_task_success(taskToken=token, output=json.dumps(event))
         else:
+            print("Notifying task failure to step function payload: " + json.dumps(event))
             sfn.send_task_failure(taskToken=token, error=event["error"], cause=event["cause"])
     else:
         save_task_token(stack_name, proxy_lambda, event["token"])
@@ -28,7 +30,7 @@ def lambda_handler(event, context):
         response = fn.invoke(FunctionName=proxy_lambda, LogType='Tail',
                              InvocationType='Event',
                              Payload=bytes(json.dumps(payload), 'utf-8'))
-        print("Proxy lambda response: " + json.dumps(response))
+        print("Proxy lambda response: " + str(response["StatusCode"]))
 
 
 def save_task_token(stack_name, proxy_lambda, token):
