@@ -13,13 +13,13 @@ redshift_copy_role_arn = os.environ["RedshiftCopyRoleArn"]
 
 
 def lambda_handler(event, context):
-    dataset = event["data"]["dataset"]
+    dataset = event["data"]["dataset"]["path"]
     secret_id = event["data"]["secretId"]
     session_id = event["data"]["sessionId"]
 
     # List tables to load
     s3_path = urlparse(dataset, allow_fragments=False)
-    print("Querying folders from dataset: " + dataset)
+    print("Querying folders from dataset: " + dataset + " Name: " + event["data"]["dataset"]["name"])
 
     folders = []
     paginator = s3.get_paginator('list_objects')
@@ -32,8 +32,7 @@ def lambda_handler(event, context):
                 # Remember folder & prepare the query
                 folders.append(folder)
                 query = "COPY " + folder + " FROM 's3://" + s3_path.netloc + "/" + prefix.get(
-                    'Prefix') + "' iam_role '" + redshift_copy_role_arn + "' region '" + os.environ[
-                            "AWS_REGION"] + "'"
+                    'Prefix') + "' iam_role '" + redshift_copy_role_arn + "' FORMAT AS PARQUET;"
 
                 print("Submitting query: " + query + " User: " + secret_id)
                 payload = {

@@ -21,7 +21,8 @@ def lambda_handler(event, context):
             sfn.send_task_success(taskToken=token, output=json.dumps(event))
         else:
             print("Notifying task failure to step function payload: " + json.dumps(event))
-            sfn.send_task_failure(taskToken=token, error=event["error"], cause=event["cause"])
+            error = event["error"][:250] + (event["error"][250:] and '..')
+            sfn.send_task_failure(taskToken=token, error=error, cause=event["cause"])
     else:
         save_task_token(stack_name, proxy_lambda, event["token"])
         print("Task token saved to dynamodb. Invoking " + proxy_lambda)

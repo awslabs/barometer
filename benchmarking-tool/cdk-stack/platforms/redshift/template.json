@@ -321,7 +321,6 @@
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
                     "logs:PutLogEvents",
-                    "s3:ListBucket"
                   ],
                   "Resource": "*"
                 }
