@@ -28,7 +28,7 @@ export class CommonFunctions extends Construct {
 
     public readonly createDestroyPlatform: Function;
     public readonly dashboardBuilder: Function;
-    public readonly dataCopier: Function;
+    public readonly platformLambdaProxy: Function;
     public readonly jdbcQueryRunner: Function;
     public readonly stepFunctionHelpers: Function;
 
@@ -50,12 +50,14 @@ export class CommonFunctions extends Construct {
             }
         });
         // Allow lambda function to create cloudformation stack
-        let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json"];
+        let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json", props.dataBucket.bucketArn + "/platforms/*/functions/*/code.zip"];
+        let invokeFunctionResources = []
         let platforms = listPaths(platformDirPath, true);
         let zip = new AdmZip();
 
         for (let i = 0; i < platforms.length; i++) {
             resources.push("arn:aws:cloudformation:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":stack/" + platforms[i] + "-*/*");
+            invokeFunctionResources.push("arn:aws:lambda:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":function:" + platforms[i] + "-*");
             // Zip all platform driver jars
             if (fs.existsSync(platformDirPath + platforms[i] + "/driver/")) {
                 let driverJars = listPaths(platformDirPath + platforms[i] + "/driver/");
@@ -89,12 +91,23 @@ export class CommonFunctions extends Construct {
             runtime: Runtime.PYTHON_3_8
         });
 
-        this.dataCopier = new Function(this, "dataCopier", {
-            code: Code.fromAsset(commonFunctionsDirPath + "data-copier"),
+        this.platformLambdaProxy = new Function(this, "platformLambdaProxy", {
+            code: Code.fromAsset(commonFunctionsDirPath + "platform-lambda-proxy"),
             handler: "app.lambda_handler",
-            runtime: Runtime.PYTHON_3_8
+            runtime: Runtime.PYTHON_3_8,
+            environment: {
+                DataTableName: props.dataTable.tableName,
+                DataBucketName: props.dataBucket.bucketName
+            }
         });
-
+        this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
+            actions: ["lambda:InvokeFunction"],
+            resources: invokeFunctionResources
+        }));
+        this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
+            actions: ["dynamodb:PutItem", "dynamodb:DeleteItem", "kms:Decrypt"],
+            resources: [props.dataTable.tableArn, props.key.keyArn]
+        }));
 
         // Create lambda layer with all platform drivers
         let platformDriverLayer = new LayerVersion(this, 'PlatformDrivers', {

@@ -43,6 +43,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         LambdaLogger logger = context.getLogger();
         String secretId = event.get("secretId");
         String scriptPath = event.get("scriptPath");
+        String query = event.get("query");
         String stackName = event.get("stackName");
         String sessionId = event.get("sessionId");
 
@@ -57,12 +58,12 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         Properties userInfo = new Properties();
         userInfo.setProperty("user", secretId);
 
-        String query;
         try {
-            AmazonS3URI uri = new AmazonS3URI(scriptPath);
-            InputStream inputStream = amazonS3.getObject(uri.getBucket(), uri.getKey()).getObjectContent();
-            query = IOUtils.toString(inputStream);
-
+            if (scriptPath != null) {
+                AmazonS3URI uri = new AmazonS3URI(scriptPath);
+                InputStream inputStream = amazonS3.getObject(uri.getBucket(), uri.getKey()).getObjectContent();
+                query = IOUtils.toString(inputStream);
+            }
             logger.log("Fetched script: " + scriptPath);
             logger.log("Executing using user: " + secretId);
             try (Connection connection = DriverManager.getConnection(secretId, userInfo);
@@ -96,7 +97,8 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         dimensions.add(new Dimension().withName("SESSION_ID").withValue(response.getSessionId()));
         dimensions.add(new Dimension().withName("SECRET_ID").withValue(response.getSecretId()));
         dimensions.add(new Dimension().withName("STACK_NAME").withValue(response.getStackName()));
-        dimensions.add(new Dimension().withName("SCRIPT_PATH").withValue(response.getScriptPath()));
+        String scriptPath = response.getScriptPath();
+        dimensions.add(new Dimension().withName("SCRIPT_PATH").withValue(scriptPath == null ? "DIRECT_QUERY" : scriptPath));
 
         PutMetricDataRequest request = new PutMetricDataRequest()
                 .withNamespace("Benchmarking")

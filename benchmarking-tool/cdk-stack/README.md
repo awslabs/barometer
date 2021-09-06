@@ -63,9 +63,9 @@ This project deploys [Benchmarking Stack](./lib/benchmarking-stack.ts) infrastru
        runs cloudformation `template.json` with user provided options
     2. Invokes [jdbc-query-runner](./common-functions/jdbc-query-runner) lambda which connects to platform using JDBC
        driver & runs all DDL statements read from S3 bucket as per [workload](./workloads) config
-    3. Invokes [data-copier](./common-functions/data-copier) lambda function which optionally copies workload dataset
+    3. Invokes [data-copier](./common-functions/platform-lambda-proxy) lambda function which optionally copies workload dataset
        from external S3 bucket to benchmarking stack created S3 bucket.
-    4. Invokes [data-copier](./common-functions/data-copier) lambda function which optionally
+    4. Invokes [data-copier](./common-functions/platform-lambda-proxy) lambda function which optionally
        executes [platform](./platforms) specific procedure to copy data into the platform from external or benchmarking
        stack created S3 bucket.
     5. Runs `benchmark runner` step function flow in parallel for `N` parallel users as defined in experiment config

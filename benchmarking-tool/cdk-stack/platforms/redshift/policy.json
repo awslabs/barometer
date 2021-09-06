@@ -32,17 +32,31 @@
         "redshift:ModifyClusterParameterGroup",
         "redshift:DeleteClusterParameterGroup",
         "redshift:DeleteClusterSubnetGroup",
+        "redshift:DescribeLoggingStatus",
         "secretsmanager:GetSecretValue",
         "secretsmanager:PutSecretValue",
         "ec2:DeleteSecurityGroup",
-        "ec2:createTags"
+        "ec2:CreateTags",
+        "iam:GetRole",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:PutRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:PassRole",
+        "iam:TagRole",
+        "iam:ListRoleTags",
+        "lambda:CreateFunction",
+        "lambda:DeleteFunction"
       ],
       "Resource": [
         "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
         "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
         "arn:aws:redshift:eu-west-1:215004874051:subnetgroup:redshift-*",
         "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*",
-        "arn:aws:ec2:eu-west-1:215004874051:security-group/*"
+        "arn:aws:ec2:eu-west-1:215004874051:security-group/*",
+        "arn:aws:iam::215004874051:role/redshift-*",
+        "arn:aws:lambda:eu-west-1:215004874051:function:redshift-*"
       ]
     },
     {

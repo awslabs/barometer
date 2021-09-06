@@ -1,0 +1,40 @@
+{
+  "concurrentSessionCount": 2,
+  "executionMode": "concurrent",
+  "keepInfrastructure": true,
+  "platformConfig": {
+    "name": "s1",
+    "platformType": "redshift",
+    "settings": {
+      "numberOfNodes": "1",
+      "features": {
+        "workloadManager": false,
+        "concurrencyScaling": false
+      },
+      "nodeType": "dc2.large"
+    }
+  },
+  "workloadConfig": {
+    "name": "tpc-ds/v3",
+    "settings": {
+      "volume": {
+        "name": "1 GB",
+        "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
+        "format": "csv",
+        "compression": "gzip",
+        "delimiter": "|"
+      },
+      "ddl": {
+        "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift/"
+      },
+      "queries": {
+        "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+      },
+      "supportedPlatforms": [
+        "Redshift",
+        "Redshift Spectrum"
+      ],
+      "loadMethod": "copy"
+    }
+  }
+}

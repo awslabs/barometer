@@ -60,7 +60,7 @@
     }
   },
   "Conditions": {
-    "IsMultiNodeCluster": {
+    "IsSingleNodeCluster": {
       "Fn::Equals": [
         {
           "Ref": "ClusterType"

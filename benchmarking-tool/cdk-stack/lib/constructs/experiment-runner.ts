@@ -1,14 +1,32 @@
 import {Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
-import {LambdaInvoke, StepFunctionsStartExecution} from "@aws-cdk/aws-stepfunctions-tasks";
-import {Choice, Condition, IntegrationPattern, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
+import {
+    DynamoAttributeValue, DynamoGetItem,
+    DynamoPutItem,
+    LambdaInvoke,
+    StepFunctionsStartExecution
+} from "@aws-cdk/aws-stepfunctions-tasks";
+import {
+    Choice,
+    Condition,
+    IntegrationPattern,
+    JsonPath,
+    Map,
+    Pass,
+    Result,
+    StateMachine
+} from "@aws-cdk/aws-stepfunctions";
 import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
 import {Policy, PolicyStatement} from "@aws-cdk/aws-iam";
+import {Table} from "@aws-cdk/aws-dynamodb";
+import {Key} from "@aws-cdk/aws-kms";
 
 
 interface ExperimentRunnerProps {
     commonFunctions: CommonFunctions;
     benchmarkRunnerWorkflow: StateMachine;
+    dataTable: Table;
+    key: Key;
 }
 
 /**
@@ -125,32 +143,81 @@ export class ExperimentRunner extends Construct {
             }),
             comment: "Run DDL Query on platform",
             resultPath: JsonPath.DISCARD,
-        }))).next(new Choice(this, 'Copy dataset to the platform?', {
+        }))).next(new Pass(this, 'Prepare unique copy key', {
+            parameters: {
+                "id.$": "States.Format('{}#{}#copy',$.platformLambdaOutput.stackName,$.workloadConfig.name)"
+            },
+            resultPath: "$.copyKey"
+        })).next(new Choice(this, 'Copy dataset to the platform?', {
             comment: "Evaluate user choice of copying dataset to the platform"
-        }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new LambdaInvoke(this, 'Yes, Run data copier', {
-            lambdaFunction: props.commonFunctions.dataCopier,
-            comment: "Copy dataset from workload config path to the platform",
+        }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new DynamoGetItem(this, 'Yes, Get data copy status', {
+            key: {"PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id"))},
+            table: props.dataTable,
+            resultPath: "$.copyStatus"
+        }).next(new Choice(this, 'Data already copied?', {
+            comment: "Check if data already copied or not"
+        }).when(Condition.or(Condition.isNotPresent("$.copyStatus.Item"), Condition.booleanEquals("$.copyStatus.Item.DATA_COPIED.BOOL", false)), new LambdaInvoke(this, 'No, Fetch list of tables to copy', {
+            lambdaFunction: props.commonFunctions.stepFunctionHelpers,
             payload: TaskInput.fromObject({
-                "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                "dataset.$": "$.workloadConfig.settings.volume",
-                "sessionId": "COPY",
-                "stackName.$": "$.platformLambdaOutput.stackName"
+                "method": "listS3Directories",
+                "parameters": {
+                    "basePath.$": "$.workloadConfig.settings.volume.path"
+                }
             }),
+            comment: "Fetch DDL SQL scripts from S3 path as Map items",
+            resultPath: "$.tablesToCopy",
+        }).next(new Map(this, 'Parallel table copy', {
+            comment: "Copy table in parallel",
+            itemsPath: "$.tablesToCopy.Payload.paths",
+            maxConcurrency: 5,
+            parameters: {
+                "tableDataPath.$": "$$.Map.Item.Value",
+                "platformLambdaOutput.$": "$.platformLambdaOutput",
+                "volume.$": "$.workloadConfig.settings.volume"
+            },
             resultPath: JsonPath.DISCARD,
-        }).next(runBenchmarkingForUsers))
+        }).iterator(new LambdaInvoke(this, 'Run data copier', {
+            lambdaFunction: props.commonFunctions.platformLambdaProxy,
+            comment: "Copy dataset from table path to the platform",
+            payload: TaskInput.fromObject({
+                "stackName.$": "$.platformLambdaOutput.stackName",
+                "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
+                "proxyToken.$": "$.tableDataPath",
+                "proxyPayload": {
+                    "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                    "tableDataPath.$": "$.tableDataPath",
+                    "volume.$": "$.volume",
+                    "sessionId": "COPY"
+                },
+                "token": JsonPath.taskToken
+            }),
+            timeout: Duration.hours(1),
+            integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
+            resultPath: JsonPath.DISCARD,
+        }))).next(new DynamoPutItem(this, 'Mark data copy success', {
+            item: {
+                "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
+                "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
+            },
+            table: props.dataTable,
+            resultPath: JsonPath.DISCARD
+        })).next(runBenchmarkingForUsers))
+            .otherwise(runBenchmarkingForUsers)))
             .otherwise(runBenchmarkingForUsers));
 
         // Define step function flow
         this.workflow = new StateMachine(this, 'Workflow', {
             definition: experimentRunnerDefinition
         });
+        props.key.grantDecrypt(this.workflow);
 
         let policy = new Policy(this, 'TaskStatusUpdatePolicy');
         policy.addStatements(
             new PolicyStatement({
-                actions: ["states:SendTaskSuccess"],
+                actions: ["states:SendTaskSuccess", "states:SendTaskFailure"],
                 resources: ["*"]
             }));
         props.commonFunctions.createDestroyPlatform.role?.attachInlinePolicy(policy);
+        props.commonFunctions.platformLambdaProxy.role?.attachInlinePolicy(policy);
     }
 }

@@ -2,6 +2,7 @@ import json
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 
 cf = boto3.client("cloudformation")
 dynamodb = boto3.client("dynamodb")
@@ -37,7 +38,7 @@ def create_stack(platform_config, stack_name, token):
         response = cf.describe_stacks(StackName=stack_name)
         print("Stack " + stack_name + " already exists. Skipping creation.")
         sfn_respond(stack_name, response)
-    except cf.exceptions.AlreadyExistsException:
+    except ClientError:
         for key, value in platform_config["settings"].items():
             if type(value) == dict:
                 for k, v in value.items():
@@ -103,7 +104,7 @@ def handle_stack_create_complete(record):
 
 
 def sfn_respond(stack_name, describe_stack_response=None):
-    secret_ids = {"secretIds": [], "stackName": stack_name}
+    secret_ids = {"secretIds": [], "stackName": stack_name, "dataCopierLambda": "None"}
     token = fetch_and_delete_task_token(stack_name)
     if token is not None:
         stack_response = describe_stack_response
@@ -113,6 +114,9 @@ def sfn_respond(stack_name, describe_stack_response=None):
         for output in outputs:
             if output["OutputKey"].startswith("SecretId"):
                 secret_ids["secretIds"].append(output["OutputValue"])
+            if output["OutputKey"] == "DataCopierLambdaArn":
+                secret_ids["dataCopierLambda"] = output["OutputValue"]
+
         print("Sending task success to Step function with payload: " + json.dumps(secret_ids))
         sfn.send_task_success(taskToken=token, output=json.dumps(secret_ids))
     else:
