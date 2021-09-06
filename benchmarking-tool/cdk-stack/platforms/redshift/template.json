@@ -308,7 +308,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::ImportValue": "Benchmarking::Exec::FunctionArn"
+                      "Fn::ImportValue": "Benchmarking::Exec::QueryFunctionArn"
                     },
                     {
                       "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
@@ -364,7 +364,7 @@
               "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
             },
             "QueryFunctionArn": {
-              "Fn::ImportValue": "Benchmarking::Exec::FunctionArn"
+              "Fn::ImportValue": "Benchmarking::Exec::QueryFunctionArn"
             }
           }
         }

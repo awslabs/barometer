@@ -118,7 +118,7 @@ export class BenchmarkingStack extends cdk.Stack {
         });
         new CfnOutput(this, 'QueryRunnerLambdaArn', {
             value: commonFunctions.jdbcQueryRunner.functionArn,
-            exportName: "Benchmarking::Exec::FunctionArn"
+            exportName: "Benchmarking::Exec::QueryFunctionArn"
         });
         new CfnOutput(this, 'ProxyLambdaArn', {
             value: commonFunctions.platformLambdaProxy.functionArn,

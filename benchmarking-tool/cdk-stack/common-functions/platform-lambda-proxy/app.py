@@ -11,11 +11,12 @@ sfn = boto3.client("stepfunctions")
 
 def lambda_handler(event, context):
     stack_name = event["stackName"]
+    proxy_token = event["proxyToken"]
     lambda_fn = event["lambdaFunction"].split(":")
     proxy_lambda = lambda_fn[-1]
 
     if "status" in event:
-        token = fetch_and_delete_task_token(stack_name, proxy_lambda)
+        token = fetch_and_delete_task_token(stack_name, proxy_lambda, proxy_token)
         if event["status"] == "SUCCESS":
             print("Notifying task success to step function payload: " + json.dumps(event))
             sfn.send_task_success(taskToken=token, output=json.dumps(event))
@@ -24,9 +25,9 @@ def lambda_handler(event, context):
             error = event["error"][:250] + (event["error"][250:] and '..')
             sfn.send_task_failure(taskToken=token, error=error, cause=event["cause"])
     else:
-        save_task_token(stack_name, proxy_lambda, event["token"])
+        save_task_token(stack_name, proxy_lambda, event["token"], proxy_token)
         print("Task token saved to dynamodb. Invoking " + proxy_lambda)
-        payload = {"data": event["proxyPayload"], "stackName": stack_name}
+        payload = {"data": event["proxyPayload"], "stackName": stack_name, "proxyToken": proxy_token}
         print("Payload: " + json.dumps(payload))
         response = fn.invoke(FunctionName=proxy_lambda, LogType='Tail',
                              InvocationType='Event',
@@ -34,16 +35,16 @@ def lambda_handler(event, context):
         print("Proxy lambda response: " + str(response["StatusCode"]))
 
 
-def save_task_token(stack_name, proxy_lambda, token):
-    key = stack_name + "#" + proxy_lambda
+def save_task_token(stack_name, proxy_lambda, token, proxy_token):
+    key = stack_name + "#" + proxy_lambda + "#" + proxy_token
     print("Saving token for proxy invoke: " + key)
     dynamodb.put_item(TableName=os.environ["DataTableName"],
                       Item={"PK": {"S": hashlib.md5(key.encode('utf-8')).hexdigest()}, "value": {"S": token}})
 
 
-def fetch_and_delete_task_token(stack_name, proxy_lambda):
+def fetch_and_delete_task_token(stack_name, proxy_lambda, proxy_token):
     token = None
-    key = stack_name + "#" + proxy_lambda
+    key = stack_name + "#" + proxy_lambda + "#" + proxy_token
     print("Fetching token for proxy invoke: " + key)
     token_response = dynamodb.delete_item(TableName=os.environ["DataTableName"],
                                           Key={"PK": {"S": hashlib.md5(key.encode('utf-8')).hexdigest()}},

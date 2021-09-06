@@ -4,6 +4,17 @@ from urllib.parse import urlparse
 s3 = boto3.client("s3")
 
 
+def list_s3_directories(params):
+    base_path = params["basePath"]
+    s3_path = urlparse(base_path, allow_fragments=False)
+    response = {"paths": []}
+    paginator = s3.get_paginator('list_objects')
+    for result in paginator.paginate(Bucket=s3_path.netloc, Delimiter='/', Prefix=s3_path.path.lstrip('/')):
+        for prefix in result.get('CommonPrefixes'):
+            response["paths"].append("s3://" + s3_path.netloc + "/" + prefix.get('Prefix'))
+    return response
+
+
 def list_s3_paths(params):
     base_path = params["basePath"]
     extension = params["extension"]
@@ -32,3 +43,6 @@ def lambda_handler(event, context):
 
     if event["method"] == "getUserSessionAsMapItems":
         return get_user_session_as_map_items(event["parameters"])
+
+    if event["method"] == "listS3Directories":
+        return list_s3_directories(event["parameters"])

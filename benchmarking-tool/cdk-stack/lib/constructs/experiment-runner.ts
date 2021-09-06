@@ -156,23 +156,45 @@ export class ExperimentRunner extends Construct {
             resultPath: "$.copyStatus"
         }).next(new Choice(this, 'Data already copied?', {
             comment: "Check if data already copied or not"
-        }).when(Condition.or(Condition.isNotPresent("$.copyStatus.Item"), Condition.booleanEquals("$.copyStatus.Item.DATA_COPIED.BOOL", false)), new LambdaInvoke(this, 'No, Run data copier', {
+        }).when(Condition.or(Condition.isNotPresent("$.copyStatus.Item"), Condition.booleanEquals("$.copyStatus.Item.DATA_COPIED.BOOL", false)), new LambdaInvoke(this, 'No, Fetch list of tables to copy', {
+            lambdaFunction: props.commonFunctions.stepFunctionHelpers,
+            payload: TaskInput.fromObject({
+                "method": "listS3Directories",
+                "parameters": {
+                    "basePath.$": "$.workloadConfig.settings.volume.path"
+                }
+            }),
+            comment: "Fetch DDL SQL scripts from S3 path as Map items",
+            resultPath: "$.tablesToCopy",
+        }).next(new Map(this, 'Parallel table copy', {
+            comment: "Copy table in parallel",
+            itemsPath: "$.tablesToCopy.Payload.paths",
+            maxConcurrency: 5,
+            parameters: {
+                "tableDataPath.$": "$$.Map.Item.Value",
+                "platformLambdaOutput.$": "$.platformLambdaOutput",
+                "volume.$": "$.workloadConfig.settings.volume"
+            },
+            resultPath: JsonPath.DISCARD,
+        }).iterator(new LambdaInvoke(this, 'Run data copier', {
             lambdaFunction: props.commonFunctions.platformLambdaProxy,
-            comment: "Copy dataset from workload config path to the platform",
+            comment: "Copy dataset from table path to the platform",
             payload: TaskInput.fromObject({
                 "stackName.$": "$.platformLambdaOutput.stackName",
                 "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
+                "proxyToken.$": "$.tableDataPath",
                 "proxyPayload": {
                     "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                    "dataset.$": "$.workloadConfig.settings.volume",
+                    "tableDataPath.$": "$.tableDataPath",
+                    "volume.$": "$.volume",
                     "sessionId": "COPY"
                 },
                 "token": JsonPath.taskToken
             }),
-            timeout: Duration.minutes(30),
+            timeout: Duration.hours(1),
             integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             resultPath: JsonPath.DISCARD,
-        }).next(new DynamoPutItem(this, 'Mark data copy success', {
+        }))).next(new DynamoPutItem(this, 'Mark data copy success', {
             item: {
                 "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
                 "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
@@ -187,7 +209,7 @@ export class ExperimentRunner extends Construct {
         this.workflow = new StateMachine(this, 'Workflow', {
             definition: experimentRunnerDefinition
         });
-        props.key.grantEncryptDecrypt(this.workflow);
+        props.key.grantDecrypt(this.workflow);
 
         let policy = new Policy(this, 'TaskStatusUpdatePolicy');
         policy.addStatements(
