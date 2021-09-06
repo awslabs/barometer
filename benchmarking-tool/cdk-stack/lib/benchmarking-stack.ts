@@ -85,7 +85,9 @@ export class BenchmarkingStack extends cdk.Stack {
         let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {commonFunctions: commonFunctions});
         new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
-            benchmarkRunnerWorkflow: benchmarkRunner.workflow
+            benchmarkRunnerWorkflow: benchmarkRunner.workflow,
+            dataTable: dataTable,
+            key: key
         });
 
         let today = new Date().toISOString().slice(0, 10);

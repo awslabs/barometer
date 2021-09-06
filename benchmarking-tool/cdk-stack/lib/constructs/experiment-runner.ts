@@ -1,14 +1,32 @@
 import {Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
-import {LambdaInvoke, StepFunctionsStartExecution} from "@aws-cdk/aws-stepfunctions-tasks";
-import {Choice, Condition, IntegrationPattern, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
+import {
+    DynamoAttributeValue, DynamoGetItem,
+    DynamoPutItem,
+    LambdaInvoke,
+    StepFunctionsStartExecution
+} from "@aws-cdk/aws-stepfunctions-tasks";
+import {
+    Choice,
+    Condition,
+    IntegrationPattern,
+    JsonPath,
+    Map,
+    Pass,
+    Result,
+    StateMachine
+} from "@aws-cdk/aws-stepfunctions";
 import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
 import {Policy, PolicyStatement} from "@aws-cdk/aws-iam";
+import {Table} from "@aws-cdk/aws-dynamodb";
+import {Key} from "@aws-cdk/aws-kms";
 
 
 interface ExperimentRunnerProps {
     commonFunctions: CommonFunctions;
     benchmarkRunnerWorkflow: StateMachine;
+    dataTable: Table;
+    key: Key;
 }
 
 /**
@@ -125,9 +143,20 @@ export class ExperimentRunner extends Construct {
             }),
             comment: "Run DDL Query on platform",
             resultPath: JsonPath.DISCARD,
-        }))).next(new Choice(this, 'Copy dataset to the platform?', {
+        }))).next(new Pass(this, 'Prepare unique copy key', {
+            parameters: {
+                "id.$": "States.Format('{}#{}#copy',$.platformLambdaOutput.stackName,$.workloadConfig.name)"
+            },
+            resultPath: "$.copyKey"
+        })).next(new Choice(this, 'Copy dataset to the platform?', {
             comment: "Evaluate user choice of copying dataset to the platform"
-        }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new LambdaInvoke(this, 'Yes, Run data copier', {
+        }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new DynamoGetItem(this, 'Yes, Get data copy status', {
+            key: {"PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id"))},
+            table: props.dataTable,
+            resultPath: "$.copyStatus"
+        }).next(new Choice(this, 'Data already copied?', {
+            comment: "Check if data already copied or not"
+        }).when(Condition.or(Condition.isNotPresent("$.copyStatus.Item"), Condition.booleanEquals("$.copyStatus.Item.DATA_COPIED.BOOL", false)), new LambdaInvoke(this, 'No, Run data copier', {
             lambdaFunction: props.commonFunctions.platformLambdaProxy,
             comment: "Copy dataset from workload config path to the platform",
             payload: TaskInput.fromObject({
@@ -143,13 +172,22 @@ export class ExperimentRunner extends Construct {
             timeout: Duration.minutes(30),
             integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             resultPath: JsonPath.DISCARD,
-        }).next(runBenchmarkingForUsers))
+        }).next(new DynamoPutItem(this, 'Mark data copy success', {
+            item: {
+                "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
+                "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
+            },
+            table: props.dataTable,
+            resultPath: JsonPath.DISCARD
+        })).next(runBenchmarkingForUsers))
+            .otherwise(runBenchmarkingForUsers)))
             .otherwise(runBenchmarkingForUsers));
 
         // Define step function flow
         this.workflow = new StateMachine(this, 'Workflow', {
             definition: experimentRunnerDefinition
         });
+        props.key.grantEncryptDecrypt(this.workflow);
 
         let policy = new Policy(this, 'TaskStatusUpdatePolicy');
         policy.addStatements(

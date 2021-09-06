@@ -19,7 +19,10 @@
     "settings": {
       "volume": {
         "name": "1 GB",
-        "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb-scale-factor/parquet/"
+        "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
+        "format": "csv",
+        "compression": "gzip",
+        "delimiter": "|"
       },
       "ddl": {
         "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift/"

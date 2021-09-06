@@ -2,7 +2,7 @@ create table if not exists dbgen_version
 (
     dv_version                varchar(32),
     dv_create_date            date       ,
-    dv_create_time            timestamp,
+    dv_create_time            varchar(32),
     dv_cmdline_args           varchar(200)                  
 );
 

@@ -14,8 +14,19 @@ redshift_copy_role_arn = os.environ["RedshiftCopyRoleArn"]
 
 def lambda_handler(event, context):
     dataset = event["data"]["dataset"]["path"]
+    data_format = event["data"]["dataset"]["format"].lower()
     secret_id = event["data"]["secretId"]
     session_id = event["data"]["sessionId"]
+
+    query_template = "COPY $table FROM '$path' iam_role '" + redshift_copy_role_arn + "'"
+
+    if "compression" in event["data"]["dataset"]:
+        query_template += " " + event["data"]["dataset"]["compression"]
+    else:
+        query_template += " FORMAT AS " + data_format
+    if "delimiter" in event["data"]["dataset"]:
+        query_template += " DELIMITER AS '" + event["data"]["dataset"]["delimiter"] + "'"
+    query_template += " ACCEPTINVCHARS"
 
     # List tables to load
     s3_path = urlparse(dataset, allow_fragments=False)
@@ -31,8 +42,8 @@ def lambda_handler(event, context):
             if folder not in folders:
                 # Remember folder & prepare the query
                 folders.append(folder)
-                query = "COPY " + folder + " FROM 's3://" + s3_path.netloc + "/" + prefix.get(
-                    'Prefix') + "' iam_role '" + redshift_copy_role_arn + "' FORMAT AS PARQUET;"
+                query = query_template.replace("$table", folder) \
+                    .replace("$path", "s3://" + s3_path.netloc + "/" + prefix.get('Prefix'))
 
                 print("Submitting query: " + query + " User: " + secret_id)
                 payload = {

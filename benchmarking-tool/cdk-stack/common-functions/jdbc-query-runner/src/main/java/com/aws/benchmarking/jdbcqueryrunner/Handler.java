@@ -97,7 +97,8 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         dimensions.add(new Dimension().withName("SESSION_ID").withValue(response.getSessionId()));
         dimensions.add(new Dimension().withName("SECRET_ID").withValue(response.getSecretId()));
         dimensions.add(new Dimension().withName("STACK_NAME").withValue(response.getStackName()));
-        dimensions.add(new Dimension().withName("SCRIPT_PATH").withValue(response.getScriptPath()));
+        String scriptPath = response.getScriptPath();
+        dimensions.add(new Dimension().withName("SCRIPT_PATH").withValue(scriptPath == null ? "DIRECT_QUERY" : scriptPath));
 
         PutMetricDataRequest request = new PutMetricDataRequest()
                 .withNamespace("Benchmarking")

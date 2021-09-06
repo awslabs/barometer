@@ -5,11 +5,16 @@
   "volumes": [
     {
       "name": "100 GB",
-      "path": "s3://datalab-bucket/tpc/tpc-h/v3/100g/pipe-separated/"
+      "path": "s3://datalab-bucket/tpc/tpc-h/v3/100g/pipe-separated/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
     },
     {
       "name": "3 TB",
-      "path": "s3://datalab-bucket/tpc/tpc-h/v3/3t/pipe-separated/"
+      "path": "s3://datalab-bucket/tpc/tpc-h/v3/3t/parquet/",
+      "format": "parquet",
+      "compression": "snappy"
     }
   ],
   "ddl": {
