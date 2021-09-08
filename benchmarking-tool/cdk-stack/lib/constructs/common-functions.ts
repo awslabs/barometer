@@ -88,8 +88,16 @@ export class CommonFunctions extends Construct {
         this.dashboardBuilder = new Function(this, "dashboardBuilder", {
             code: Code.fromAsset(commonFunctionsDirPath + "dashboard-builder"),
             handler: "app.lambda_handler",
-            runtime: Runtime.PYTHON_3_8
+            runtime: Runtime.PYTHON_3_8,
+            environment: {
+                SummaryDashboardName: "BenchmarkingExperimentsSummary",
+                ExperimentDashboardPrefix: "BenchmarkingExperiment-"
+            }
         });
+        this.dashboardBuilder.addToRolePolicy(new PolicyStatement({
+            actions: ["cloudwatch:GetDashboard", "cloudwatch:PutDashboard"],
+            resources: ["arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperimentsSummary", "arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperiment-*"]
+        }));
 
         this.platformLambdaProxy = new Function(this, "platformLambdaProxy", {
             code: Code.fromAsset(commonFunctionsDirPath + "platform-lambda-proxy"),

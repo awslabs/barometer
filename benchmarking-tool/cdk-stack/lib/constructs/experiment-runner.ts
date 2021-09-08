@@ -1,21 +1,13 @@
 import {Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
 import {
-    DynamoAttributeValue, DynamoGetItem,
+    DynamoAttributeValue,
+    DynamoGetItem,
     DynamoPutItem,
     LambdaInvoke,
     StepFunctionsStartExecution
 } from "@aws-cdk/aws-stepfunctions-tasks";
-import {
-    Choice,
-    Condition,
-    IntegrationPattern,
-    JsonPath,
-    Map,
-    Pass,
-    Result,
-    StateMachine
-} from "@aws-cdk/aws-stepfunctions";
+import {Choice, Condition, IntegrationPattern, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
 import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
 import {Policy, PolicyStatement} from "@aws-cdk/aws-iam";
 import {Table} from "@aws-cdk/aws-dynamodb";
@@ -58,30 +50,47 @@ export class ExperimentRunner extends Construct {
 
         // Get user sessions & run benchmarking queries for each of them
         const runBenchmarkingForUsers = getUserSessionAsMapItems
+            .next(new LambdaInvoke(this, 'Fetch benchmarking SQL scripts S3 paths', {
+                lambdaFunction: props.commonFunctions.stepFunctionHelpers,
+                payload: TaskInput.fromObject({
+                    "method": "listS3Paths",
+                    "parameters": {
+                        "basePath.$": "$.workloadConfig.settings.queries.path",
+                        "extension": ".sql"
+                    }
+                }),
+                comment: "Fetch DDL SQL scripts from S3 path as Map items",
+                resultPath: "$.queries",
+            }))
             .next(new Map(this, 'User sessions', {
                 maxConcurrency: 2, // TODO: Find a way to pass this dynamically based on $.concurrentSessionCount
                 resultPath: JsonPath.DISCARD,
                 itemsPath: "$.userSessionsOutput.Payload.userSessions",
                 parameters: {
-                    "workloadConfig.$": "$.workloadConfig",
                     "platformLambdaOutput.$": "$.platformLambdaOutput",
                     "secretId.$": "$$.Map.Item.Value.secretId",
-                    "sessionId.$": "$$.Map.Item.Value.sessionId"
+                    "sessionId.$": "$$.Map.Item.Value.sessionId",
+                    "queries.$": "$.queries.Payload.paths"
                 }
             }).iterator(new StepFunctionsStartExecution(this, 'Run Benchmarking', {
                 stateMachine: props.benchmarkRunnerWorkflow,
+                integrationPattern: IntegrationPattern.RUN_JOB,
                 input: TaskInput.fromObject({
-                    "workloadConfig.$": "$.workloadConfig",
                     "secretId.$": "$.secretId",
                     "sessionId.$": "$.sessionId",
-                    "stackName.$": "$.platformLambdaOutput.stackName"
+                    "stackName.$": "$.platformLambdaOutput.stackName",
+                    "queries.$": "$.queries"
                 }),
                 resultPath: JsonPath.DISCARD
             }))).next(new LambdaInvoke(this, 'Prepare Dashboards', {
                 lambdaFunction: props.commonFunctions.dashboardBuilder,
                 comment: "Prepares cloudwatch/quicksight dashboard to show recorded data to the user",
                 payload: TaskInput.fromObject({
-                    "stackName.$": "$.platformLambdaOutput.stackName"
+                    "stackName.$": "$.platformLambdaOutput.stackName",
+                    "userSessions.$": "$.userSessionsOutput.Payload.userSessions",
+                    "experimentName.$": "States.Format('{}-{}',$.workloadConfig.name, $.platformConfig.platformType)",
+                    "queries.$": "$.queries.Payload.paths",
+                    "ddlQueries.$": "$.ddlScripts.Payload.paths"
                 }),
                 resultPath: JsonPath.DISCARD,
             })).next(new Choice(this, 'Keep infrastructure?', {
