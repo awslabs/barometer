@@ -2,8 +2,6 @@ echo "Building JDBC function"
 cd ./common-functions/jdbc-query-runner
 mvn clean install
 cd ../..
-echo "Infrastructure Diff"
-cdk diff BenchmarkingStack
 echo "Deploying Infrastructure"
 cdk deploy BenchmarkingStack
 DATA_BUCKET=$(aws cloudformation describe-stacks --stack-name BenchmarkingStack | jq -r '.Stacks[0].Outputs[] | select(.OutputKey == "DataBucketName") | .OutputValue')

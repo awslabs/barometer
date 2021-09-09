@@ -1,5 +1,8 @@
 import {CLIModule} from '../../common/cli-module';
 import {Configuration} from '../../../impl/configuration';
+import {CloudFormationClient, DescribeStacksCommand} from "@aws-sdk/client-cloudformation";
+import {SFN, StartExecutionCommand} from "@aws-sdk/client-sfn";
+import open from "open";
 
 export class Module {
     public static getInstance(configuration: Configuration): ExperimentModule {
@@ -8,6 +11,10 @@ export class Module {
 }
 
 export class ExperimentModule extends CLIModule {
+
+    cloudFormationClient = new CloudFormationClient({});
+    sfn = new SFN({});
+
     /**
      * Questions to be prompted
      */
@@ -39,11 +46,50 @@ export class ExperimentModule extends CLIModule {
             return choices;
         };
         await this.askQuestions(_questions).then(async (answers) => {
-            const experiment = this.configuration.experiments[answers.experimentName];
-            console.log(experiment.settings);
+            const experiment = this.configuration.experiments[answers.experimentName].settings;
+            let stepFunctionArn;
+            try {
+                const commandOutput = await this.cloudFormationClient.send(new DescribeStacksCommand({StackName: "BenchmarkingStack"}));
+                if (commandOutput.Stacks && commandOutput.Stacks[0].Outputs) {
+                    for (let i = 0; i < commandOutput.Stacks[0].Outputs.length; i++) {
+                        if (commandOutput.Stacks[0].Outputs[i].OutputKey == "ExperimentRunnerArn") {
+                            stepFunctionArn = commandOutput.Stacks[0].Outputs[i].OutputValue;
+                        }
+                    }
+                }
+            } catch (e) {
+                if (e.name == "ValidationError") {
+                    // Stack doesn't exists
+                    this.printInfo();
+                }
+            }
+
+            if (stepFunctionArn) {
+                // Start step function execution
+                const startExecutionCmd = new StartExecutionCommand({
+                    stateMachineArn: stepFunctionArn,
+                    input: JSON.stringify(experiment)
+                });
+                const output = await this.sfn.send(startExecutionCmd);
+                console.log("Experiment run started at - " + output.startDate);
+                const executionUrl = "https://console.aws.amazon.com/states/home#/executions/details/" + output.executionArn;
+                const dashboardUrl = "https://console.aws.amazon.com/cloudwatch/home#dashboards:name=BenchmarkingExperiment-"
+                    + experiment.workloadConfig.settings.name.replace("/", "_") + "-"
+                    + experiment.platformConfig.platformType;
+                console.log("Visit this link to see execution: " + executionUrl);
+                console.log("Visit this link to see dashboard: " + dashboardUrl);
+                await open(executionUrl);
+            } else this.printInfo();
+
             return answers;
         });
-        this.nextstep = 'exit-module';
+
+        this.nextstep = 'exit';
         return [this.nextstep, this.configuration];
+    }
+
+    printInfo(): void {
+        console.log("Benchmarking stack doesn't exist.. Please deploy it first using following command");
+        console.log("cd ../cdk-stack && ./deploy.sh");
     }
 }

@@ -48,11 +48,14 @@
     "@aws-cdk/aws-athena": "^1.115.0",
     "@aws-cdk/aws-redshift": "^1.115.0",
     "@aws-cdk/core": "1.114.0",
+    "@aws-sdk/client-cloudformation": "^3.30.0",
+    "@aws-sdk/client-sfn": "^3.30.0",
     "inquirer": "^8.1.2",
     "joi": "^17.4.0",
     "lodash": "^4.17.21",
     "prompts": "^2.4.1",
     "source-map-support": "^0.5.19",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "open": "^8.2.1"
   }
 }

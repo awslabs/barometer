@@ -5,6 +5,7 @@ import {CLIModuleQuestions} from "../common/cli-prompts";
 import fs from "fs";
 import {LoadMethod, WorkloadConfiguration, WorkloadSettings} from "../../impl/workload";
 import path = require('path');
+import {Utils} from "../utils";
 
 export class Module {
     public static getInstance(configuration: Configuration): WorkloadModule {
@@ -53,7 +54,7 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
 
         // Scan workload directory to load all supported workloads
         const workloadDirPath: string = path.join(__dirname, '../../../../../cdk-stack/workloads/');
-        const workloadConfigDirs = listPaths(workloadDirPath, true);
+        const workloadConfigDirs = Utils.listPaths(workloadDirPath, true);
         for (let i = 0; i < workloadConfigDirs.length; i++) {
             const config = JSON.parse(fs.readFileSync(workloadDirPath + workloadConfigDirs[i] + "/config.json", 'utf-8'));
             datasetQuestion["choices"].push({name: config.description, value: config});
@@ -84,12 +85,4 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
         }
         return [this.nextstep, this.configuration];
     }
-}
-
-function listPaths(path: string, directoriesOnly = false) {
-    return fs.readdirSync(path).filter(function (file) {
-        let doFilter = true;
-        if (directoriesOnly) doFilter = fs.statSync(path + '/' + file).isDirectory();
-        return doFilter;
-    });
 }
