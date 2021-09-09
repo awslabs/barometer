@@ -40,7 +40,7 @@ export class ExperimentModule extends CLIModule {
         };
         await this.askQuestions(_questions).then(async (answers) => {
             const experiment = this.configuration.experiments[answers.experimentName];
-            experiment.settings;
+            console.log(experiment.settings);
             return answers;
         });
         this.nextstep = 'exit-module';

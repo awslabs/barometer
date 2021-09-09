@@ -1,5 +1,5 @@
-import { NodeType } from "@aws-cdk/aws-redshift";
-import { IPlatformConfiguration } from '../../platform';
+import {NodeType} from "@aws-cdk/aws-redshift";
+import {IPlatformConfiguration} from '../../platform';
 
 export interface IRedshiftPlatformConfiguration extends IPlatformConfiguration {
     settings: IRedshiftSettings;

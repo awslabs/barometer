@@ -13,5 +13,6 @@ export enum PlatformTypeName {
 export interface IPlatformConfiguration extends IConfigurationItem {
 
     platformType: PlatformType;
+    loadDataset: boolean;
 
 }

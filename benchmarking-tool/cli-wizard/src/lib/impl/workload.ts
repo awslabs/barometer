@@ -11,6 +11,11 @@ export class WorkloadConfiguration extends ConfigurationItem implements IWorkloa
     }
 }
 
+export enum LoadMethod {
+    COPY = "copy",
+    DIRECT = "direct"
+}
+
 export class WorkloadSettings implements IWorkloadSettings {
     volume!: Volume;
     loadMethod!: string;

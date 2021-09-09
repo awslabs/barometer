@@ -4,6 +4,7 @@ import {ConfigurationItem} from "./configuration";
 
 export class PlatformConfiguration extends ConfigurationItem implements IPlatformConfiguration {
     platformType!: PlatformType;
+    loadDataset!: boolean;
 
     constructor() {
         super();

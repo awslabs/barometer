@@ -3,7 +3,7 @@ import {Configuration} from '../../impl/configuration';
 import {CLIModule, ICLIModule} from '../common/cli-module';
 import {CLIModuleQuestions} from "../common/cli-prompts";
 import fs from "fs";
-import {WorkloadConfiguration, WorkloadSettings} from "../../impl/workload";
+import {LoadMethod, WorkloadConfiguration, WorkloadSettings} from "../../impl/workload";
 import path = require('path');
 
 export class Module {
@@ -40,8 +40,8 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
             name: 'loadMethod',
             message: 'How do you want to import the data ?',
             choices: [
-                {name: 'Import directly from the source bucket', value: 'direct'},
-                {name: 'Make a copy in a local S3 bucket first', value: 'copy'},
+                {name: 'Import directly from the source bucket', value: LoadMethod.DIRECT},
+                {name: 'Make a copy in a local S3 bucket first', value: LoadMethod.COPY},
             ],
         });
     }

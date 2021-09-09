@@ -88,7 +88,7 @@ export class ExperimentRunner extends Construct {
                 payload: TaskInput.fromObject({
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "userSessions.$": "$.userSessionsOutput.Payload.userSessions",
-                    "experimentName.$": "States.Format('{}-{}',$.workloadConfig.name, $.platformConfig.platformType)",
+                    "experimentName.$": "States.Format('{}-{}',$.workloadConfig.settings.name, $.platformConfig.platformType)",
                     "queries.$": "$.queries.Payload.paths",
                     "ddlQueries.$": "$.ddlScripts.Payload.paths"
                 }),
@@ -154,12 +154,12 @@ export class ExperimentRunner extends Construct {
             resultPath: JsonPath.DISCARD,
         }))).next(new Pass(this, 'Prepare unique copy key', {
             parameters: {
-                "id.$": "States.Format('{}#{}#copy',$.platformLambdaOutput.stackName,$.workloadConfig.name)"
+                "id.$": "States.Format('{}#{}#copy',$.platformLambdaOutput.stackName,$.workloadConfig.settings.name)"
             },
             resultPath: "$.copyKey"
         })).next(new Choice(this, 'Copy dataset to the platform?', {
             comment: "Evaluate user choice of copying dataset to the platform"
-        }).when(Condition.stringEquals("$.workloadConfig.settings.loadMethod", "copy"), new DynamoGetItem(this, 'Yes, Get data copy status', {
+        }).when(Condition.booleanEquals("$.platformConfig.loadDataset", true), new DynamoGetItem(this, 'Yes, Get data copy status', {
             key: {"PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id"))},
             table: props.dataTable,
             resultPath: "$.copyStatus"
