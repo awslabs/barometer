@@ -25,7 +25,7 @@ export class RedshiftModule extends CLIModule {
       choices: async (): Promise<any> => {
         const choices: Array<any> = [];
         for (const _key in NodeType) {
-          choices.push({ name: NodeType[_key], value: _key });
+          choices.push({ name: NodeType[_key], value: NodeType[_key] });
         }
         return choices.sort();
       },
