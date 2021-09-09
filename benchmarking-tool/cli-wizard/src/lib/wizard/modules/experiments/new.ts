@@ -1,7 +1,6 @@
 import {CLIModule} from '../../common/cli-module';
 import {Configuration} from '../../../impl/configuration';
 import {ExperimentConfiguration, ExperimentSettings} from '../../../impl/experiment';
-import {WorkloadType} from '../../../interface/workload';
 import {ExecutionMode} from '../../../interface/experiment';
 import {CLIModuleQuestions} from '../../common/cli-prompts';
 
@@ -20,18 +19,6 @@ export class ExperimentModule extends CLIModule {
     setQuestions(): void {
         this.questions = new Array<any>();
         this.questions.push(CLIModuleQuestions.entryName);
-        this.questions.push({
-            type: 'list',
-            name: 'workloadType',
-            message: 'Please select the type of the workload you would like to use.',
-            choices: async (): Promise<any> => {
-                const choices: Array<any> = [];
-                for (const _key in WorkloadType) {
-                    choices.push({name: _key, value: WorkloadType[_key]});
-                }
-                return choices;
-            },
-        });
         this.questions.push({
             type: 'list',
             name: 'workloadName',
@@ -58,13 +45,13 @@ export class ExperimentModule extends CLIModule {
             message: 'Which query execution mode would you like to use ?',
             choices: [
                 {
-                    name: 'Concurrently (all queries are started at the same time)',
-                    value: ExecutionMode.CONCURRENT,
+                    name: 'Sequentially (queries are started one after each other)',
+                    value: ExecutionMode.SEQUENTIAL
                 },
                 {
-                    name: 'Sequentially (queries are started one after each other)',
-                    value: ExecutionMode.SEQUENTIAL,
-                },
+                    name: 'Concurrently (all queries are started at the same time)',
+                    value: ExecutionMode.CONCURRENT,
+                }
             ],
         });
         this.questions.push({
@@ -101,7 +88,7 @@ export class ExperimentModule extends CLIModule {
         platformNamePrompt['choices'] = async (answers): Promise<Array<any>> => {
             const choices: Array<any> = [];
             for (const _key in this.configuration.platforms) {
-                if (this.configuration.platforms[_key].workloadType.includes(answers.workloadType)) {
+                if (this.configuration.workloads[answers.workloadName].settings.supportedPlatforms.includes(this.configuration.platforms[_key].platformType)) {
                     choices.push({
                         name: this.configuration.platforms[_key].name,
                         value: _key,
@@ -125,6 +112,8 @@ export class ExperimentModule extends CLIModule {
             const settings = new ExperimentSettings();
             settings.platformConfig = this.configuration.platforms[answers.platformName];
             settings.workloadConfig = this.configuration.workloads[answers.workloadName];
+            settings.workloadConfig.settings.ddl = this.configuration.workloads[answers.workloadName].settings.ddl[settings.platformConfig.platformType]
+            settings.workloadConfig.settings.queries = this.configuration.workloads[answers.workloadName].settings.queries[settings.platformConfig.platformType]
             settings.concurrentSessionCount = answers.concurrentSessionCount;
             settings.executionMode = answers.executionMode;
             settings.keepInfrastructure = answers.keepInfrastructure;
@@ -132,7 +121,6 @@ export class ExperimentModule extends CLIModule {
             const entry = new ExperimentConfiguration();
             entry.name = answers.name;
             entry.platformType = settings.platformConfig.platformType;
-            entry.workloadType = settings.workloadConfig.workloadType;
             entry.settings = settings;
 
             await this.addEntry(entry);

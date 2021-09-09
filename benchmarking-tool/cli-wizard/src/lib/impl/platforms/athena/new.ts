@@ -1,21 +1,18 @@
-import { IAthenaPlatformConfiguration, IAthenaSettings } from '../../../interface/platforms/athena/new';
+import {IAthenaPlatformConfiguration, IAthenaSettings} from '../../../interface/platforms/athena/new';
 
-import { PlatformType } from '../../../interface/platform';
-import { PlatformConfiguration } from '../../platform';
-import { WorkloadType } from '../../../interface/workload';
+import {PlatformType} from '../../../interface/platform';
+import {PlatformConfiguration} from '../../platform';
 
 export class AthenaPlatformConfiguration extends PlatformConfiguration implements IAthenaPlatformConfiguration {
-  settings!: AthenaSettings;
+    settings!: AthenaSettings;
 
-  constructor() {
-    super();
-    this.platformType = PlatformType.ATHENA;
-    this.workloadType = new Array<WorkloadType>();
-    this.workloadType.push(WorkloadType.OLAP);
-  }
+    constructor() {
+        super();
+        this.platformType = PlatformType.ATHENA;
+    }
 }
 
 export class AthenaSettings implements IAthenaSettings {
-  enforceWorkgroupConfiguration!: boolean;
-  bytesScannedCutoffPerQuery!: number;
+    enforceWorkgroupConfiguration!: boolean;
+    bytesScannedCutoffPerQuery!: number;
 }
