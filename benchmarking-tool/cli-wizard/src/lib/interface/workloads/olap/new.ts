@@ -1,12 +1,28 @@
-import { IWorkloadConfiguration } from "../../workload";
+import {IWorkloadConfiguration} from "../../workload";
 
 export interface IOLAPWorkloadConfiguration extends IWorkloadConfiguration {
     settings: IOLAPWorkloadSettings;
 }
 
 export interface IOLAPWorkloadSettings {
-    dataset: string;
-    scalingFactor: number;
+    name: string;
+    description: string;
+    volume: IVolume;
     loadMethod: string;
-    usePartitioning: boolean;
+    ddl: { [p: string]: IScriptPath };
+    queries: { [p: string]: IScriptPath };
+    supportedPlatforms: Array<string>;
+}
+
+export interface IVolume {
+    name: string;
+    path: string;
+    format: string;
+    compression?: string;
+    delimiter?: string;
+}
+
+
+export interface IScriptPath {
+    path: string;
 }

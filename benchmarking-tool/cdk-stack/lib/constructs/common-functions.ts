@@ -10,7 +10,7 @@ import * as fs from "fs";
 import {Key} from "@aws-cdk/aws-kms";
 import * as AdmZip from "adm-zip";
 
-const path = require('path');
+import path = require('path');
 
 interface CommonFunctionsProps {
     dataBucket: Bucket;
@@ -169,7 +169,7 @@ export class CommonFunctions extends Construct {
     }
 }
 
-function listPaths(path: string, directoriesOnly: boolean = false) {
+function listPaths(path: string, directoriesOnly = false) {
     return fs.readdirSync(path).filter(function (file) {
         let doFilter = true;
         if (directoriesOnly) doFilter = fs.statSync(path + '/' + file).isDirectory();

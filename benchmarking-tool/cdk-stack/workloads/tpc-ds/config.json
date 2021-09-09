@@ -1,0 +1,34 @@
+{
+  "name": "TPC-DS/v3",
+  "description": "TPC-DS v3",
+  "type": "olap",
+  "volumes": [
+    {
+      "name": "1 GB",
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
+    }
+  ],
+  "ddl": {
+    "redshift": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift/"
+    },
+    "redshift-spectrum": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift-spectrum/"
+    }
+  },
+  "queries": {
+    "redshift": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+    },
+    "redshift-spectrum": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+    }
+  },
+  "supportedPlatforms": [
+    "redshift",
+    "redshift-spectrum"
+  ]
+}
