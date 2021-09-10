@@ -9,8 +9,8 @@ import {LambdaSubscription} from "@aws-cdk/aws-sns-subscriptions";
 import * as fs from "fs";
 import {Key} from "@aws-cdk/aws-kms";
 import * as AdmZip from "adm-zip";
-
-const path = require('path');
+import {Utils} from "../utils";
+import path = require('path');
 
 interface CommonFunctionsProps {
     dataBucket: Bucket;
@@ -52,7 +52,7 @@ export class CommonFunctions extends Construct {
         // Allow lambda function to create cloudformation stack
         let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json", props.dataBucket.bucketArn + "/platforms/*/functions/*/code.zip"];
         let invokeFunctionResources = []
-        let platforms = listPaths(platformDirPath, true);
+        let platforms = Utils.listPaths(platformDirPath, true);
         let zip = new AdmZip();
 
         for (let i = 0; i < platforms.length; i++) {
@@ -60,7 +60,7 @@ export class CommonFunctions extends Construct {
             invokeFunctionResources.push("arn:aws:lambda:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":function:" + platforms[i] + "-*");
             // Zip all platform driver jars
             if (fs.existsSync(platformDirPath + platforms[i] + "/driver/")) {
-                let driverJars = listPaths(platformDirPath + platforms[i] + "/driver/");
+                let driverJars = Utils.listPaths(platformDirPath + platforms[i] + "/driver/");
                 for (let j = 0; j < driverJars.length; j++) {
                     zip.addLocalFile(platformDirPath + platforms[i] + "/driver/" + driverJars[j], "java/lib/", driverJars[j]);
                 }
@@ -167,12 +167,4 @@ export class CommonFunctions extends Construct {
             resources: [props.dataBucket.bucketArn]
         }));
     }
-}
-
-function listPaths(path: string, directoriesOnly: boolean = false) {
-    return fs.readdirSync(path).filter(function (file) {
-        let doFilter = true;
-        if (directoriesOnly) doFilter = fs.statSync(path + '/' + file).isDirectory();
-        return doFilter;
-    });
 }

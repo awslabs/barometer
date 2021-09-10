@@ -7,8 +7,8 @@ import {ExperimentRunner} from "./constructs/experiment-runner";
 import {BenchmarkRunner} from "./constructs/benchmark-runner";
 import {
     GatewayVpcEndpointAwsService,
-    InterfaceVpcEndpoint, InterfaceVpcEndpointAwsService,
-    InterfaceVpcEndpointService,
+    InterfaceVpcEndpoint,
+    InterfaceVpcEndpointAwsService,
     SubnetType,
     Vpc
 } from "@aws-cdk/aws-ec2";
@@ -83,7 +83,7 @@ export class BenchmarkingStack extends cdk.Stack {
             key: key
         });
         let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {commonFunctions: commonFunctions});
-        new ExperimentRunner(this, 'ExperimentRunner', {
+        const experimentRunner = new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
             benchmarkRunnerWorkflow: benchmarkRunner.workflow,
             dataTable: dataTable,
@@ -123,6 +123,9 @@ export class BenchmarkingStack extends cdk.Stack {
         new CfnOutput(this, 'ProxyLambdaArn', {
             value: commonFunctions.platformLambdaProxy.functionArn,
             exportName: "Benchmarking::Exec::ProxyFunctionArn"
+        });
+        new CfnOutput(this, 'ExperimentRunnerArn', {
+            value: experimentRunner.workflow.stateMachineArn
         });
         new CfnOutput(this, 'CostExplorer', {
             value: "https://console.aws.amazon.com/cost-management/home?#/custom?groupBy=Service&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&excludeCategorizedResources=false&excludeForecast=false&timeRangeOption=Custom&granularity=Daily&reportName=&reportType=CostUsage&isTemplate=true&startDate=" + today + "&endDate=" + today + "&filter=%5B%7B%22dimension%22:%22TagKeyValue%22,%22values%22:null,%22include%22:true,%22children%22:%5B%7B%22dimension%22:%22aws:cloudformation:stack-name%22,%22values%22:%5B%22BenchmarkingStack%22%5D,%22include%22:true,%22children%22:null%7D%5D%7D,%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack"

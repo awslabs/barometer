@@ -1,14 +1,13 @@
-import { ConfigurationType } from '../interface/configuration';
-import { IPlatformConfiguration, PlatformType } from "../interface/platform";
-import { WorkloadType } from '../interface/workload';
-import { ConfigurationItem } from "./configuration";
+import {ConfigurationType} from '../interface/configuration';
+import {IPlatformConfiguration, PlatformType} from "../interface/platform";
+import {ConfigurationItem} from "./configuration";
 
 export class PlatformConfiguration extends ConfigurationItem implements IPlatformConfiguration {
-  platformType!: PlatformType;
-  workloadType!: Array<WorkloadType>;
+    platformType!: PlatformType;
+    loadDataset!: boolean;
 
-  constructor() {
-    super();
-    this.configType = ConfigurationType.PLATFORM;
-  }
+    constructor() {
+        super();
+        this.configType = ConfigurationType.PLATFORM;
+    }
 }

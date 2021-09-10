@@ -1,22 +1,24 @@
 {
-  "concurrentSessionCount": 2,
-  "executionMode": "concurrent",
-  "keepInfrastructure": true,
   "platformConfig": {
-    "name": "s1",
+    "id": "674864f3-16fd-4d6b-8b0f-6a3dcd0b6d28",
+    "configType": "platforms",
     "platformType": "redshift",
+    "name": "r1",
     "settings": {
       "numberOfNodes": "1",
       "features": {
-        "workloadManager": false,
-        "concurrencyScaling": false
+        "workloadManager": true
       },
       "nodeType": "dc2.large"
     }
   },
   "workloadConfig": {
-    "name": "tpc-ds/v3",
+    "id": "f6d49ad5-9728-4ee2-a7bc-19db51d9bde9",
+    "configType": "workloads",
+    "name": "w1",
     "settings": {
+      "name": "TPC-DS/v3",
+      "description": "TPC-DS v3",
       "volume": {
         "name": "1 GB",
         "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
@@ -31,10 +33,14 @@
         "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
       },
       "supportedPlatforms": [
-        "Redshift",
-        "Redshift Spectrum"
+        "redshift",
+        "redshift-spectrum"
       ],
-      "loadMethod": "copy"
+      "loadMethod": "direct",
+      "workloadType": "OLAP"
     }
-  }
+  },
+  "concurrentSessionCount": 1,
+  "executionMode": "sequential",
+  "keepInfrastructure": true
 }

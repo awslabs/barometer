@@ -45,6 +45,7 @@ export class AthenaModule extends CLIModule {
         const entry = new AthenaPlatformConfiguration();
         entry.name = answers.name;
         entry.settings = settings;
+        entry.loadDataset = false;
 
         await this.addEntry(entry);
       }

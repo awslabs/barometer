@@ -1,12 +1,40 @@
-import { ConfigurationType } from '../interface/configuration';
-import { IWorkloadConfiguration, WorkloadType } from "../interface/workload";
-import { ConfigurationItem } from "./configuration";
+import {ConfigurationType} from '../interface/configuration';
+import {ConfigurationItem} from "./configuration";
+import {IWorkloadSettings, IScriptPath, IVolume, IWorkloadConfiguration} from "../interface/workload";
 
 export class WorkloadConfiguration extends ConfigurationItem implements IWorkloadConfiguration {
-    workloadType!: WorkloadType;
+    settings!: WorkloadSettings;
 
     constructor() {
         super();
         this.configType = ConfigurationType.WORKLOAD;
     }
+}
+
+export enum LoadMethod {
+    COPY = "copy",
+    DIRECT = "direct"
+}
+
+export class WorkloadSettings implements IWorkloadSettings {
+    volume!: Volume;
+    loadMethod!: string;
+    supportedPlatforms!: Array<string>;
+    ddl!: { [p: string]: ScriptPath } | ScriptPath;
+    queries!: { [p: string]: ScriptPath } | ScriptPath;
+    description!: string;
+    name!: string;
+    workloadType!: string;
+}
+
+export class Volume implements IVolume {
+    name!: string;
+    path!: string;
+    format!: string;
+    compression?: string;
+    delimiter?: string;
+}
+
+export class ScriptPath implements IScriptPath {
+    path!: string;
 }
