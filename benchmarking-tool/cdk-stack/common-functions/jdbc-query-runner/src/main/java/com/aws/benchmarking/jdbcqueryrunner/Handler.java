@@ -17,12 +17,14 @@ import com.amazonaws.util.IOUtils;
 import java.io.InputStream;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaResponse> {
 
     final AmazonS3 amazonS3 = AmazonS3ClientBuilder.defaultClient();
     final AmazonCloudWatch cloudWatch = AmazonCloudWatchClientBuilder.defaultClient();
+    private static final Map<String, Connection> cachedConnections = new ConcurrentHashMap<>();
 
     static {
         // Load all the driver classes
@@ -54,10 +56,6 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         response.setStackName(stackName);
         response.setMetrics(new HashMap<>());
 
-        // Set secret id as user
-        Properties userInfo = new Properties();
-        userInfo.setProperty("user", secretId);
-
         try {
             if (scriptPath != null) {
                 AmazonS3URI uri = new AmazonS3URI(scriptPath);
@@ -66,8 +64,8 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
             }
             logger.log("Fetched script: " + scriptPath);
             logger.log("Executing using user: " + secretId);
-            try (Connection connection = DriverManager.getConnection(secretId, userInfo);
-                 Statement statement = connection.createStatement()) {
+            Connection connection = getConnection(secretId, logger);
+            try (Statement statement = connection.createStatement()) {
                 // Execute query
                 long startTimeMillis = System.currentTimeMillis();
                 boolean hasResults = statement.execute(query);
@@ -90,6 +88,25 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         }
 
         return response;
+    }
+
+    private static Connection getConnection(String secretId, LambdaLogger logger) throws SQLException {
+        Connection cachedConnection = cachedConnections.get(secretId);
+        try {
+            if (cachedConnection != null && !cachedConnection.isClosed()) {
+                return cachedConnection;
+            }
+            if (cachedConnection != null)
+                cachedConnection.close();
+        } catch (SQLException e) {
+            logger.log("Can't reuse cachedConnection. Recreating - " + e.getMessage());
+        }
+        // Set secret id as user
+        Properties userInfo = new Properties();
+        userInfo.setProperty("user", secretId);
+        cachedConnection = DriverManager.getConnection(secretId, userInfo);
+        cachedConnections.put(secretId, cachedConnection);
+        return cachedConnection;
     }
 
     private void publishMetrics(JdbcLambdaResponse response) {

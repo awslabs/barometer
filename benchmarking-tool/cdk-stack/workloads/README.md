@@ -12,7 +12,7 @@ structure under [this](.) folder.
 ```
 .
 +-- example_workload/
-|   +-- icon.png
+|   +-- icon.png (Optional)
 |   +-- config.json
 ```
 
@@ -27,33 +27,37 @@ structure under [this](.) folder.
 
 ```json
 {
-  "name": "TPC-H v3",
-  "description": "TPC-H v3 dataset",
-  "type": "OLAP",
+  "name": "TPC-DS/v3",
+  "description": "TPC-DS v3",
+  "type": "olap",
   "volumes": [
     {
-      "name": "100 GB",
-      "path": "s3://external-bucket/tpc/tpc-h/v3/100g/pipe-separated/"
-    },
-    {
-      "name": "3 TB",
-      "path": "s3://external-bucket/tpc/tpc-h/v3/3t/pipe-separated/"
+      "name": "1 GB",
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
     }
   ],
   "ddl": {
-    "Redshift": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/redshift/",
-    "Redshift Spectrum": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/redshift/",
-    "Athena": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/athena/"
+    "redshift": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift/"
+    },
+    "redshift-spectrum": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift-spectrum/"
+    }
   },
   "queries": {
-    "Redshift": "s3://benchmarking-tool-shared/tpc/tpc-h/benchmarking-queries/redshift/",
-    "Redshift Spectrum": "s3://benchmarking-tool-shared/tpc/tpc-h/benchmarking-queries/redshift/",
-    "Athena": "s3://benchmarking-tool-shared/tpc/tpc-h/benchmarking-queries/athena/"
+    "redshift": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+    },
+    "redshift-spectrum": {
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+    }
   },
   "supportedPlatforms": [
-    "Redshift",
-    "Redshift Spectrum",
-    "Athena"
+    "redshift",
+    "redshift-spectrum"
   ]
 }
 ```
@@ -64,6 +68,9 @@ structure under [this](.) folder.
 - `volumes`: Defines multiple sizes of the dataset
 - `volume[0].name`: The name of given size of the dataset to preset user with sizing options
 - `volume[0].path`: The path from where benchmarking tool can read/download dataset when needed
+- `volume[0].format`: Format of the workload data. Can be either `csv` or `parquet` for now.
+- `volume[0].compression`: Compression of dataset. Can be `gzip`, `zip`, `lzop` etc.
+- `volume[0].delimiter`: Required only if format is `csv`
 - `ddl`: The path to the platform specific ddl statements to be used for creating schema in target platform.
   Benchmarking tool sorts all `.sql` files in ascending order of name & executes them one by one on target platform. if
   sequence matters make sure to name accordingly.

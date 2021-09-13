@@ -29,12 +29,6 @@ def rearrange_widgets(dashboard):
     return dashboard
 
 
-if __name__ == '__main__':
-    dashboard = rearrange_widgets(json.load(open("t.json")))
-    for w in dashboard["widgets"]:
-        print(str(w["x"]) + " " + str(w["y"]))
-
-
 def lambda_handler(event, context):
     print(json.dumps(event))
 

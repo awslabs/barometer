@@ -112,6 +112,8 @@ def sfn_respond(stack_name, describe_stack_response=None):
             stack_response = cf.describe_stacks(StackName=stack_name)
         outputs = stack_response["Stacks"][0]["Outputs"]
         for output in outputs:
+            if output["OutputKey"] == "SecretIdAdminUser":
+                secret_ids["secretIds"].insert(0, output["OutputValue"])
             if output["OutputKey"].startswith("SecretId"):
                 secret_ids["secretIds"].append(output["OutputValue"])
             if output["OutputKey"] == "DataCopierLambdaArn":

@@ -35,24 +35,9 @@ export class ExperimentModule extends CLIModule {
             message: 'Number of concurrent sessions?',
             default: 1,
             validate: async (input: number): Promise<any> => {
-                if (input > 0) return true;
-                return 'Only positive numbers > 0 are allowed';
+                if (input > 0 && input < 1001) return true;
+                return 'Only positive numbers > 0 and < 1001 are allowed';
             },
-        });
-        this.questions.push({
-            type: 'list',
-            name: 'executionMode',
-            message: 'Which query execution mode would you like to use ?',
-            choices: [
-                {
-                    name: 'Sequentially (queries are started one after each other)',
-                    value: ExecutionMode.SEQUENTIAL
-                },
-                {
-                    name: 'Concurrently (all queries are started at the same time)',
-                    value: ExecutionMode.CONCURRENT,
-                }
-            ],
         });
         this.questions.push({
             type: 'confirm',
@@ -115,7 +100,7 @@ export class ExperimentModule extends CLIModule {
             settings.workloadConfig.settings.ddl = this.configuration.workloads[answers.workloadName].settings.ddl[settings.platformConfig.platformType]
             settings.workloadConfig.settings.queries = this.configuration.workloads[answers.workloadName].settings.queries[settings.platformConfig.platformType]
             settings.concurrentSessionCount = answers.concurrentSessionCount;
-            settings.executionMode = answers.executionMode;
+            settings.executionMode = ExecutionMode.SEQUENTIAL;
             settings.keepInfrastructure = answers.keepInfrastructure;
 
             const entry = new ExperimentConfiguration();
