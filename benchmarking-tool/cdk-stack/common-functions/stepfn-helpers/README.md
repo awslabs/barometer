@@ -2,14 +2,25 @@
 
 ## Input
 
+### listS3Directories
+
+```json
+{
+  "method": "listS3Directories",
+  "parameters": {
+    "basePath": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl"
+  }
+}
+```
+
 ### listS3Paths
 
 ```json
 {
   "method": "listS3Paths",
   "parameters": {
-    "basePath": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/",
-    "extension": ".sql"
+    "extension": ".sql",
+    "basePath": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl"
   }
 }
 ```
@@ -20,11 +31,13 @@
 {
   "method": "getUserSessionAsMapItems",
   "parameters": {
-    "sessionCount": "3",
-    "userSecrets": [
-      "secretId.user1",
-      "secretId.user2"
-    ]
+    "sessionCount": 3,
+    "userSecrets": {
+      "secretIds": [
+        "user1.SecretId",
+        "user2.SecretId"
+      ]
+    }
   }
 }
 ```
@@ -41,6 +54,17 @@
 1. `listS3Paths`: Takes s3 `basePath`, lists all object paths ending with `extension`
 
 ## Output
+
+### listS3Directories
+
+```json
+{
+  "paths": [
+    "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/sub-dir-1",
+    "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/sub-dir-2"
+  ]
+}
+```
 
 ### listS3Paths
 
