@@ -102,7 +102,7 @@ def build_summery_widget(queries, stack_name, user, user_sessions):
                 stack_name
             ])
     widget["properties"]["region"] = os.environ["AWS_REGION"]
-    widget["title"] = "Benchmarking query timings user - " + user.split(":")[-1].split("-")[0]
+    widget["properties"]["title"] = "Benchmarking query timings user - " + user.split(":")[-1].split("-")[0]
     return widget
 
 

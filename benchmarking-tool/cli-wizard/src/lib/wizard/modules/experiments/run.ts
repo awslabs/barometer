@@ -77,7 +77,7 @@ export class ExperimentModule extends CLIModule {
                 const executionUrl = "https://console.aws.amazon.com/states/home#/executions/details/" + output.executionArn;
                 const dashboardUrl = "https://console.aws.amazon.com/cloudwatch/home#dashboards:name=BenchmarkingExperiment-"
                     + experiment.workloadConfig.settings.name.replace("/", "_") + "-"
-                    + experiment.platformConfig.platformType;
+                    + experiment.platformConfig.settings.name;
                 console.log("Visit this link to see execution: " + executionUrl);
                 console.log("Visit this link to see dashboard: " + dashboardUrl);
                 await open(executionUrl);
