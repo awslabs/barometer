@@ -97,8 +97,6 @@ export class ExperimentModule extends CLIModule {
             const settings = new ExperimentSettings();
             settings.platformConfig = this.configuration.platforms[answers.platformName];
             settings.workloadConfig = this.configuration.workloads[answers.workloadName];
-            settings.workloadConfig.settings.ddl = this.configuration.workloads[answers.workloadName].settings.ddl[settings.platformConfig.platformType]
-            settings.workloadConfig.settings.queries = this.configuration.workloads[answers.workloadName].settings.queries[settings.platformConfig.platformType]
             settings.concurrentSessionCount = answers.concurrentSessionCount;
             settings.executionMode = ExecutionMode.SEQUENTIAL;
             settings.keepInfrastructure = answers.keepInfrastructure;

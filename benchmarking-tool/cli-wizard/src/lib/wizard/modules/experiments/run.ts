@@ -47,6 +47,8 @@ export class ExperimentModule extends CLIModule {
         };
         await this.askQuestions(_questions).then(async (answers) => {
             const experiment = this.configuration.experiments[answers.experimentName].settings;
+            experiment.workloadConfig.settings.ddl = experiment.workloadConfig.settings.ddl[experiment.platformConfig.platformType];
+            experiment.workloadConfig.settings.queries = experiment.workloadConfig.settings.queries[experiment.platformConfig.platformType];
             let stepFunctionArn;
             try {
                 const commandOutput = await this.cloudFormationClient.send(new DescribeStacksCommand({StackName: "BenchmarkingStack"}));
