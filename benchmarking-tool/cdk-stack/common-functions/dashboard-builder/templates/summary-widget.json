@@ -10,7 +10,7 @@
     "view": "bar",
     "stacked": false,
     "title": "Benchmarking query timings",
-    "period": 86400,
+    "period": 900,
     "stat": "Average"
   }
 }

@@ -1,5 +1,5 @@
 import * as cdk from '@aws-cdk/core';
-import {CfnOutput} from '@aws-cdk/core';
+import {CfnOutput, RemovalPolicy} from '@aws-cdk/core';
 import {BlockPublicAccess, Bucket, BucketEncryption} from "@aws-cdk/aws-s3";
 import {Key} from "@aws-cdk/aws-kms";
 import {CommonFunctions} from "./constructs/common-functions";
@@ -61,7 +61,8 @@ export class BenchmarkingStack extends cdk.Stack {
             encryption: BucketEncryption.KMS, // Encryption at rest
             encryptionKey: key,
             enforceSSL: true, // Encryption in transit
-            bucketKeyEnabled: true // Save costs by providing bucket hint that all objects will be encrypted by given key only
+            bucketKeyEnabled: true, // Save costs by providing bucket hint that all objects will be encrypted by given key only
+            removalPolicy: RemovalPolicy.DESTROY
         });
 
         let sns = new Topic(this, 'StackUpdate', {masterKey: key});
@@ -73,7 +74,8 @@ export class BenchmarkingStack extends cdk.Stack {
             },
             encryption: TableEncryption.CUSTOMER_MANAGED,
             encryptionKey: key,
-            billingMode: BillingMode.PAY_PER_REQUEST
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            removalPolicy: RemovalPolicy.DESTROY
         });
         let commonFunctions = new CommonFunctions(this, 'CommonFunctions', {
             dataBucket: dataBucket,

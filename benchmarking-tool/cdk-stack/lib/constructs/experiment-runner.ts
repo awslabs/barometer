@@ -63,7 +63,6 @@ export class ExperimentRunner extends Construct {
                 resultPath: "$.queries",
             }))
             .next(new Map(this, 'User sessions', {
-                maxConcurrency: 2, // TODO: Find a way to pass this dynamically based on $.concurrentSessionCount
                 resultPath: JsonPath.DISCARD,
                 itemsPath: "$.userSessionsOutput.Payload.userSessions",
                 parameters: {
@@ -88,7 +87,7 @@ export class ExperimentRunner extends Construct {
                 payload: TaskInput.fromObject({
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "userSessions.$": "$.userSessionsOutput.Payload.userSessions",
-                    "experimentName.$": "States.Format('{}-{}',$.workloadConfig.settings.name, $.platformConfig.platformType)",
+                    "experimentName.$": "States.Format('{}-{}',$.workloadConfig.settings.name, $.platformConfig.name)",
                     "queries.$": "$.queries.Payload.paths",
                     "ddlQueries.$": "$.ddlScripts.Payload.paths"
                 }),

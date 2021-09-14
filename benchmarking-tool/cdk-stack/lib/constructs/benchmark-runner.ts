@@ -22,7 +22,7 @@ export class BenchmarkRunner extends Construct {
         const benchmarkRunnerDefinition = new Map(this, 'Run all queries', {
             comment: "Runs all benchmarking queries",
             itemsPath: "$.queries",
-            maxConcurrency: 1, // TODO set 1 to run one by one, 0 to run all at a time
+            maxConcurrency: 1,
             parameters: {
                 "secretId.$": "$.secretId",
                 "sessionId.$": "$.sessionId",
