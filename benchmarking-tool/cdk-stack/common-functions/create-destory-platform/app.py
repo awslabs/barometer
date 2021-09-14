@@ -58,11 +58,19 @@ def create_stack(platform_config, stack_name, token):
                         Tags=[{"Key": "ManagedBy", "Value": "BenchmarkingStack"}])
 
 
-def handle_stack_delete_complete(record):
+def handle_stack_delete_complete(record, failure=False):
     stack_name = extract_stack_name(record)
     token = fetch_and_delete_task_token(stack_name)
-    if token is not None:
+    if token is not None and not failure:
         sfn.send_task_success(taskToken=token, output=json.dumps({}))
+    elif failure:
+        stack_id = extract(record, "StackId")
+        status = extract(record, "ResourceStatus")
+        region = os.environ["AWS_REGION"]
+        sfn.send_task_failure(taskToken=token, error=status,
+                              cause="https://" + region + ".console.aws.amazon.com/cloudformation/home?region="
+                                    + region + "#/stacks/events?filteringStatus=active&filteringText=&viewNested=true&hideStacks=false&stackId="
+                                    + stack_id)
     else:
         print("No task token found in DynamoDB for stack: " + stack_name)
 
@@ -74,16 +82,24 @@ def handle_sns_event(event):
                 handle_stack_create_complete(record)
             elif "ResourceStatus='DELETE_COMPLETE'" in record["Sns"]["Message"]:
                 handle_stack_delete_complete(record)
+            elif "ResourceStatus='ROLLBACK_COMPLETE'" in record["Sns"]["Message"] or \
+                    "ResourceStatus='DELETE_FAILED'" in record["Sns"]["Message"] or \
+                    "ResourceStatus='CREATE_FAILED'" in record["Sns"]["Message"]:
+                handle_stack_delete_complete(record, True)
             print("Stack creation or deletion complete\n" + json.dumps(event))
 
 
-def extract_stack_name(record):
+def extract(record, key):
     message_lines = record["Sns"]["Message"].split("\n")
     for line in message_lines:
-        if line.startswith("StackName"):
-            stack_name = line.split("=")[1].replace("'", "")
-            print("Stack name extracted as: " + stack_name)
-            return stack_name
+        if line.startswith(key):
+            value = line.split("=")[1].replace("'", "")
+            print("Value for " + key + " extracted as: " + value)
+            return value
+
+
+def extract_stack_name(record):
+    return extract(record, "StackName")
 
 
 def fetch_and_delete_task_token(stack_name):

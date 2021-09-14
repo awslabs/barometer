@@ -47,7 +47,8 @@ export class CommonFunctions extends Construct {
                 DataBucketName: props.dataBucket.bucketName,
                 StackUpdateTopicArn: props.stackUpdateTopic.topicArn,
                 DataTableName: props.dataTable.tableName
-            }
+            },
+            timeout: Duration.minutes(1)
         });
         // Allow lambda function to create cloudformation stack
         let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json", props.dataBucket.bucketArn + "/platforms/*/functions/*/code.zip"];
@@ -92,7 +93,8 @@ export class CommonFunctions extends Construct {
             environment: {
                 SummaryDashboardName: "BenchmarkingExperimentsSummary",
                 ExperimentDashboardPrefix: "BenchmarkingExperiment-"
-            }
+            },
+            timeout: Duration.minutes(1)
         });
         this.dashboardBuilder.addToRolePolicy(new PolicyStatement({
             actions: ["cloudwatch:GetDashboard", "cloudwatch:PutDashboard"],
@@ -106,7 +108,8 @@ export class CommonFunctions extends Construct {
             environment: {
                 DataTableName: props.dataTable.tableName,
                 DataBucketName: props.dataBucket.bucketName
-            }
+            },
+            timeout: Duration.minutes(1)
         });
         this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
             actions: ["lambda:InvokeFunction"],
@@ -160,7 +163,8 @@ export class CommonFunctions extends Construct {
         this.stepFunctionHelpers = new Function(this, "helpers", {
             code: Code.fromAsset(commonFunctionsDirPath + "stepfn-helpers"),
             handler: "app.lambda_handler",
-            runtime: Runtime.PYTHON_3_8
+            runtime: Runtime.PYTHON_3_8,
+            timeout: Duration.minutes(1)
         });
         this.stepFunctionHelpers.addToRolePolicy(new PolicyStatement({
             actions: ["s3:ListBucket"],
