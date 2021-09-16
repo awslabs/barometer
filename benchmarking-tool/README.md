@@ -8,17 +8,23 @@ based
 on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760aa6dceb39082084f710abccf4d973b4156f1ec912acb2270c918656025731)
 .
 
+## 📋 Table of content
+
+- [Description](#-description)
+- [Use cases](#-use-cases)
+- [Pre-requisites](#-pre-requisites)
+- [Installing](#-installing)
+- [Deployment](#-deployment)
+- [Quickstart](#-quickstart)
+- [See Also](#-see-also)
+
 ## 🔰 Description
 
 This tool will deploy [cdk](https://aws.amazon.com/cdk/) stack which is used to run benchmarking experiments. The
 experiment is a combination of [platform](./cdk-stack/platforms) and [workload](./cdk-stack/workloads) which can be
 defined using [cli-wizard](./cli-wizard) provided by the tool. Example running experiment in QuickStart.
 
-### Quickstart
-
-![](./define_experiment.gif)
-
-### Use cases
+## 🛠 Use cases
 
 - Comparison of tool performance: Redshift vs Redshift Spectrum
 - Comparison of configurations: Redshift dc2 vs ra3 node type
@@ -44,6 +50,11 @@ Benchmarking tool supports below combinations as experiment
   AWS_REGION for deploying the tool
 - [jq](https://stedolan.github.io/jq/download/) tool installed & added in PATH
 
+## 🚀 Installing
+
+1. Clone the repository https://gitlab.aws.dev/aws-emea-prototyping/data-analytics/reusable-assets/aws-placeholder
+2. Go to the folder benchmarking-tool `cd aws-placeholder/benchmarking-tool`
+
 ## 🎮 Deployment
 
 Set below environment variables if not set already in bash/cli session
@@ -64,7 +75,8 @@ SET CDK_DEPLOY_REGION=Aws region to deploy the tool
 With aws cdk cli installed, go to the folder named benchmarking-tool/cdk-stack & run deploy
 
 ```shell
-cd cdk-stack && ./deploy.sh
+cd cdk-stack 
+./deploy.sh # For Linux or MacOS use deploy.sh, For Windows use deploy.cmd
 ```
 
 Once `BenchmarkingStack` is deployed successfully run cli-wizard.
@@ -74,7 +86,11 @@ cd cli-wizard
 npm install && npm run build && npm run wizard
 ```
 
-## See Also
+## 🎬 Quickstart
+
+![](./define_experiment.gif)
+
+## 👀 See Also
 
 - [Architectural & design concepts](./Concepts.md) driving this project
 - [Benchmarking Stack](./cdk-stack) infrastructure
