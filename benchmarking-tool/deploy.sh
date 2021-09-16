@@ -8,8 +8,9 @@ then
   echo "==> [FAILED] Environment variable CDK_DEPLOY_REGION not set. Exiting."
   exit 1
 fi
+export AWS_REGION=$CDK_DEPLOY_REGION
 echo "==> [Progress 1/8] Building JDBC function"
-cd ./common-functions/jdbc-query-runner
+cd ./cdk-stack/common-functions/jdbc-query-runner
 mvn clean install
 cd ../..
 echo "==> [Progress 2/8] Building Infrastructure"
@@ -18,6 +19,7 @@ echo "==> [Progress 3/8] Bootstrapping CDK stack if not done already"
 TOOLKIT_STACK_NAME=$(aws cloudformation describe-stacks --stack-name CDKToolkit | jq -r ".Stacks[0].StackName")
 if test -z "$TOOLKIT_STACK_NAME"
 then
+echo "==> [Progress 3/8] Bootstrapping CDK stack as CDKToolkit stack not found for region $AWS_REGION"
 cdk bootstrap
 fi
 echo "==> [Progress 4/8] Deploying Infrastructure "

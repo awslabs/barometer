@@ -69,8 +69,9 @@ export class CommonFunctions extends Construct {
             }
             if (fs.existsSync(platformDirPath + platforms[i] + "/policy.json")) {
                 let policyText = fs.readFileSync(platformDirPath + platforms[i] + "/policy.json", 'utf-8');
-                if (props.env && props.env.region && props.env.account)
-                    policyText = policyText.replace("${AWS::Region}", props.env.region).replace("${AWS::AccountId}", props.env.account);
+                if (props.env && props.env.region && props.env.account) {
+                    policyText = policyText.replace(/\${AWS::Region}/g, props.env.region).replace(/\${AWS::AccountId}/g, props.env.account);
+                }
                 let policyDocument = PolicyDocument.fromJson(JSON.parse(policyText));
                 this.createDestroyPlatform.role?.attachInlinePolicy(new Policy(this, platforms[i] + "-policy", {document: policyDocument}));
             }
