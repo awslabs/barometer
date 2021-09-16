@@ -72,18 +72,17 @@ SET CDK_DEPLOY_ACCOUNT=Aws account id to deploy the tool
 SET CDK_DEPLOY_REGION=Aws region to deploy the tool
 ```
 
-With aws cdk cli installed, go to the folder named benchmarking-tool/cdk-stack & run deploy
+With aws cdk cli installed, run deploy
 
 ```shell
-cd cdk-stack 
-./deploy.sh # For Linux or MacOS use deploy.sh, For Windows use deploy.cmd
+./deploy.sh # For Linux or MacOS use deploy.sh, For Windows use deploy.bat
 ```
 
-Once `BenchmarkingStack` is deployed successfully run cli-wizard.
+Once `BenchmarkingStack` is deployed successfully run cli-wizard to run experiemnts.
 
 ```shell
 cd cli-wizard
-npm install && npm run build && npm run wizard
+npm run wizard
 ```
 
 ## 🎬 Quickstart
