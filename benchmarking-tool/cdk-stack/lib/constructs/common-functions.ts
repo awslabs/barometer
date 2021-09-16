@@ -1,4 +1,4 @@
-import {Aws, Construct, Duration} from "@aws-cdk/core";
+import {Aws, Construct, Duration, Environment} from "@aws-cdk/core";
 import {Code, Function, LayerVersion, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
@@ -13,6 +13,7 @@ import {Utils} from "../utils";
 import path = require('path');
 
 interface CommonFunctionsProps {
+    env?: Environment,
     dataBucket: Bucket;
     vpc: Vpc;
     stackUpdateTopic: Topic,
@@ -68,6 +69,8 @@ export class CommonFunctions extends Construct {
             }
             if (fs.existsSync(platformDirPath + platforms[i] + "/policy.json")) {
                 let policyText = fs.readFileSync(platformDirPath + platforms[i] + "/policy.json", 'utf-8');
+                if (props.env && props.env.region && props.env.account)
+                    policyText = policyText.replace("${AWS::Region}", props.env.region).replace("${AWS::AccountId}", props.env.account);
                 let policyDocument = PolicyDocument.fromJson(JSON.parse(policyText));
                 this.createDestroyPlatform.role?.attachInlinePolicy(new Policy(this, platforms[i] + "-policy", {document: policyDocument}));
             }

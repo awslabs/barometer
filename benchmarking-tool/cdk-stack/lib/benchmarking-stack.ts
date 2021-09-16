@@ -78,6 +78,7 @@ export class BenchmarkingStack extends cdk.Stack {
             removalPolicy: RemovalPolicy.DESTROY
         });
         let commonFunctions = new CommonFunctions(this, 'CommonFunctions', {
+            env: props?.env,
             dataBucket: dataBucket,
             vpc: vpc,
             stackUpdateTopic: sns,

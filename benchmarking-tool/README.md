@@ -40,10 +40,28 @@ Benchmarking tool supports below combinations as experiment
 - [mvn](https://maven.apache.org/install.html) with JDK 8 in PATH
 - [npm](https://nodejs.org/en/download/)
 - cdk cli: `npm install -g aws-cdk`
+- [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) configured for target AWS_ACCOUNT &
+  AWS_REGION for deploying the tool
+- [jq](https://stedolan.github.io/jq/download/) tool installed & added in PATH
 
 ## 🎮 Deployment
 
-With aws cdk cli installed, go to the folder named cdk-stack & run deploy
+Set below environment variables if not set already in bash/cli session
+
+```bash
+# For Linux or MacOS
+# Example:
+# export CDK_DEPLOY_ACCOUNT=123456789
+# export CDK_DEPLOY_REGION=eu-west-1
+export CDK_DEPLOY_ACCOUNT=Aws account id to deploy the tool
+export CDK_DEPLOY_REGION=Aws region to deploy the tool
+
+# For Windows
+SET CDK_DEPLOY_ACCOUNT=Aws account id to deploy the tool
+SET CDK_DEPLOY_REGION=Aws region to deploy the tool
+```
+
+With aws cdk cli installed, go to the folder named benchmarking-tool/cdk-stack & run deploy
 
 ```shell
 cd cdk-stack && ./deploy.sh
@@ -53,7 +71,7 @@ Once `BenchmarkingStack` is deployed successfully run cli-wizard.
 
 ```shell
 cd cli-wizard
-npm run build && npm run wizard
+npm install && npm run build && npm run wizard
 ```
 
 ## See Also

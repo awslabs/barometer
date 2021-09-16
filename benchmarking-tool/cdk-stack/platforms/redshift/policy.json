@@ -12,10 +12,10 @@
         "secretsmanager:DeleteSecret"
       ],
       "Resource": [
-        "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
-        "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
-        "arn:aws:redshift:eu-west-1:215004874051:subnetgroup:redshift-*",
-        "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*"
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:redshift*",
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:parametergroup:redshift-*",
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:subnetgroup:redshift-*",
+        "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:AdminUserSecret-*"
       ],
       "Condition": {
         "StringEquals": {
@@ -50,13 +50,13 @@
         "lambda:DeleteFunction"
       ],
       "Resource": [
-        "arn:aws:redshift:eu-west-1:215004874051:cluster:redshift*",
-        "arn:aws:redshift:eu-west-1:215004874051:parametergroup:redshift-*",
-        "arn:aws:redshift:eu-west-1:215004874051:subnetgroup:redshift-*",
-        "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-*",
-        "arn:aws:ec2:eu-west-1:215004874051:security-group/*",
-        "arn:aws:iam::215004874051:role/redshift-*",
-        "arn:aws:lambda:eu-west-1:215004874051:function:redshift-*"
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:redshift*",
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:parametergroup:redshift-*",
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:subnetgroup:redshift-*",
+        "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:AdminUserSecret-*",
+        "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/*",
+        "arn:aws:iam::${AWS::AccountId}:role/redshift-*",
+        "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:redshift-*"
       ]
     },
     {
