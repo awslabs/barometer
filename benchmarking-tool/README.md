@@ -78,9 +78,10 @@ With aws cdk cli installed, run deploy
 ./deploy.sh # For Linux or MacOS use deploy.sh, For Windows use deploy.bat
 ```
 
-Once `BenchmarkingStack` is deployed successfully run cli-wizard to run experiemnts.
+Once `BenchmarkingStack` is deployed successfully run cli-wizard to run experiments.
 
 ```shell
+# Set CDK_DEPLOY_ACCOUNT, CDK_DEPLOY_REGION again if using different terminal window
 cd cli-wizard
 npm run wizard
 ```

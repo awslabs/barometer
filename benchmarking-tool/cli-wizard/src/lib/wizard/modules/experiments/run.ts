@@ -12,8 +12,8 @@ export class Module {
 
 export class ExperimentModule extends CLIModule {
 
-    cloudFormationClient = new CloudFormationClient({});
-    sfn = new SFN({});
+    cloudFormationClient = new CloudFormationClient({region: process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION});
+    sfn = new SFN({region: process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION});
 
     /**
      * Questions to be prompted
@@ -73,9 +73,10 @@ export class ExperimentModule extends CLIModule {
                     input: JSON.stringify(experiment)
                 });
                 const output = await this.sfn.send(startExecutionCmd);
-                console.log("Experiment run started at - " + output.startDate);
-                const executionUrl = "https://console.aws.amazon.com/states/home#/executions/details/" + output.executionArn;
-                const dashboardUrl = "https://console.aws.amazon.com/cloudwatch/home#dashboards:name=BenchmarkingExperiment-"
+                const region = process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION;
+                console.log("Experiment run started at - " + output.startDate + " in region - " + region);
+                const executionUrl = "https://" + region + ".console.aws.amazon.com/states/home?region=" + region + "#/executions/details/" + output.executionArn;
+                const dashboardUrl = "https://" + region + ".console.aws.amazon.com/cloudwatch/home?region=" + region + "#dashboards:name=BenchmarkingExperiment-"
                     + experiment.workloadConfig.settings.name.replace("/", "_") + "-"
                     + experiment.platformConfig.settings.name;
                 console.log("Visit this link to see execution: " + executionUrl);

@@ -31,7 +31,7 @@ then
   exit 1
 fi
 echo "==> [Progress 5/8] Data bucket is $DATA_BUCKET. Zipping all lambda function source-code"
-for p in cdk-stack/platforms/*/; do
+for p in platforms/*/; do
   for f in "${p}"functions/*/; do
     echo "==> zipping function from path: $f"
     rm "$f"code.zip
@@ -39,9 +39,9 @@ for p in cdk-stack/platforms/*/; do
   done
 done
 echo "==> [Progress 6/8] Syncing platforms folder to s3://$DATA_BUCKET/platforms"
-aws s3 sync cdk-stack/platforms "s3://$DATA_BUCKET/platforms"
+aws s3 sync platforms "s3://$DATA_BUCKET/platforms"
 echo "==> [Progress 7/8] Syncing workloads folder to s3://$DATA_BUCKET/platforms"
-aws s3 sync cdk-stack/workloads "s3://$DATA_BUCKET/workloads"
+aws s3 sync workloads "s3://$DATA_BUCKET/workloads"
 echo "==> [Progress 8/8] Building cli-wizard"
 cd ../cli-wizard
 npm install && npm run build
