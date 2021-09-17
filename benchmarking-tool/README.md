@@ -16,6 +16,7 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 - [Installing](#-installing)
 - [Deployment](#-deployment)
 - [Quickstart](#-quickstart)
+- [Architecture](#-architecture)
 - [See Also](#-see-also)
 
 ## 🔰 Description
@@ -89,6 +90,23 @@ npm run wizard
 ## 🎬 Quickstart
 
 ![](./define_experiment.gif)
+
+## Architecture
+
+### User flow
+
+![](./Benchmarking-tool-architacture-Highlevel.jpg)
+
+1. User deploys Benchmarking Stack
+2. Benchmarking stack creates infrastructure & step function workflows
+3. User uses [cli-wizard](./cli-wizard) to define & run experiments which triggers experiment runner workflow internally
+4. Workflow deploys, benchmarks & destroys platform
+5. Workflow creates persistent dashboard registering metrics
+6. User uses this dashboard to compare benchmarking results
+
+### Detailed architecture for Redshift platform
+
+![](./Benchmarking-tool-architacture-Detailed%20with%20Redshift.jpg)
 
 ## 👀 See Also
 
