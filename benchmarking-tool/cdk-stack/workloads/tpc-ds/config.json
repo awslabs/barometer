@@ -5,7 +5,7 @@
   "volumes": [
     {
       "name": "1 GB",
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/volumes/1gb/",
       "format": "csv",
       "compression": "gzip",
       "delimiter": "|"
@@ -21,10 +21,10 @@
   },
   "queries": {
     "redshift": {
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/1gb/"
     },
     "redshift-spectrum": {
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/1gb/"
     }
   },
   "supportedPlatforms": [
