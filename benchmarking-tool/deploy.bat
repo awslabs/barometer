@@ -28,7 +28,7 @@ if defined CDK_DEPLOY_ACCOUNT (
 			goto :data_bucket_next
 		)
 		:data_bucket_next
-		if not [DATA_BUCKET] == [] (
+		if not [%DATA_BUCKET%] == [] (
 			echo "==> [Progress 5/8] Data bucket is %DATA_BUCKET%. Zipping all lambda function source-code"
 			for /d %%D in (platforms/*) do (
 				for /d %%K in (platforms/%%~D/functions/*) do (
