@@ -4,7 +4,7 @@ set CDK_DEPLOY_REGION=eu-west-1
 @echo off
 if defined CDK_DEPLOY_ACCOUNT (
 	if defined CDK_DEPLOY_REGION (
-		set AWS_REGION=%CDK_DEPLOY_REGION%
+		set "AWS_REGION=%CDK_DEPLOY_REGION%"
 		echo "==> [Progress 1/8] Building JDBC function"
 		cd ./cdk-stack/common-functions/jdbc-query-runner
 		call mvn clean install
@@ -12,19 +12,23 @@ if defined CDK_DEPLOY_ACCOUNT (
 		echo "==> [Progress 2/8] Building Infrastructure"
 		call npm install
 		echo "==> [Progress 3/8] Bootstrapping CDK stack if not done already"
-		FOR /F "tokens=* USEBACKQ" %%F IN (`aws cloudformation describe-stacks --stack-name CDKToolkit ^| jq -r ".Stacks[0].StackName"`) DO (
-			SET TOOLKIT_STACK_NAME=%%F
+		FOR /F "tokens=* USEBACKQ" %%a IN (`aws cloudformation describe-stacks --stack-name CDKToolkit ^| jq -r ".Stacks[0].StackName"`) DO (
+			SET "TOOLKIT_STACK_NAME=%%a"
+			goto :cdk_toolkit_next
 		)
+		:cdk_toolkit_next
 		if not defined TOOLKIT_STACK_NAME (
 			echo "==> [Progress 3/8] Bootstrapping CDK stack as CDKToolkit stack not found for region %AWS_REGION%"
 			call cdk bootstrap
 		)
 		echo "==> [Progress 4/8] Deploying Infrastructure "
 		call cdk deploy BenchmarkingStack
-		FOR /F "tokens=* USEBACKQ" %%A IN (`aws cloudformation describe-stacks --stack-name BenchmarkingStack ^| jq -r ".Stacks[0].Outputs[] | select(.OutputKey == \"DataBucketName\") | .OutputValue"`) DO (
-			SET DATA_BUCKET=%%A
+		FOR /F "tokens=* USEBACKQ" %%b IN (`aws cloudformation describe-stacks --stack-name BenchmarkingStack ^| jq -r ".Stacks[0].Outputs[] | select(.OutputKey == \"DataBucketName\") | .OutputValue"`) DO (
+			SET "DATA_BUCKET=%%b"
+			goto :data_bucket_next
 		)
-		if defined DATA_BUCKET (
+		:data_bucket_next
+		if not [DATA_BUCKET] == [] (
 			echo "==> [Progress 5/8] Data bucket is %DATA_BUCKET%. Zipping all lambda function source-code"
 			for /d %%D in (platforms/*) do (
 				for /d %%K in (platforms/%%~D/functions/*) do (
