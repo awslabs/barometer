@@ -50,12 +50,16 @@ export class ExperimentModule extends CLIModule {
             experiment.workloadConfig.settings.ddl = experiment.workloadConfig.settings.ddl[experiment.platformConfig.platformType];
             experiment.workloadConfig.settings.queries = experiment.workloadConfig.settings.queries[experiment.platformConfig.platformType];
             let stepFunctionArn;
+            let dataBucketName;
             try {
                 const commandOutput = await this.cloudFormationClient.send(new DescribeStacksCommand({StackName: "BenchmarkingStack"}));
                 if (commandOutput.Stacks && commandOutput.Stacks[0].Outputs) {
                     for (let i = 0; i < commandOutput.Stacks[0].Outputs.length; i++) {
                         if (commandOutput.Stacks[0].Outputs[i].OutputKey == "ExperimentRunnerArn") {
                             stepFunctionArn = commandOutput.Stacks[0].Outputs[i].OutputValue;
+                        }
+                        if (commandOutput.Stacks[0].Outputs[i].OutputKey == "DataBucketName") {
+                            dataBucketName = commandOutput.Stacks[0].Outputs[i].OutputValue;
                         }
                     }
                 }
@@ -66,11 +70,11 @@ export class ExperimentModule extends CLIModule {
                 }
             }
 
-            if (stepFunctionArn) {
+            if (stepFunctionArn && dataBucketName) {
                 // Start step function execution
                 const startExecutionCmd = new StartExecutionCommand({
                     stateMachineArn: stepFunctionArn,
-                    input: JSON.stringify(experiment)
+                    input: JSON.stringify(experiment).replace(/#DATA_BUCKET#/g, dataBucketName)
                 });
                 const output = await this.sfn.send(startExecutionCmd);
                 const region = process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION;

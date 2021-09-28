@@ -17,6 +17,7 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 - [Deployment](#-deployment)
 - [Quickstart](#-quickstart)
 - [Architecture](#-architecture)
+- [Cleanup](#-cleanup)
 - [See Also](#-see-also)
 
 ## 🔰 Description
@@ -50,7 +51,6 @@ Benchmarking tool supports below combinations as experiment
 - [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) configured for target AWS_ACCOUNT &
   AWS_REGION for deploying the tool
 - [jq](https://stedolan.github.io/jq/download/) tool installed & added in PATH
-- [sed](http://www.gnu.org/software/sed/) tool installed & added in PATH (Not needed for Windows OS)
 
 ## 🚀 Installing
 
@@ -108,6 +108,11 @@ npm run wizard
 ### Detailed architecture for Redshift platform
 
 ![](./Benchmarking-tool-architacture-Detailed%20with%20Redshift.jpg)
+
+## Cleanup
+
+1. Go to Cloudformation service and select stack named `BenchmarkingStack`
+2. To clean up any platform, delete stack with name starting with platform name. Example: `redshift-xyz`
 
 ## 👀 See Also
 

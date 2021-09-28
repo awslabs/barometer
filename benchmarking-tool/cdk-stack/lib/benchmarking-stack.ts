@@ -61,6 +61,7 @@ export class BenchmarkingStack extends cdk.Stack {
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL, // No public access to the bucket or object within it
             encryption: BucketEncryption.KMS, // Encryption at rest
             encryptionKey: key,
+            autoDeleteObjects: true,
             enforceSSL: true, // Encryption in transit
             bucketKeyEnabled: true, // Save costs by providing bucket hint that all objects will be encrypted by given key only
             removalPolicy: RemovalPolicy.DESTROY

@@ -1,7 +1,16 @@
 import {Construct} from "@aws-cdk/core";
 import {Bucket} from "@aws-cdk/aws-s3";
-import {Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
-import {PolicyStatement} from "@aws-cdk/aws-iam";
+import {
+    Instance,
+    InstanceClass,
+    InstanceInitiatedShutdownBehavior,
+    InstanceSize,
+    InstanceType,
+    MachineImage,
+    SubnetType,
+    Vpc
+} from "@aws-cdk/aws-ec2";
+import {PolicyStatement, Role, ServicePrincipal} from "@aws-cdk/aws-iam";
 import {BlockDeviceVolume} from "@aws-cdk/aws-ec2/lib/volume";
 import {Key} from "@aws-cdk/aws-kms";
 import * as fs from "fs";
@@ -22,6 +31,9 @@ export class DatasetLoader extends Construct {
 
         const userData = fs.readFileSync(path.join(__dirname, '../../userdata.sh'), 'utf-8').replace(/#BUCKET#/g, props.dataBucket.bucketName).split("\n");
 
+        const role = new Role(this, 'InstanceRole', {
+            assumedBy: new ServicePrincipal("ec2.amazonaws.com")
+        });
         const instance = new Instance(this, 'Instance', {
             instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
             machineImage: MachineImage.latestAmazonLinux(),
@@ -34,17 +46,20 @@ export class DatasetLoader extends Construct {
                     encrypted: true,
                     deleteOnTermination: true
                 })
-            }]
+            }],
+            role: role
         });
+        instance.instance.instanceInitiatedShutdownBehavior = InstanceInitiatedShutdownBehavior.TERMINATE;
         instance.addUserData(...userData);
-        instance.addToRolePolicy(new PolicyStatement({
+        role.addToPolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:PutObject", "s3:ListBucket"],
             resources: [
                 props.dataBucket.bucketArn,
                 props.dataBucket.bucketArn + "/tools/TPC-DSGen-software-code-3.2.0rc1.zip",
+                props.dataBucket.bucketArn + "/tools/logs/*",
                 props.dataBucket.bucketArn + "/datasets/*"
             ]
         }));
-        props.key.grantEncryptDecrypt(instance);
+        props.key.grantEncryptDecrypt(role);
     }
 }
