@@ -14,6 +14,7 @@ import {
 } from "@aws-cdk/aws-ec2";
 import {Topic} from "@aws-cdk/aws-sns";
 import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
+import {DatasetLoader} from "./constructs/dataset-loader";
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
@@ -92,6 +93,7 @@ export class BenchmarkingStack extends cdk.Stack {
             dataTable: dataTable,
             key: key
         });
+        new DatasetLoader(this, 'DatasetLoader', {dataBucket: dataBucket, vpc: vpc, key: key});
 
         let today = new Date().toISOString().slice(0, 10);
 

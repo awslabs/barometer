@@ -50,6 +50,7 @@ Benchmarking tool supports below combinations as experiment
 - [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) configured for target AWS_ACCOUNT &
   AWS_REGION for deploying the tool
 - [jq](https://stedolan.github.io/jq/download/) tool installed & added in PATH
+- [sed](http://www.gnu.org/software/sed/) tool installed & added in PATH (Not needed for Windows OS)
 
 ## 🚀 Installing
 
