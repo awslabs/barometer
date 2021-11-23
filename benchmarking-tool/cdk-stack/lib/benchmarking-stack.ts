@@ -31,12 +31,12 @@ export class BenchmarkingStack extends cdk.Stack {
             natGateways: 0,
             subnetConfiguration: [{
                 name: "Private",
-                subnetType: SubnetType.ISOLATED
+                subnetType: SubnetType.PRIVATE_ISOLATED
             }],
             gatewayEndpoints: {
                 "S3": {
                     service: GatewayVpcEndpointAwsService.S3,
-                    subnets: [{subnetType: SubnetType.ISOLATED}]
+                    subnets: [{subnetType: SubnetType.PRIVATE_ISOLATED}]
                 }
             }
         });
@@ -44,13 +44,13 @@ export class BenchmarkingStack extends cdk.Stack {
         new InterfaceVpcEndpoint(this, 'SecretsManagerEndpoint', {
             service: InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
             vpc: vpc,
-            subnets: {subnetType: SubnetType.ISOLATED}
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
         });
 
         new InterfaceVpcEndpoint(this, 'MonitoringEndpoint', {
             service: InterfaceVpcEndpointAwsService.CLOUDWATCH,
             vpc: vpc,
-            subnets: {subnetType: SubnetType.ISOLATED}
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
         });
 
         // Define new KMS Key. Used for all enc/dec for Benchmarking framework
