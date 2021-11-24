@@ -46,7 +46,8 @@ export class ExperimentModule extends CLIModule {
             return choices;
         };
         await this.askQuestions(_questions).then(async (answers) => {
-            const experiment = this.configuration.experiments[answers.experimentName].settings;
+            let experiment = this.configuration.experiments[answers.experimentName].settings;
+            experiment = JSON.parse(JSON.stringify(experiment)); // Make a copy of the object and operate on it further
             experiment.workloadConfig.settings.ddl = experiment.workloadConfig.settings.ddl[experiment.platformConfig.platformType];
             experiment.workloadConfig.settings.queries = experiment.workloadConfig.settings.queries[experiment.platformConfig.platformType];
             let stepFunctionArn;
