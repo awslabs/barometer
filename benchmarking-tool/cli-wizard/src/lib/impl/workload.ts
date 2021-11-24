@@ -11,14 +11,8 @@ export class WorkloadConfiguration extends ConfigurationItem implements IWorkloa
     }
 }
 
-export enum LoadMethod {
-    COPY = "copy",
-    DIRECT = "direct"
-}
-
 export class WorkloadSettings implements IWorkloadSettings {
     volume!: Volume;
-    loadMethod!: string;
     supportedPlatforms!: Array<string>;
     ddl!: { [p: string]: ScriptPath } | ScriptPath;
     queries!: { [p: string]: ScriptPath } | ScriptPath;

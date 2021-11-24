@@ -3,9 +3,9 @@ import {Configuration} from '../../impl/configuration';
 import {CLIModule, ICLIModule} from '../common/cli-module';
 import {CLIModuleQuestions} from "../common/cli-prompts";
 import fs from "fs";
-import {LoadMethod, WorkloadConfiguration, WorkloadSettings} from "../../impl/workload";
-import path = require('path');
+import {WorkloadConfiguration, WorkloadSettings} from "../../impl/workload";
 import {Utils} from "../utils";
+import path = require('path');
 
 export class Module {
     public static getInstance(configuration: Configuration): WorkloadModule {
@@ -36,15 +36,6 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
                 })
             },
         });
-        this.questions.push({
-            type: 'list',
-            name: 'loadMethod',
-            message: 'How do you want to import the data ?',
-            choices: [
-                {name: 'Import directly from the source bucket', value: LoadMethod.DIRECT},
-                {name: 'Make a copy in a local S3 bucket first', value: LoadMethod.COPY},
-            ],
-        });
     }
 
     async runModuleQuestions(): Promise<[string, Configuration]> {
@@ -69,7 +60,6 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
                 settings.ddl = answers.dataset.ddl;
                 settings.queries = answers.dataset.queries;
                 settings.supportedPlatforms = answers.dataset.supportedPlatforms;
-                settings.loadMethod = answers.loadMethod;
                 settings.workloadType = answers.dataset.type.toUpperCase();
 
                 const entry = new WorkloadConfiguration();

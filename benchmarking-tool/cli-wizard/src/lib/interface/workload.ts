@@ -10,7 +10,6 @@ export interface IWorkloadSettings {
     description: string;
     workloadType: string;
     volume: IVolume;
-    loadMethod: string;
     ddl: { [p: string]: IScriptPath } | IScriptPath;
     queries: { [p: string]: IScriptPath } | IScriptPath;
     supportedPlatforms: Array<string>;
