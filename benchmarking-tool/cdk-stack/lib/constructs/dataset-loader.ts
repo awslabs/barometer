@@ -29,7 +29,8 @@ export class DatasetLoader extends Construct {
     constructor(scope: Construct, id: string, props: DatasetLoaderProps) {
         super(scope, id);
 
-        const userData = fs.readFileSync(path.join(__dirname, '../../userdata.sh'), 'utf-8').replace(/#BUCKET#/g, props.dataBucket.bucketName).split("\n");
+        const userData = fs.readFileSync(path.join(__dirname, '../../userdata.sh'), 'utf-8')
+            .replace(/#BUCKET#/g, props.dataBucket.bucketName).split("\n");
 
         const role = new Role(this, 'InstanceRole', {
             assumedBy: new ServicePrincipal("ec2.amazonaws.com")
@@ -51,6 +52,7 @@ export class DatasetLoader extends Construct {
         });
         instance.instance.instanceInitiatedShutdownBehavior = InstanceInitiatedShutdownBehavior.TERMINATE;
         instance.addUserData(...userData);
+
         role.addToPolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:PutObject", "s3:ListBucket"],
             resources: [

@@ -250,9 +250,20 @@
                   "Effect": "Allow",
                   "Action": [
                     "s3:GetObject",
-                    "s3:ListBucket"
+                    "s3:ListBucket",
+                    "kms:Decrypt"
                   ],
                   "Resource": [
+                    {
+                      "Fn::Sub": [
+                        "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}",
+                        {
+                          "KMSKeyId": {
+                            "Fn::ImportValue": "Benchmarking::KMSKey"
+                          }
+                        }
+                      ]
+                    },
                     {
                       "Fn::ImportValue": "Benchmarking::DataBucketArn"
                     },
@@ -320,7 +331,7 @@
                   "Action": [
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
-                    "logs:PutLogEvents",
+                    "logs:PutLogEvents"
                   ],
                   "Resource": "*"
                 }

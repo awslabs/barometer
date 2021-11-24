@@ -47,7 +47,8 @@
         "iam:TagRole",
         "iam:ListRoleTags",
         "lambda:CreateFunction",
-        "lambda:DeleteFunction"
+        "lambda:DeleteFunction",
+        "lambda:GetFunction"
       ],
       "Resource": [
         "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:redshift*",

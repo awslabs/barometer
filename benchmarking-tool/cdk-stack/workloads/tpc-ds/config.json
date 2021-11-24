@@ -13,18 +13,18 @@
   ],
   "ddl": {
     "redshift": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/ddl/redshift/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/ddl/"
     },
     "redshift-spectrum": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/ddl/redshift-spectrum/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/ddl/"
     }
   },
   "queries": {
     "redshift": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/benchmarking-queries/1gb/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/benchmarking-queries/"
     },
     "redshift-spectrum": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/benchmarking-queries/1gb/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/benchmarking-queries/"
     }
   },
   "supportedPlatforms": [
