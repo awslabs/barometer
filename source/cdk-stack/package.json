@@ -11,29 +11,29 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assert": "1.123.0",
-    "@types/jest": "^26.0.10",
-    "@types/node": "10.17.27",
+    "@aws-cdk/assert": "1.134.0",
+    "@types/jest": "^27.0.3",
+    "@types/node": "^16.11.10",
     "@types/adm-zip": "^0.4.34",
-    "aws-cdk": "^1.123.0",
-    "jest": "^26.4.2",
-    "ts-jest": "^26.2.0",
-    "ts-node": "^9.0.0",
-    "typescript": "~3.9.7"
+    "aws-cdk": "^1.134.0",
+    "jest": "^27.3.1",
+    "ts-jest": "^27.0.7",
+    "ts-node": "^10.4.0",
+    "typescript": "~4.5.2"
   },
   "dependencies": {
-    "@aws-cdk/core": "1.123.0",
-    "@aws-cdk/aws-s3": "1.123.0",
-    "@aws-cdk/aws-ec2": "1.123.0",
-    "@aws-cdk/aws-kms": "1.123.0",
-    "@aws-cdk/aws-lambda": "1.123.0",
-    "@aws-cdk/aws-stepfunctions": "1.123.0",
-    "@aws-cdk/aws-stepfunctions-tasks": "1.123.0",
-    "@aws-cdk/aws-iam": "1.123.0",
-    "@aws-cdk/aws-sns": "1.123.0",
-    "@aws-cdk/aws-sns-subscriptions": "1.123.0",
-    "@aws-cdk/aws-dynamodb": "1.123.0",
-    "adm-zip": "^0.5.5",
-    "source-map-support": "^0.5.16"
+    "@aws-cdk/core": "1.134.0",
+    "@aws-cdk/aws-s3": "1.134.0",
+    "@aws-cdk/aws-ec2": "1.134.0",
+    "@aws-cdk/aws-kms": "1.134.0",
+    "@aws-cdk/aws-lambda": "1.134.0",
+    "@aws-cdk/aws-stepfunctions": "1.134.0",
+    "@aws-cdk/aws-stepfunctions-tasks": "1.134.0",
+    "@aws-cdk/aws-iam": "1.134.0",
+    "@aws-cdk/aws-sns": "1.134.0",
+    "@aws-cdk/aws-sns-subscriptions": "1.134.0",
+    "@aws-cdk/aws-dynamodb": "1.134.0",
+    "adm-zip": "^0.5.9",
+    "source-map-support": "^0.5.21"
   }
 }

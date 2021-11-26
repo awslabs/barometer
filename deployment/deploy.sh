@@ -19,6 +19,8 @@ then
   exit 1
 fi
 export AWS_REGION=$CDK_DEPLOY_REGION
+aws_user=$(aws sts get-caller-identity | jq -r .UserId)
+echo "==> [Progress 1/9] Using AWS user $aws_user"
 echo "==> [Progress 1/9] Building JDBC function"
 cd ../source/cdk-stack/common-functions/jdbc-query-runner
 mvn clean install
