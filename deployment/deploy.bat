@@ -1,12 +1,9 @@
-set PATH=%PATH%;D:\software\apache-maven-3.8.2\bin;D:\software\node-v14.17.6-win-x86;D:\software;c:\Users\annshah\AppData\Roaming\Python\Python38\Scripts
-set CDK_DEPLOY_ACCOUNT=585388894621
-set CDK_DEPLOY_REGION=eu-west-1
 @echo off
 if defined CDK_DEPLOY_ACCOUNT (
 	if defined CDK_DEPLOY_REGION (
 		set "AWS_REGION=%CDK_DEPLOY_REGION%"
 		echo "==> [Progress 1/8] Building JDBC function"
-		cd ./cdk-stack/common-functions/jdbc-query-runner
+		cd ../source/cdk-stack/common-functions/jdbc-query-runner
 		call mvn clean install
 		cd ../..
 		echo "==> [Progress 2/8] Building Infrastructure"

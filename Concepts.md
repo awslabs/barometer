@@ -1,14 +1,14 @@
-# Benchmarking Tool Project
+# AWS Barometer Project
 
 ## Architectural Concepts
 
-1. Extensible: The project & it's modules should be extensible so that it can support future use cases for example add
+1. **Extensible**: The project & it's modules should be extensible so that it can support future use cases for example add
    new platform or "Bring your own dataset" (BYOD)
-2. Maintainable: Being a community project it is important to keep the project maintainable for very long term.
-3. Secure: Security is P1 always here it is even more important as Benchmarking tool works with data & customer account
-4. Welcoming: Being a community project to help others contribute we need to keep the learning curve to minimal,
+2. **Maintainable**: Being a community project it is important to keep the project maintainable for very long term.
+3. **Secure**: Security is P1 always here it is even more important as Benchmarking tool works with data & customer account
+4. **Welcoming**: Being a community project to help others contribute we need to keep the learning curve to minimal,
    automate processes & follow conventions & best practices for easy/fast on-boarding.
-5. Scalable: The architecture will typically work with big datasets hence all architectural component must be scalable
+5. **Scalable**: The architecture will typically work with big datasets hence all architectural component must be scalable
    to absorb it.
 
 ## Architecture Design Principals
@@ -51,9 +51,9 @@
 - Infrastructure as code
 - Dynamic resource allocation (ex: Parameters defined dynamically based on volume of data)
 
-## Benchmarking tool project composed of
+## AWS Barometer project is composed of
 
-- [CDK Stack](./cdk-stack)
-- [Command line Wizard](./cli-wizard)
-- [UI Wizard](./ui-wizard)
-- [Tools and utilities](./tools)
+- [CDK Stack](./source/cdk-stack)
+- [Command line Wizard](./source/cli-wizard)
+- [UI Wizard](./source/ui-wizard)
+- [Tools and utilities](./source/tools)

@@ -1,3 +1,13 @@
+if ! hash mvn npm aws cdk jq &>/dev/null
+then
+ echo "==> [FAILED] All required prerequisites not found. Please ensure that below tools are installed & available in current bash environment. Exiting."
+ echo "=> mvn (with jdk 8 or higher) https://maven.apache.org/install.html"
+ echo "=> npm https://docs.npmjs.com/downloading-and-installing-node-js-and-npm"
+ echo "=> aws cdk (npm install -g aws-cdk)"
+ echo "=> aws-cli https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
+ echo "=> jq https://stedolan.github.io/jq/download/"
+ exit 1
+fi
 if test -z "$CDK_DEPLOY_ACCOUNT"
 then
   echo "==> [FAILED] Environment variable CDK_DEPLOY_ACCOUNT not set. Exiting."
@@ -10,7 +20,7 @@ then
 fi
 export AWS_REGION=$CDK_DEPLOY_REGION
 echo "==> [Progress 1/9] Building JDBC function"
-cd ./cdk-stack/common-functions/jdbc-query-runner
+cd ../source/cdk-stack/common-functions/jdbc-query-runner
 mvn clean install
 cd ../..
 echo "==> [Progress 2/9] Building Infrastructure"

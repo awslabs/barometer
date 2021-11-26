@@ -8,7 +8,6 @@ This project deploys [Benchmarking Stack](./lib/benchmarking-stack.ts) infrastru
 2. S3 bucket to copy [workload](./workloads) dataset & [platform](./platforms) cloudformation template
 3. Commonly reused [lambda functions](./common-functions) for benchmarking activities
 4. Step function workflow to orchestrate experiment execution.
-5. Optional - Amplify UI tool
 
 ## Benchmarking flow
 
@@ -56,7 +55,6 @@ This project deploys [Benchmarking Stack](./lib/benchmarking-stack.ts) infrastru
         "redshift",
         "redshift-spectrum"
       ],
-      "loadMethod": "direct",
       "workloadType": "OLAP"
     }
   },

@@ -7,46 +7,46 @@ build-cdk: # Builds cdk using latest nodejs image
   image: node:latest
   script:
     - echo "Compiling the code..."
-    - cd benchmarking-tool/cdk-stack
+    - cd source/cdk-stack
     - npm install
     - echo "Compile complete."
   cache:
     paths:
-      - benchmarking-tool/cdk-stack/node_modules/
+      - source/cdk-stack/node_modules/
 
 build-cli-wizard: # Builds cli-wizard using latest nodejs image
   stage: build
   image: node:latest
   script:
     - echo "Compiling the code..."
-    - cd benchmarking-tool/cli-wizard
+    - cd source/cli-wizard
     - npm install
     - npm run build
     - echo "Compile complete."
   cache:
     paths:
-      - benchmarking-tool/cli-wizard/node_modules/
+      - source/cli-wizard/node_modules/
 
 build-ui-wizard: # Builds ui-wizard using latest nodejs image
   stage: build
   image: node:latest
   script:
     - echo "Compiling the code..."
-    - cd benchmarking-tool/ui-wizard
+    - cd source/ui-wizard
     - touch src/aws-exports.js # File created by Amplify pull in future
     - npm install
     - npm run build
     - echo "Compile complete."
   cache:
     paths:
-      - benchmarking-tool/ui-wizard/node_modules/
+      - source/ui-wizard/node_modules/
 
 deploy-analytics-004:
   stage: deploy
   image: node:latest
   script:
     - echo "Deploy to analytics account 004 server"
-    - cd benchmarking-tool/cdk-stack
+    - cd source/cdk-stack
     - npm install
     - npm install aws-cdk
     - export AWS_REGION=$AWS_DEFAULT_REGION
