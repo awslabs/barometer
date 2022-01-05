@@ -53,6 +53,24 @@ export class BenchmarkingStack extends cdk.Stack {
             subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
         });
 
+        new InterfaceVpcEndpoint(this, 'SSMMessagesEndpoint', {
+            service: InterfaceVpcEndpointAwsService.SSM_MESSAGES,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
+        });
+
+        new InterfaceVpcEndpoint(this, 'Ec2MessagesEndpoint', {
+            service: InterfaceVpcEndpointAwsService.EC2_MESSAGES,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
+        });
+
+        new InterfaceVpcEndpoint(this, 'SSMEndpoint', {
+            service: InterfaceVpcEndpointAwsService.SSM,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
+        });
+
         // Define new KMS Key. Used for all enc/dec for Benchmarking framework
         let key = new Key(this, "Key", {enableKeyRotation: true});
 
