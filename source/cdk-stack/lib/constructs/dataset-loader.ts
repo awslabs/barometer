@@ -6,7 +6,7 @@ import {
     InstanceInitiatedShutdownBehavior,
     InstanceSize,
     InstanceType,
-    MachineImage,
+    MachineImage, SecurityGroup,
     SubnetType,
     Vpc
 } from "@aws-cdk/aws-ec2";
@@ -48,7 +48,8 @@ export class DatasetLoader extends Construct {
                     deleteOnTermination: true
                 })
             }],
-            role: role
+            role: role,
+            securityGroup: SecurityGroup.fromSecurityGroupId(this, 'default-sg-lookup', props.vpc.vpcDefaultSecurityGroup)
         });
         instance.instance.instanceInitiatedShutdownBehavior = InstanceInitiatedShutdownBehavior.TERMINATE;
         instance.addUserData(...userData);
