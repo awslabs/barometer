@@ -1,4 +1,4 @@
-if ! hash mvn npm aws cdk jq &>/dev/null
+if ! hash mvn npm aws cdk jq zip &>/dev/null
 then
  echo "==> [FAILED] All required prerequisites not found. Please ensure that below tools are installed & available in current bash environment. Exiting."
  echo "=> mvn (with jdk 8 or higher) https://maven.apache.org/install.html"
@@ -6,6 +6,7 @@ then
  echo "=> aws cdk (npm install -g aws-cdk)"
  echo "=> aws-cli https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
  echo "=> jq https://stedolan.github.io/jq/download/"
+ echo "=> zip (sudo apt install zip / yum install zip)"
  exit 1
 fi
 if test -z "$CDK_DEPLOY_ACCOUNT"
