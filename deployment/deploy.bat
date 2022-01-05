@@ -39,9 +39,9 @@ if defined CDK_DEPLOY_ACCOUNT (
 			echo "==> [Progress 7/9] Syncing workloads folder to s3://%DATA_BUCKET%/platforms"
 			call aws s3 sync workloads "s3://%DATA_BUCKET%/workloads"
 			echo "==> [Progress 8/9] Uploading TPC-DS Tools"
-			call aws s3 cp ../tools/tpc-ds/TPC-DSGen-software-code-3.2.0rc1.zip "s3://$DATA_BUCKET/tools/TPC-DSGen-software-code-3.2.0rc1.zip"
-            call aws s3 cp ../tools/tpc-ds/ddl.sql "s3://$DATA_BUCKET/datasets/tpc-ds-v3/ddl/ddl.sql"
-            call aws s3 sync ../tools/tpc-ds/queries "s3://$DATA_BUCKET/datasets/tpc-ds-v3/benchmarking-queries"
+			call aws s3 cp ../tools/tpc-ds/TPC-DSGen-software-code-3.2.0rc1.zip "s3://%DATA_BUCKET%/tools/TPC-DSGen-software-code-3.2.0rc1.zip"
+            call aws s3 cp ../tools/tpc-ds/ddl.sql "s3://%DATA_BUCKET%/datasets/tpc-ds-v3/ddl/ddl.sql"
+            call aws s3 sync ../tools/tpc-ds/queries "s3://%DATA_BUCKET%/datasets/tpc-ds-v3/benchmarking-queries"
 			echo "==> [Progress 9/9] Building cli-wizard"
 			cd ../cli-wizard
 			call npm install && npm run build
