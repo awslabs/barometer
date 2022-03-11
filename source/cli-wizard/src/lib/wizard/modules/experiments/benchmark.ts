@@ -122,8 +122,7 @@ export class ExperimentModule extends CLIModule {
                     console.log("Experiment run started at - " + output.startDate + " in region - " + region);
                     const executionUrl = "https://" + region + ".console.aws.amazon.com/states/home?region=" + region + "#/executions/details/" + output.executionArn;
                     const dashboardUrl = "https://" + region + ".console.aws.amazon.com/cloudwatch/home?region=" + region + "#dashboards:name=BenchmarkingExperiment-"
-                        + "CustomQueries"
-                        + "RunBenchmarkOnly";
+                        + "RunBenchmarkOnly-CustomPlatform";
                     console.log("Visit this link to see execution: " + executionUrl);
                     console.log("Visit this link to see dashboard: " + dashboardUrl);
                     await open(executionUrl);
