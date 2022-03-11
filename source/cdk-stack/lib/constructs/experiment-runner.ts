@@ -109,7 +109,7 @@ export class ExperimentRunner extends Construct {
             }).next(endState))
                 .otherwise(endState));
 
-        // Full workflow step function definition
+        // Main experiment runner flow
         const experimentRunnerDefinition = new LambdaInvoke(this, "Create platform if it doesn't exists", {
             lambdaFunction: props.commonFunctions.createDestroyPlatform,
             payload: TaskInput.fromObject({
@@ -213,9 +213,15 @@ export class ExperimentRunner extends Construct {
             .otherwise(runBenchmarkingForUsers)))
             .otherwise(runBenchmarkingForUsers));
 
+        // Full workflow step function definition
+        const runBenchmarkOnlyChoice = new Choice(this, "Run Benchmark Only?", {
+            comment: "Test if user wants to run benchmark only or full experiment"
+        }).when(Condition.stringEquals("$.workloadConfig.settings.name", "RunBenchmarkOnly"), runBenchmarkingForUsers)
+            .otherwise(experimentRunnerDefinition);
+
         // Define step function flow
         this.workflow = new StateMachine(this, 'Workflow', {
-            definition: experimentRunnerDefinition
+            definition: runBenchmarkOnlyChoice
         });
         props.key.grantDecrypt(this.workflow);
 

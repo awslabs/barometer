@@ -43,6 +43,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
     @Override
     public JdbcLambdaResponse handleRequest(Map<String, String> event, Context context) {
         LambdaLogger logger = context.getLogger();
+        String connectionTest = event.get("connectionTest");
         String secretId = event.get("secretId");
         String scriptPath = event.get("scriptPath");
         String query = event.get("query");
@@ -57,6 +58,10 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         response.setMetrics(new HashMap<>());
 
         try {
+            if ("true".equalsIgnoreCase(connectionTest) && secretId != null) {
+                getConnection(secretId, logger);
+                return response;
+            }
             if (scriptPath != null) {
                 AmazonS3URI uri = new AmazonS3URI(scriptPath);
                 InputStream inputStream = amazonS3.getObject(uri.getBucket(), uri.getKey()).getObjectContent();

@@ -97,7 +97,9 @@ export class ExperimentModule extends CLIModule {
     }
 
     printInfo(): void {
-        console.log("Benchmarking stack doesn't exist.. Please deploy it first using following command");
+        console.log("*************** ERROR ********************")
+        console.log("Benchmarking stack doesn't exist OR environment variables not set (missing access).. Please deploy it first using following command");
         console.log("cd ../cdk-stack && ./deploy.sh");
+        console.log("******************************************")
     }
 }

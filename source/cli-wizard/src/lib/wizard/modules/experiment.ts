@@ -20,6 +20,7 @@ export class ExperimentModule extends CLIModule {
             choices: [
                 {name: 'Add an experiment', value: '../modules/experiments/new'},
                 {name: 'Run an experiment', value: '../modules/experiments/run'},
+                {name: 'Run benchmark only', value: '../modules/experiments/benchmark'},
                 this.getQuestionSeparator(),
                 {name: 'Return to the previous menu', value: 'exit-module'},
                 {name: 'Exit CLI', value: 'exit'},
