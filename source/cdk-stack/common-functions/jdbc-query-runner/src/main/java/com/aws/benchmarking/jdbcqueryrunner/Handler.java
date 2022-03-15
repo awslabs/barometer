@@ -43,6 +43,18 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
     @Override
     public JdbcLambdaResponse handleRequest(Map<String, String> event, Context context) {
         LambdaLogger logger = context.getLogger();
+        if (logger == null)
+            logger = new LambdaLogger() {
+                @Override
+                public void log(String s) {
+                    System.out.println(s);
+                }
+
+                @Override
+                public void log(byte[] bytes) {
+                    System.out.println(Arrays.toString(bytes));
+                }
+            };
         String connectionTest = event.get("connectionTest");
         String secretId = event.get("secretId");
         String scriptPath = event.get("scriptPath");
