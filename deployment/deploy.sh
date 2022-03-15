@@ -25,6 +25,10 @@ echo "==> [Progress 1/9] Using AWS user $aws_user"
 echo "==> [Progress 1/9] Building JDBC function"
 cd ../source/cdk-stack/common-functions/jdbc-query-runner
 mvn clean install
+for d in ../../platforms/*/; do
+    echo "==> copying all drivers from path: $d"
+    cp "$d"driver/* target/dependency/.
+done
 cd ../..
 echo "==> [Progress 2/9] Building Infrastructure"
 npm install

@@ -1,5 +1,5 @@
 import {Aws, Construct, Duration, Environment} from "@aws-cdk/core";
-import {Code, Function, LayerVersion, Runtime} from "@aws-cdk/aws-lambda";
+import {Code, DockerImageCode, DockerImageFunction, Function, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
 import {Policy, PolicyDocument, PolicyStatement} from "@aws-cdk/aws-iam";
@@ -8,7 +8,6 @@ import {Table} from "@aws-cdk/aws-dynamodb";
 import {LambdaSubscription} from "@aws-cdk/aws-sns-subscriptions";
 import * as fs from "fs";
 import {Key} from "@aws-cdk/aws-kms";
-import * as AdmZip from "adm-zip";
 import {Utils} from "../utils";
 import path = require('path');
 
@@ -37,7 +36,6 @@ export class CommonFunctions extends Construct {
         super(scope, id);
         // Path to common-functions root folder
         const commonFunctionsDirPath: string = path.join(__dirname, '../../common-functions/');
-        const platformDriverZipPath: string = path.join(__dirname, '../../build/PlatformDrivers.zip');
         const platformDirPath: string = path.join(__dirname, '../../platforms/');
 
         this.createDestroyPlatform = new Function(this, "createDestroyPlatform", {
@@ -55,18 +53,11 @@ export class CommonFunctions extends Construct {
         let resources = [props.key.keyArn, props.dataTable.tableArn, props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/platforms/*/template.json", props.dataBucket.bucketArn + "/platforms/*/functions/*/code.zip"];
         let invokeFunctionResources = []
         let platforms = Utils.listPaths(platformDirPath, true);
-        let zip = new AdmZip();
 
         for (let i = 0; i < platforms.length; i++) {
             resources.push("arn:aws:cloudformation:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":stack/" + platforms[i] + "-*/*");
             invokeFunctionResources.push("arn:aws:lambda:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":function:" + platforms[i] + "-*");
-            // Zip all platform driver jars
-            if (fs.existsSync(platformDirPath + platforms[i] + "/driver/")) {
-                let driverJars = Utils.listPaths(platformDirPath + platforms[i] + "/driver/");
-                for (let j = 0; j < driverJars.length; j++) {
-                    zip.addLocalFile(platformDirPath + platforms[i] + "/driver/" + driverJars[j], "java/lib/", driverJars[j]);
-                }
-            }
+
             if (fs.existsSync(platformDirPath + platforms[i] + "/policy.json")) {
                 let policyText = fs.readFileSync(platformDirPath + platforms[i] + "/policy.json", 'utf-8');
                 if (props.env && props.env.region && props.env.account) {
@@ -76,8 +67,6 @@ export class CommonFunctions extends Construct {
                 this.createDestroyPlatform.role?.attachInlinePolicy(new Policy(this, platforms[i] + "-policy", {document: policyDocument}));
             }
         }
-        // Write driver jars zip
-        zip.writeZip(platformDriverZipPath);
 
         this.createDestroyPlatform.addToRolePolicy(new PolicyStatement({
             actions: ["cloudformation:CreateStack", "cloudformation:DeleteStack", "cloudformation:DescribeStacks", "kms:CreateGrant", "dynamodb:PutItem", "dynamodb:DeleteItem", "s3:GetObject", "s3:ListBucket"],
@@ -124,19 +113,9 @@ export class CommonFunctions extends Construct {
             resources: [props.dataTable.tableArn, props.key.keyArn]
         }));
 
-        // Create lambda layer with all platform drivers
-        let platformDriverLayer = new LayerVersion(this, 'PlatformDrivers', {
-            code: Code.fromAsset(platformDriverZipPath),
-            description: "Contains all platform drivers",
-            compatibleRuntimes: [Runtime.JAVA_8, Runtime.JAVA_8_CORRETTO]
-        });
-
-        this.jdbcQueryRunner = new Function(this, "jdbcQueryRunner", {
-            code: Code.fromAsset(commonFunctionsDirPath + "jdbc-query-runner/target/jdbc-query-runner-1.0.0.jar"),
-            handler: "com.aws.benchmarking.jdbcqueryrunner.Handler",
-            runtime: Runtime.JAVA_8_CORRETTO,
+        this.jdbcQueryRunner = new DockerImageFunction(this, "jdbcQueryRunnerFn", {
+            code: DockerImageCode.fromImageAsset(commonFunctionsDirPath + "jdbc-query-runner"),
             vpc: props.vpc,
-            layers: [platformDriverLayer],
             timeout: Duration.minutes(15),
             memorySize: 256
         });
