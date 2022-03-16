@@ -41,6 +41,18 @@ export class BenchmarkingStack extends cdk.Stack {
             }
         });
 
+        new InterfaceVpcEndpoint(this, 'ECRDockerEndpoint', {
+            service: InterfaceVpcEndpointAwsService.ECR_DOCKER,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
+        });
+
+        new InterfaceVpcEndpoint(this, 'ECREndpoint', {
+            service: InterfaceVpcEndpointAwsService.ECR,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
+        });
+
         new InterfaceVpcEndpoint(this, 'SecretsManagerEndpoint', {
             service: InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
             vpc: vpc,
@@ -49,6 +61,12 @@ export class BenchmarkingStack extends cdk.Stack {
 
         new InterfaceVpcEndpoint(this, 'MonitoringEndpoint', {
             service: InterfaceVpcEndpointAwsService.CLOUDWATCH,
+            vpc: vpc,
+            subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
+        });
+
+        new InterfaceVpcEndpoint(this, 'LogsEndpoint', {
+            service: InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             vpc: vpc,
             subnets: {subnetType: SubnetType.PRIVATE_ISOLATED}
         });
@@ -117,7 +135,7 @@ export class BenchmarkingStack extends cdk.Stack {
             dataTable: dataTable,
             key: key
         });
-        new DatasetLoader(this, 'DatasetLoader', {dataBucket: dataBucket, vpc: vpc, key: key});
+        // new DatasetLoader(this, 'DatasetLoader', {dataBucket: dataBucket, vpc: vpc, key: key});
 
         let today = new Date().toISOString().slice(0, 10);
 

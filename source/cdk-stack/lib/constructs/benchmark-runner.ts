@@ -3,11 +3,18 @@ import {IntegrationPattern, JsonPath, StateMachine} from "@aws-cdk/aws-stepfunct
 import {EcsFargateLaunchTarget, EcsRunTask} from "@aws-cdk/aws-stepfunctions-tasks";
 import {Cluster} from "@aws-cdk/aws-ecs/lib/cluster";
 import {SubnetType, Vpc} from "@aws-cdk/aws-ec2";
-import {ContainerDefinition, ContainerImage, FargatePlatformVersion, FargateTaskDefinition} from "@aws-cdk/aws-ecs";
+import {
+    ContainerDefinition,
+    ContainerImage,
+    FargatePlatformVersion,
+    FargateTaskDefinition,
+    LogDriver
+} from "@aws-cdk/aws-ecs";
 import {PolicyStatement} from "@aws-cdk/aws-iam";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {IFunction} from "@aws-cdk/aws-lambda";
 import {IKey} from "@aws-cdk/aws-kms";
+import {RetentionDays} from "@aws-cdk/aws-logs";
 import path = require('path');
 
 
@@ -64,21 +71,23 @@ export class BenchmarkRunner extends Construct {
             cluster: ecsCluster,
             launchTarget: new EcsFargateLaunchTarget({platformVersion: FargatePlatformVersion.LATEST}),
             taskDefinition: taskDefinition,
-            integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+            integrationPattern: IntegrationPattern.RUN_JOB,
             subnets: {subnetType: SubnetType.PRIVATE_ISOLATED},
             securityGroups: props.jdbcQueryRunnerFunction.connections.securityGroups,
             assignPublicIp: false,
             containerOverrides: [{
                 containerDefinition: new ContainerDefinition(this, 'QueryRunner', {
                     image: ContainerImage.fromAsset(commonFunctionsDirPath + "jdbc-query-runner"),
-                    taskDefinition: taskDefinition
+                    taskDefinition: taskDefinition,
+                    logging: LogDriver.awsLogs({streamPrefix: "Benchmark-QueryRunner", logRetention: RetentionDays.FIVE_DAYS})
                 }),
-                command: ["java -classpath lib/*:. com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"],
+                command: ["java", "-classpath", "lib/*:.", "com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"],
                 environment: [
                     {name: 'secretId', value: JsonPath.stringAt("$.secretId")},
                     {name: 'sessionId', value: JsonPath.stringAt("$.sessionId")},
                     {name: 'stackName', value: JsonPath.stringAt("$.stackName")},
-                    {name: 'queries', value: JsonPath.jsonToString(JsonPath.listAt("$.queries"))}
+                    {name: 'basePath', value: JsonPath.stringAt("$.basePath")},
+                    {name: 'extension', value: JsonPath.stringAt("$.extension")}
                 ]
             }],
             resultPath: JsonPath.DISCARD

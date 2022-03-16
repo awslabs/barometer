@@ -3,4 +3,5 @@ COPY target/classes ${LAMBDA_TASK_ROOT}
 COPY target/dependency/* ${LAMBDA_TASK_ROOT}/lib/
 
 # Entry point for lambda function
-CMD [ "com.aws.benchmarking.jdbcqueryrunner.Handler::handleRequest" ]
+ENTRYPOINT ["/usr/bin/env"]
+CMD [ "/lambda-entrypoint.sh", "com.aws.benchmarking.jdbcqueryrunner.Handler::handleRequest" ]
