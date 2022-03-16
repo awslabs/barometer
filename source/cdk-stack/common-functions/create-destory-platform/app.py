@@ -130,7 +130,7 @@ def sfn_respond(stack_name, describe_stack_response=None):
         for output in outputs:
             if output["OutputKey"] == "SecretIdAdminUser":
                 secret_ids["secretIds"].insert(0, output["OutputValue"])
-            if output["OutputKey"].startswith("SecretId"):
+            elif output["OutputKey"].startswith("SecretId"):
                 secret_ids["secretIds"].append(output["OutputValue"])
             if output["OutputKey"] == "DataCopierLambdaArn":
                 secret_ids["dataCopierLambda"] = output["OutputValue"]
