@@ -68,7 +68,7 @@ export class ExperimentRunner extends Construct {
                 parameters: {
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "secretId.$": "$$.Map.Item.Value.secretId",
-                    "sessionId.$": "$$.Map.Item.Value.sessionId",
+                    "sessionIds.$": "$$.Map.Item.Value.sessionIds",
                     "basePath.$": "$.workloadConfig.settings.queries.path"
                 }
             }).iterator(new StepFunctionsStartExecution(this, 'Run Benchmarking', {
@@ -76,7 +76,7 @@ export class ExperimentRunner extends Construct {
                 integrationPattern: IntegrationPattern.RUN_JOB,
                 input: TaskInput.fromObject({
                     "secretId.$": "$.secretId",
-                    "sessionId.$": "$.sessionId",
+                    "sessionIds.$": "$.sessionIds",
                     "stackName.$": "$.stackName",
                     "basePath.$": "$.basePath",
                     "extension": ".sql"
@@ -140,7 +140,7 @@ export class ExperimentRunner extends Construct {
                 integrationPattern: IntegrationPattern.RUN_JOB,
                 input: TaskInput.fromObject({
                     "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                    "sessionId": "DDL",
+                    "sessionIds": ["DDL"],
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "basePath.$": "$.workloadConfig.settings.ddl.path",
                     "extension": ".sql"

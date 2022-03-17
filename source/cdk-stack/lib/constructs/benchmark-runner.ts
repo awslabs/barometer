@@ -42,7 +42,7 @@ export class BenchmarkRunner extends Construct {
             vpc: props.vpc
         });
 
-        const taskDefinition = new FargateTaskDefinition(this, 'QueryRunnerTask', {cpu: 256, memoryLimitMiB: 512});
+        const taskDefinition = new FargateTaskDefinition(this, 'QueryRunnerTask', {cpu: 512, memoryLimitMiB: 1024});
         taskDefinition.addToTaskRolePolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
             resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn]
@@ -84,7 +84,7 @@ export class BenchmarkRunner extends Construct {
                 command: ["java", "-classpath", "lib/*:.", "com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"],
                 environment: [
                     {name: 'secretId', value: JsonPath.stringAt("$.secretId")},
-                    {name: 'sessionId', value: JsonPath.stringAt("$.sessionId")},
+                    {name: 'sessionIds', value: JsonPath.jsonToString(JsonPath.stringAt("$.sessionIds"))},
                     {name: 'stackName', value: JsonPath.stringAt("$.stackName")},
                     {name: 'basePath', value: JsonPath.stringAt("$.basePath")},
                     {name: 'extension', value: JsonPath.stringAt("$.extension")}

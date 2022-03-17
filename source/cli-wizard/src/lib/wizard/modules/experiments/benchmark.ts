@@ -39,6 +39,7 @@ export class ExperimentModule extends CLIModule {
                         InvocationType: InvocationType.RequestResponse,
                         Payload: new TextEncoder().encode(JSON.stringify({
                             connectionTest: "true",
+                            sessionId: "ConnectionTest",
                             secretId: input
                         }))
                     });

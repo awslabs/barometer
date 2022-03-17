@@ -72,7 +72,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
 
         try {
             if ("true".equalsIgnoreCase(connectionTest) && secretId != null) {
-                getConnection(secretId, logger);
+                getConnection(secretId, sessionId, logger);
                 return response;
             }
             if (scriptPath != null) {
@@ -82,7 +82,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
             }
             logger.log("Fetched script: " + scriptPath);
             logger.log("Executing using user: " + secretId);
-            Connection connection = getConnection(secretId, logger);
+            Connection connection = getConnection(secretId, sessionId, logger);
             try (Statement statement = connection.createStatement()) {
                 // Execute query
                 long startTimeMillis = System.currentTimeMillis();
@@ -108,8 +108,9 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         return response;
     }
 
-    private static Connection getConnection(String secretId, LambdaLogger logger) throws SQLException {
-        Connection cachedConnection = cachedConnections.get(secretId);
+    private static Connection getConnection(String secretId, String sessionId, LambdaLogger logger) throws SQLException {
+        String cacheKey = secretId + "/" + sessionId;
+        Connection cachedConnection = cachedConnections.get(cacheKey);
         try {
             if (cachedConnection != null && !cachedConnection.isClosed()) {
                 return cachedConnection;
@@ -123,7 +124,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         Properties userInfo = new Properties();
         userInfo.setProperty("user", secretId);
         cachedConnection = DriverManager.getConnection(secretId, userInfo);
-        cachedConnections.put(secretId, cachedConnection);
+        cachedConnections.put(cacheKey, cachedConnection);
         return cachedConnection;
     }
 

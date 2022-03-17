@@ -88,19 +88,20 @@ def populate_benchmarking_widgets(queries, dashboard, user_sessions, stack_name)
 def build_summery_widget(queries, stack_name, user, user_sessions):
     widget = get_template("summary-widget")
     for session in filter(lambda s: user == s["secretId"], user_sessions):
-        for query in queries:
-            widget["properties"]["metrics"].append([
-                "Benchmarking",
-                "runTimeMillis",
-                "SCRIPT_PATH",
-                query,
-                "SECRET_ID",
-                session["secretId"],
-                "SESSION_ID",
-                session["sessionId"],
-                "STACK_NAME",
-                stack_name
-            ])
+        for sessionId in session["sessionIds"]:
+            for query in queries:
+                widget["properties"]["metrics"].append([
+                    "Benchmarking",
+                    "runTimeMillis",
+                    "SCRIPT_PATH",
+                    query,
+                    "SECRET_ID",
+                    session["secretId"],
+                    "SESSION_ID",
+                    str(sessionId),
+                    "STACK_NAME",
+                    stack_name
+                ])
     widget["properties"]["region"] = os.environ["AWS_REGION"]
     widget["properties"]["title"] = "Benchmarking query timings user - " + user.split(":")[-1].split("-")[0]
     return widget
