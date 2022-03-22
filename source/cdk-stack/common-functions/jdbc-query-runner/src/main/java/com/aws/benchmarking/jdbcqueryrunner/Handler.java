@@ -30,11 +30,11 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         // Load all the driver classes
         try {
             Class.forName("com.aws.benchmarking.jdbcqueryrunner.drivers.AWSSecretsManagerDriverRedshift");
-            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMariaDBDriver");
-            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMSSQLServerDriver");
-            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMySQLDriver");
-            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerOracleDriver");
-            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver");
+//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMariaDBDriver");
+//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMSSQLServerDriver");
+//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMySQLDriver");
+//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerOracleDriver");
+//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
