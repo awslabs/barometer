@@ -16,6 +16,7 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 - [Installing](#-installing)
 - [Deployment](#-deployment)
 - [Quickstart](#-quickstart)
+- [Run Benchmark Only](#-run-benchmark-only)
 - [Architecture](#-architecture)
 - [Cleanup](#-cleanup)
 - [See Also](#-see-also)
@@ -23,8 +24,9 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 ## 🔰 Description
 
 AWS Barometer will deploy [cdk](https://aws.amazon.com/cdk/) stack which is used to run benchmarking experiments. The
-experiment is a combination of [platform](./source/cdk-stack/platforms) and [workload](./source/cdk-stack/workloads) which can be
-defined using [cli-wizard](./source/cli-wizard) provided by AWS Barometer tool. Example running experiment in QuickStart.
+experiment is a combination of [platform](./source/cdk-stack/platforms) and [workload](./source/cdk-stack/workloads)
+which can be defined using [cli-wizard](./source/cli-wizard) provided by AWS Barometer tool. Example running experiment
+in QuickStart.
 
 ## 🛠 Use cases
 
@@ -34,6 +36,7 @@ defined using [cli-wizard](./source/cli-wizard) provided by AWS Barometer tool. 
 - Right tool for the job selection: Athena vs Redshift for given workload
 - [Registering your custom platform](./source/cdk-stack/platforms): Redshift vs My Own Database
 - [Registering your custom workload](./source/cdk-stack/workloads): My own dataset vs Redshift
+- Run benchmarking only
 
 AWS Barometer supports below combinations as experiment
 
@@ -91,6 +94,63 @@ npm run wizard
 
 ![](./assets/define_experiment.gif)
 
+## Run benchmark only
+
+You can directly benchmark any database with this option. The option is available
+under `Manage Experiments > Run benchmarking only`. Depending on where the database is hosted you need to follow below
+steps as prerequisites to use run benchmark only option.
+
+![](./assets/run_benchmark_only.gif)
+
+### If database and AWS Barometer is in the same VPC
+
+1. Create a new secret manager secret having values in below defined json format. All properties are case-sensitive and
+   required except `dbClusterIdentifier`
+
+```json
+{
+  "username": "database-user",
+  "password": "*******",
+  "engine": "redshift",
+  "host": "my-database-host.my-domain.com",
+  "port": 5439,
+  "dbClusterIdentifier": "redshift-cluster-1",
+  "dbname": "dev"
+}
+```
+
+2. Add tag to the secret for AWS Barometer to have permissions to use it Tag name = `ManagedBy`, Tag Value
+   = `BenchmarkingStack`
+3. Allow network connection from `QueryRunnerSG` (Available as Output of BenchmarkingStack) to your database security
+   group
+4. Upload your benchmarking queries to the `DataBucket` (Bucket created by BenchmarkingStack, available as Output) in
+   new folder.
+
+```
+s3://benchmarkingstack-databucket-random-id
+    my-benchmarking-queries
+    |
+    | +-- query1.sql
+    | +-- query2.sql
+```
+
+### If database and AWS Barometer is not in the same VPC
+
+In addition to the steps mentioned above (both in the same VPC), follow below steps to
+Establish [VPC Peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)
+connection between BenchmarkingVPC and the VPC where database is hosted.
+
+1. Go to VPC console > Peering connection menu from left navigation
+2. Create new Peering connection selecting both VPCs (BenchmarkingVPC and DatabaseVPC)
+3. Accept peering connection request from Action menu
+4. Go to the VPC > Route tables and select route table associated with BenchmarkingStack subnet
+5. Add new route with Destination = CIDR range of the DatabaseVPC and Target = Peering connection id (starts
+   with `pcx-`)
+6. Repeat steps 4 and 5 for route table associated with BenchmarkingStack second subnet
+7. Go to the VPC > Route tables and select route table associated with DatabaseVPC subnet (if using default VPC select
+   the only route table available)
+8. Add new route with Destination = `10.0.0.0/16` and Target = Peering connection id (starts with `pcx-`)
+
 ## Architecture
 
 ### User flow
@@ -99,8 +159,10 @@ npm run wizard
 
 1. User deploys AWS Barometer Benchmarking Stack
 2. AWS Barometer Benchmarking stack creates infrastructure & step function workflows
-3. User uses [cli-wizard](./source/cli-wizard) to define & run experiments which triggers experiment runner workflow internally
-4. Workflow deploys, benchmarks & destroys platform (additional cloudformation stack to deploy service, e.g. Redshift Cluster)
+3. User uses [cli-wizard](./source/cli-wizard) to define & run experiments which triggers experiment runner workflow
+   internally
+4. Workflow deploys, benchmarks & destroys platform (additional cloudformation stack to deploy service, e.g. Redshift
+   Cluster)
 5. Workflow creates persistent dashboard registering metrics
 6. User uses this dashboard to compare benchmarking results
 
@@ -111,7 +173,8 @@ npm run wizard
 ## Cleanup
 
 1. To clean up any platform, delete stack with name starting with platform name. Example: `redshift-xyz`
-2. Go to Cloudformation service and select stack named `BenchmarkingStack` (or run `cdk destroy` from [cdk-stack](./source/cdk-stack) folder)
+2. Go to Cloudformation service and select stack named `BenchmarkingStack` (or run `cdk destroy`
+   from [cdk-stack](./source/cdk-stack) folder)
 
 ## 👀 See Also
 

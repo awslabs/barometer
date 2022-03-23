@@ -44,7 +44,6 @@ export class ExperimentModule extends CLIModule {
                         }))
                     });
                     const respPayload = JSON.parse(new TextDecoder().decode(response.Payload));
-                    console.log(respPayload);
                     if (respPayload["errorMessage"])
                         exceptionMessage = respPayload["errorMessage"];
                     else
