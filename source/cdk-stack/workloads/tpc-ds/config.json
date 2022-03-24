@@ -1,7 +1,6 @@
 {
   "name": "TPC-DS/v3",
   "description": "TPC-DS v3",
-  "type": "olap",
   "volumes": [
     {
       "name": "1 GB",
