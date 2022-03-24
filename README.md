@@ -121,10 +121,9 @@ steps as prerequisites to use run benchmark only option.
 
 2. Add tag to the secret for AWS Barometer to have permissions to use it Tag name = `ManagedBy`, Tag Value
    = `BenchmarkingStack`
-3. Allow network connection from `QueryRunnerSG` (Available as Output of BenchmarkingStack) to your database security
-   group
-4. Upload your benchmarking queries to the `DataBucket` (Bucket created by BenchmarkingStack, available as Output) in
-   new folder.
+3. Upload your benchmarking queries to the `DataBucket` (Bucket created by BenchmarkingStack, available as Output) in
+   new folder with any name (for example: `my-benchmarking-queries`). Note: the queries can have any name and will be
+   executed in sorted order of their names.
 
 ```
 s3://benchmarkingstack-databucket-random-id
@@ -134,22 +133,26 @@ s3://benchmarkingstack-databucket-random-id
     | +-- query2.sql
 ```
 
+4. Allow network connection from `QueryRunnerSG` (Available as Output of BenchmarkingStack) to your database security
+   group
+
 ### If database and AWS Barometer is not in the same VPC
 
-In addition to the steps mentioned above (both in the same VPC), follow below steps to
+In addition to the steps 1,2 and 3 mentioned above (both in the same VPC), follow below steps to
 Establish [VPC Peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)
 connection between BenchmarkingVPC and the VPC where database is hosted.
 
 1. Go to VPC console > Peering connection menu from left navigation
 2. Create new Peering connection selecting both VPCs (BenchmarkingVPC and DatabaseVPC)
 3. Accept peering connection request from Action menu
-4. Go to the VPC > Route tables and select route table associated with BenchmarkingStack subnet
+4. Go to the VPC > Route tables and select any route table associated with BenchmarkingStack subnet
 5. Add new route with Destination = CIDR range of the DatabaseVPC and Target = Peering connection id (starts
    with `pcx-`)
 6. Repeat steps 4 and 5 for route table associated with BenchmarkingStack second subnet
 7. Go to the VPC > Route tables and select route table associated with DatabaseVPC subnet (if using default VPC select
    the only route table available)
 8. Add new route with Destination = `10.0.0.0/16` and Target = Peering connection id (starts with `pcx-`)
+9. Follow last `step 4 - allow network connection` from `both in the same VPC` above.
 
 ## Architecture
 
