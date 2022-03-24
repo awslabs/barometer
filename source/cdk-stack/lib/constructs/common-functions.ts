@@ -142,6 +142,16 @@ export class CommonFunctions extends Construct {
                 }
             }
         }));
+        // Allow lambda function to list any bucket having tag
+        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
+            actions: ["s3:ListBucket", "s3:GetObject"],
+            resources: ["*"],
+            conditions: {
+                "StringEquals": {
+                    "aws:ResourceTag/ManagedBy": "BenchmarkingStack"
+                }
+            }
+        }));
 
         this.stepFunctionHelpers = new Function(this, "helpers", {
             code: Code.fromAsset(commonFunctionsDirPath + "stepfn-helpers"),
@@ -152,6 +162,16 @@ export class CommonFunctions extends Construct {
         this.stepFunctionHelpers.addToRolePolicy(new PolicyStatement({
             actions: ["s3:ListBucket"],
             resources: [props.dataBucket.bucketArn]
+        }));
+        // Allow lambda function to list any bucket having tag
+        this.stepFunctionHelpers.addToRolePolicy(new PolicyStatement({
+            actions: ["s3:ListBucket"],
+            resources: ["*"],
+            conditions: {
+                "StringEquals": {
+                    "aws:ResourceTag/ManagedBy": "BenchmarkingStack"
+                }
+            }
         }));
     }
 }
