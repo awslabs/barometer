@@ -279,19 +279,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "s3:GetObject",
-                    "s3:ListBucket"
-                  ],
-                  "Resource": "*",
-                  "Condition": {
-                    "StringEquals": {
-                      "aws:ResourceTag/ManagedBy": "BenchmarkingStack"
-                    }
-                  }
                 }
               ]
             }

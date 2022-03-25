@@ -27,7 +27,7 @@ def lambda_handler(event, context):
         query_template += " FORMAT AS " + data_format
     if "delimiter" in event["data"]["volume"]:
         query_template += " DELIMITER AS '" + event["data"]["volume"]["delimiter"] + "'"
-    query_template += " ACCEPTINVCHARS"
+        query_template += " ACCEPTINVCHARS"
 
     print("Processing: " + dataset)
     dirs = dataset.split('/')
