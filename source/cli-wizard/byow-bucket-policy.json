@@ -10,15 +10,10 @@
         "s3:GetObject",
         "s3:ListBucket"
       ],
-      "Resource": [
-        "arn:aws:s3:::#DATA_BUCKET#",
-        "arn:aws:s3:::#DATA_BUCKET#/*"
-      ],
+      "Resource": [],
       "Condition": {
         "StringLike": {
           "aws:PrincipalArn": [
-            "arn:aws:iam::#AWS_ACCOUNT_ID#:role/BenchmarkingStack-*",
-            "arn:aws:iam::#AWS_ACCOUNT_ID#:role/redshift-*"
           ]
         }
       }

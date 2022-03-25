@@ -131,7 +131,16 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
                                 } else return "No volumes found in format " + prefix + "volumes/[scale-factor]/[table-name]/"
                             }
                             const workloadDirPath: string = path.join(__dirname, '../../../../../cdk-stack/workloads/');
+                            const bucketPolicyTemplatePath: string = path.join(__dirname, '../../../../byow-bucket-policy.json');
+                            const template = Utils.readJson(bucketPolicyTemplatePath);
+                            template["Statement"][0]["Resource"].push("arn:aws:s3:::" + url.hostname);
+                            template["Statement"][0]["Resource"].push("arn:aws:s3:::" + url.hostname + "/" + prefix + "*");
+                            template["Statement"][0]["Condition"]["StringLike"]["aws:PrincipalArn"].push("arn:aws:iam::" + process.env.CDK_DEPLOY_ACCOUNT + ":role/BenchmarkingStack-*");
+                            template["Statement"][0]["Condition"]["StringLike"]["aws:PrincipalArn"].push("arn:aws:iam::" + process.env.CDK_DEPLOY_ACCOUNT + ":role/redshift-*");
                             Utils.writeToDir(workloadDirPath + workloadConfig.name, 'config.json', workloadConfig);
+                            const message = "\n\nPlease update bucket policy of bucket: " + url.hostname + " to the following \n\n" +
+                                JSON.stringify(template, null, 4);
+                            console.log(message);
                         } else return "Path " + prefix + "volumes/ should contain at least 1 folder";
                     }
                 } catch (e) {
