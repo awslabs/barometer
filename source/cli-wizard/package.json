@@ -50,6 +50,7 @@
     "@aws-sdk/client-cloudformation": "^3.42.0",
     "@aws-sdk/client-sfn": "^3.42.0",
     "@aws-sdk/client-lambda": "^3.42.0",
+    "@aws-sdk/client-s3": "^3.42.0",
     "inquirer": "^8.2.0",
     "joi": "^17.4.2",
     "open": "^8.4.0",

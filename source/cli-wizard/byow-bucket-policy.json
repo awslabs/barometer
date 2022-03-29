@@ -1,0 +1,22 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [],
+      "Condition": {
+        "StringLike": {
+          "aws:PrincipalArn": [
+          ]
+        }
+      }
+    }
+  ]
+}

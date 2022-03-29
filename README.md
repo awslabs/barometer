@@ -16,7 +16,8 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 - [Installing](#-installing)
 - [Deployment](#-deployment)
 - [Quickstart](#-quickstart)
-- [Run Benchmark Only](#-run-benchmark-only)
+- [Run Benchmark Only](#run-benchmark-only)
+- [Bring your own workload](#bring-your-own-workload)
 - [Architecture](#-architecture)
 - [Cleanup](#-cleanup)
 - [See Also](#-see-also)
@@ -153,6 +154,62 @@ connection between BenchmarkingVPC and the VPC where database is hosted.
    the only route table available)
 8. Add new route with Destination = `10.0.0.0/16` and Target = Peering connection id (starts with `pcx-`)
 9. Follow last `step 4 - allow network connection` from `both in the same VPC` above.
+
+## Bring your own workload
+
+You can bring your own workload for benchmarking to AWS Barometer. In this context, workload is defined as files
+arranged in specific structure on your s3 bucket. To bring your own workload for the benchmarking you need to follow
+below steps as prerequisites.
+
+![](./assets/bring_your_own_workload.gif)
+
+1. Prepare workload on your s3 bucket. It should contain folder structure as defined below. You can create folder with
+   the name of your workload (ex: `my-workload`) at any level in your s3 bucket. The root of your workload folder should
+   have three sub-directories called `volumes`, `ddl` and `benchmarking-queries`.
+    1. `volumes` sub-directory: this directory contains scale factor for your workload. for example your workload may
+       have dataset available in `1gb`, `50gb` and `1tb` scales. You can create as many scale factors as you want with
+       minimum one. Within each scale factor sub-directory you should have directory matching `table name` with all
+       table data in `.parquet` format under it.
+    2. `ddl` sub-directory: this directory contains ddl-scripts to create tables respective to the platform in question.
+       For example, ddl-scripts for `redshift` platform should go under redshift folder and ddl specific to `mysql`
+       should be placed under its own directory matching with platform name. You can place more than one ddl scripts
+       too, they will be executed in order of their names.
+    3. `benchmarking-queries` sub-directory: this directory contains benchmarking queries with respect to the platform
+       in question. You can place more than one benchmarking-query files, they will be executed in order of their names
+       per user session.
+
+```
+# Requires my-workload (can be any name) to follow convention on s3 bucket
+
+    my-workload
+    |  +-- volumes
+    |      |  +-- 1gb
+    |      |      |  +-- table_name_1
+    |      |      |      |  +-- file-1.parquet
+    |      |      |      |  +-- file-2.parquet
+    |      |      |  +-- table_name_2
+    |      |      |      |  +-- file-1.parquet
+    |      |      |      |  +-- file-2.parquet
+    |  +-- ddl
+    |      |  +-- redshift
+    |      |      |  +-- ddl.query1.sql
+    |      |      |  +-- ddl.query2.sql
+    |      |  +-- mysql
+    |      |      |  +-- ddl.query.sql
+    |  +-- benchmarking-queries
+    |      |  +-- redshift
+    |      |      |  +-- query1.sql
+    |      |      |  +-- query2.sql
+    |      |  +-- mysql
+    |      |      |  +-- query1.sql
+    |      |      |  +-- query2.sql
+
+```
+
+2. Run the cli-wizard and go to `Manage workload > Add new workload` to import your workload. Wizard will validate and
+   import workload if structure validation is successful.
+3. Wizard will print `bucket policy` while importing your workload. Please update your s3 bucket's bucket policy with
+   printed one.
 
 ## Architecture
 

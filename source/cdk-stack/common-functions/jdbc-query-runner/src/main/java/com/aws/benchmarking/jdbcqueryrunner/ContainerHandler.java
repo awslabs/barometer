@@ -38,19 +38,24 @@ public class ContainerHandler {
         ExecutorService executorService = Executors.newFixedThreadPool(sessionIds.size());
         for (String sessionId : sessionIds) {
             executorService.submit(() -> {
-                Handler handler = new Handler();
-                System.out.println("Started thread for user session: " + sessionId);
-                for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
-                    if (objectSummary.getKey().toLowerCase().endsWith(extension.toLowerCase())) {
-                        Map<String, String> event = new HashMap<>();
-                        event.put("secretId", secretId);
-                        event.put("sessionId", sessionId);
-                        event.put("stackName", stackName);
-                        event.put("scriptPath", "s3://" + objectSummary.getBucketName() + "/" + objectSummary.getKey());
-                        handler.handleRequest(event, null);
+                try {
+                    Handler handler = new Handler();
+                    System.out.println("Started thread for user session: " + sessionId);
+                    for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
+                        if (objectSummary.getKey().toLowerCase().endsWith(extension.toLowerCase())) {
+                            Map<String, String> event = new HashMap<>();
+                            event.put("secretId", secretId);
+                            event.put("sessionId", sessionId);
+                            event.put("stackName", stackName);
+                            event.put("scriptPath", "s3://" + objectSummary.getBucketName() + "/" + objectSummary.getKey());
+                            handler.handleRequest(event, null);
+                        }
                     }
+                    System.out.println("Completed thread for user session: " + sessionId);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw e;
                 }
-                System.out.println("Completed thread for user session: " + sessionId);
             });
         }
         executorService.shutdown();
