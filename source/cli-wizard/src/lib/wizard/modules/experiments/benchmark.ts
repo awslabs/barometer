@@ -48,8 +48,7 @@ export class ExperimentModule extends CLIModule {
                         exceptionMessage = respPayload["errorMessage"];
                     else
                         return true;
-                } catch (e) {
-                    console.log(e); // Remove later
+                } catch (e: any) {
                     exceptionMessage = e.message;
                 }
                 return exceptionMessage;
@@ -128,7 +127,7 @@ export class ExperimentModule extends CLIModule {
                     await open(executionUrl);
                 } else this.printInfo();
             });
-        } catch (e) {
+        } catch (e: any) {
             if (e.name == "ValidationError") {
                 // Stack doesn't exists
                 this.printInfo();

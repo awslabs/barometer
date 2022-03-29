@@ -143,7 +143,7 @@ export class WorkloadModule extends CLIModule implements ICLIModule {
                             console.log(message);
                         } else return "Path " + prefix + "volumes/ should contain at least 1 folder";
                     }
-                } catch (e) {
+                } catch (e: any) {
                     return e.message;
                 }
                 return true;
