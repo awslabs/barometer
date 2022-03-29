@@ -32,7 +32,7 @@ def get_user_session_as_map_items(params):
     user_secrets = params["userSecrets"]["secretIds"]
     response = {"userSessions": []}
     for secret in user_secrets:
-        for i in list(split(list(range(1,session_count+1)), int(session_count/4))):
+        for i in list(split(list(range(1, session_count + 1)), int(session_count / 4))):
             response["userSessions"].append({"secretId": secret, "sessionIds": i})
     return response
 
@@ -47,8 +47,10 @@ def lambda_handler(event, context):
     if event["method"] == "listS3Directories":
         return list_s3_directories(event["parameters"])
 
+
 def split(a, n):
+    if n == 0:
+        n = 1
     n = min(n, len(a))
     k, m = divmod(len(a), n)
-    return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
-
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))

@@ -1,7 +1,7 @@
 import {Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
 import {
-    DynamoAttributeValue,
+    DynamoAttributeValue, DynamoDeleteItem,
     DynamoGetItem,
     DynamoPutItem,
     LambdaInvoke,
@@ -95,7 +95,14 @@ export class ExperimentRunner extends Construct {
                 resultPath: JsonPath.DISCARD,
             })).next(new Choice(this, 'Keep infrastructure?', {
                 comment: "Take decision based on user's choice of keeping infrastructure after experiment run"
-            }).when(Condition.booleanEquals("$.keepInfrastructure", false), new LambdaInvoke(this, 'No, Destroy platform', {
+            }).when(Condition.booleanEquals("$.keepInfrastructure", false), new DynamoPutItem(this, 'Unmark data copy success', {
+                item: {
+                    "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
+                    "DATA_COPIED": DynamoAttributeValue.fromBoolean(false)
+                },
+                table: props.dataTable,
+                resultPath: JsonPath.DISCARD
+            }).next(new LambdaInvoke(this, 'No, Destroy platform', {
                 lambdaFunction: props.commonFunctions.createDestroyPlatform,
                 payload: TaskInput.fromObject({
                     "platformConfig.$": "$.platformConfig",
@@ -107,7 +114,7 @@ export class ExperimentRunner extends Construct {
                 integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
                 comment: "Destroy platform based on user choice",
                 resultPath: JsonPath.DISCARD
-            }).next(endState))
+            })).next(endState))
                 .otherwise(endState));
 
         // Main experiment runner flow

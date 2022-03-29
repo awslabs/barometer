@@ -8,8 +8,8 @@ export interface IWorkloadConfiguration extends IConfigurationItem {
 export interface IWorkloadSettings {
     name: string;
     description: string;
-    workloadType: string;
-    volume: IVolume;
+    volume?: IVolume;
+    volumes?: IVolume[];
     ddl: { [p: string]: IScriptPath } | IScriptPath;
     queries: { [p: string]: IScriptPath } | IScriptPath;
     supportedPlatforms: Array<string>;

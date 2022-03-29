@@ -3,6 +3,7 @@ import {Configuration} from '../../../impl/configuration';
 import {CloudFormationClient, DescribeStacksCommand} from "@aws-sdk/client-cloudformation";
 import {SFN, StartExecutionCommand} from "@aws-sdk/client-sfn";
 import open from "open";
+import {ValidationError} from "@aws-cdk/core";
 
 export class Module {
     public static getInstance(configuration: Configuration): ExperimentModule {
@@ -64,7 +65,7 @@ export class ExperimentModule extends CLIModule {
                         }
                     }
                 }
-            } catch (e) {
+            } catch (e: any) {
                 if (e.name == "ValidationError") {
                     // Stack doesn't exists
                     this.printInfo();

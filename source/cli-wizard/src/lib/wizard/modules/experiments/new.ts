@@ -51,15 +51,13 @@ export class ExperimentModule extends CLIModule {
         const _questions: Array<any> = this.getQuestions();
 
         const workloadNamePrompt = this.getQuestionByName(_questions, 'workloadName');
-        workloadNamePrompt['choices'] = async (answers): Promise<Array<any>> => {
+        workloadNamePrompt['choices'] = async (): Promise<Array<any>> => {
             const choices: Array<any> = [];
             for (const _key in this.configuration.workloads) {
-                if (this.configuration.workloads[_key].workloadType === answers.workloadType) {
-                    choices.push({
-                        name: this.configuration.workloads[_key].name,
-                        value: _key,
-                    });
-                }
+                choices.push({
+                    name: this.configuration.workloads[_key].name,
+                    value: _key,
+                });
             }
             if (choices.length === 0) {
                 choices.push({name: 'No entries found.', disabled: true});

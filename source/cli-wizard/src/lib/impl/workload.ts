@@ -18,7 +18,6 @@ export class WorkloadSettings implements IWorkloadSettings {
     queries!: { [p: string]: ScriptPath } | ScriptPath;
     description!: string;
     name!: string;
-    workloadType!: string;
 }
 
 export class Volume implements IVolume {

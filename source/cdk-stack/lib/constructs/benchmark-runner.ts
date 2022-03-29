@@ -56,7 +56,7 @@ export class BenchmarkRunner extends Construct {
                 }
             }
         }));
-        // Allow lambda function to read secrets from platform stacks
+        // Allow ECS task to read secrets from platform stacks
         taskDefinition.addToTaskRolePolicy(new PolicyStatement({
             actions: ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"],
             resources: ["arn:" + Aws.PARTITION + ":secretsmanager:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":secret:*"],
