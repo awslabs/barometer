@@ -4,7 +4,7 @@ import { Configuration } from '../../impl/configuration';
 import { CLIModule, ICLIModule } from '../common/cli-module';
 import { CLIModulePrompts } from '../common/cli-prompts';
 
-export const DEFAULT_CONFG_FILE_NAME = process.cwd() + '/benchmarking-config.json';
+export const DEFAULT_CONFG_FILE_NAME = process.cwd() + '/storage/benchmarking-config.json';
 
 export class Module {
   public static getInstance(configuration: Configuration ): ConfigurationModule {

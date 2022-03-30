@@ -1,6 +1,6 @@
 import { ConfigurationType, IConfiguration, IConfigurationItem } from '../interface/configuration';
 
-export const DEFAULT_CONFG_FILE_NAME = process.cwd() + "/benchmarking-config.json";
+export const DEFAULT_CONFG_FILE_NAME = process.cwd() + "/storage/benchmarking-config.json";
 
 export class ConfigurationItem implements IConfigurationItem {
   id!: string;
