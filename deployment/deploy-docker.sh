@@ -2,10 +2,10 @@
 if [ -z "$1" ]; then
   echo "No argument supplied. Please pass argument 'deploy' or 'wizard'"
   echo "You can also mount your aws config by passing volume switch (-v) or directly setting environment variable as shown below"
-  echo "Usage: docker run aws-barometer --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev deploy <region>"
-  echo "Usage: docker run aws-barometer -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -v ~/storage:/build/cli-wizard/storage wizard <region>"
-  echo "Usage: docker run aws-barometer --rm -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token deploy"
-  echo "Usage: docker run aws-barometer -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token wizard"
+  echo "Usage: docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev aws-barometer deploy <region>"
+  echo "Usage: docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -v ~/storage:/build/cli-wizard/storage aws-barometer wizard <region>"
+  echo "Usage: docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token aws-barometer deploy"
+  echo "Usage: docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token aws-barometer wizard"
   exit 1
 fi
 

@@ -27,7 +27,7 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 AWS Barometer will deploy [cdk](https://aws.amazon.com/cdk/) stack which is used to run benchmarking experiments. The
 experiment is a combination of [platform](./source/cdk-stack/platforms) and [workload](./source/cdk-stack/workloads)
 which can be defined using [cli-wizard](./source/cli-wizard) provided by AWS Barometer tool. Example running experiment
-in QuickStart.
+in [Quickstart](#-quickstart).
 
 ## 🛠 Use cases
 
@@ -38,57 +38,84 @@ in QuickStart.
 - [Registering your custom platform](./source/cdk-stack/platforms): Redshift vs My Own Database
 - [Registering your custom workload](./source/cdk-stack/workloads): My own dataset vs Redshift
 - Run benchmarking only
+- Bring your own workload
 
 AWS Barometer supports below combinations as experiment
 
 - Supported platforms:
     - [Redshift](./source/cdk-stack/platforms/redshift)
+    - [Benchmark your own platform](#run-benchmark-only)
 - Supported workloads:
     - [TPC-DS/v3](./source/cdk-stack/workloads/tpc-ds) (Volumes: 1 GB)
+    - [Bring your own workload](#bring-your-own-workload)
 
 ## 🎒 Pre-requisites
 
-- [mvn](https://maven.apache.org/install.html) with JDK 8 or higher available in current environment
-- [npm](https://nodejs.org/en/download/)
-- AWS cdk cli: `npm install -g aws-cdk`
-- [Aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) configured for target AWS_ACCOUNT &
-  AWS_REGION for deploying the tool
-- [jq](https://stedolan.github.io/jq/download/) tool installed & available in current environment
+- [Docker](https://www.docker.com/): Install docker service and docker cli. This tool uses docker to build image and run
+  containers.
 
 ## 🚀 Installing
 
-1. Clone the repository https://gitlab.aws.dev/aws-emea-prototyping/data-analytics/reusable-assets/aws-barometer
-2. Go to the folder deployment `cd deployment`
+Clone the repository https://gitlab.aws.dev/aws-emea-prototyping/data-analytics/reusable-assets/aws-barometer and
+run `docker build -t aws-barometer .` in `aws-barometer` directory (root of the git project)
 
 ## 🎮 Deployment
 
-Set below environment variables if not set already in bash/cli session
-
-```bash
-# For Linux or MacOS
-# Example:
-# export CDK_DEPLOY_ACCOUNT=123456789
-# export CDK_DEPLOY_REGION=eu-west-1
-export CDK_DEPLOY_ACCOUNT=Aws account id to deploy the tool
-export CDK_DEPLOY_REGION=Aws region to deploy the tool
-
-# For Windows
-SET CDK_DEPLOY_ACCOUNT=Aws account id to deploy the tool
-SET CDK_DEPLOY_REGION=Aws region to deploy the tool
-```
-
-With aws cdk cli installed, run deploy
+1. Run below command to deploy `aws-barometer` to your aws account.
 
 ```shell
-./deploy.sh # For Linux or MacOS use deploy.sh, For Windows use deploy.bat
+
+# Example 1: Passing local aws credentials to the docker container for deployment (deploying in eu-west-1 region)
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws aws-barometer deploy eu-west-1
+
+# Example 2: Using AWS profile (ex: dev) to deploy
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev aws-barometer deploy eu-west-1
+
+
+# Example 3: Passing aws region as environment variable
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock \
+      -v ~/.aws:/root/.aws -e AWS_PROFILE=dev \
+      -e AWS_REGION=eu-west-1 aws-barometer deploy
+
+# Example 4: Using aws secret access key and aws secret id to deploy (with optional session token - temporary credentials)
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock \
+   -e AWS_ACCESS_KEY_ID=<my-aws-access-key-id> \
+   -e AWS_SECRET_ACCESS_KEY=<my-aws-secret-access-key> \
+   -e AWS_SESSION_TOKEN=<my-session-token> \
+    aws-barometer deploy eu-west-1
+
 ```
 
-Once `BenchmarkingStack` is deployed successfully run cli-wizard to run experiments.
+2. Run below command to run `cli-wizard` once `aws-barometer` is successfully deployed to your AWS account.
 
 ```shell
-# Set CDK_DEPLOY_ACCOUNT, CDK_DEPLOY_REGION again if using different terminal window
-cd cli-wizard
-npm run wizard
+
+# Example 1: Passing local aws credentials to the docker container for running wizard (deployed in eu-west-1 region)
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws \
+  --name barometer-wizard \
+  aws-barometer wizard eu-west-1
+
+# Example 2: Using AWS profile (ex: dev) to run wizard
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev \
+  --name barometer-wizard \
+  aws-barometer wizard eu-west-1
+
+# Example 3: Using aws secret access key and aws secret id to run wizard (with optional session token - temporary credentials)
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock \
+   -e AWS_ACCESS_KEY_ID=<my-aws-access-key-id> \
+   -e AWS_SECRET_ACCESS_KEY=<my-aws-secret-access-key> \
+   -e AWS_SESSION_TOKEN=<my-session-token> \
+   --name barometer-wizard \
+   aws-barometer  wizard eu-west-1
+    
+# Example 4: Reusing wizard configurations 
+docker start -ia barometer-wizard
+
+# Example 5: Persisting wizard configurations 
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws \
+  -v ~/storage:/build/cli-wizard/storage \
+  --name barometer-wizard \
+  aws-barometer wizard eu-west-1
 ```
 
 ## 🎬 Quickstart
@@ -96,6 +123,8 @@ npm run wizard
 ![](./assets/define_experiment.gif)
 
 ## Run benchmark only
+
+> This option can be used as `Benchmark your own platform` or `Bring your own platform`
 
 You can directly benchmark any database with this option. The option is available
 under `Manage Experiments > Run benchmarking only`. Depending on where the database is hosted you need to follow below
