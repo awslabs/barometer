@@ -45,7 +45,7 @@ export class BenchmarkRunner extends Construct {
         const taskDefinition = new FargateTaskDefinition(this, 'QueryRunnerTask', {cpu: 512, memoryLimitMiB: 1024});
         taskDefinition.addToTaskRolePolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
-            resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn]
+            resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn, "arn:aws:s3:::redshift-downloads", "arn:aws:s3:::redshift-downloads/*"]
         }));
         taskDefinition.addToTaskRolePolicy(new PolicyStatement({
             actions: ["cloudwatch:PutMetricData"],
@@ -79,7 +79,10 @@ export class BenchmarkRunner extends Construct {
                 containerDefinition: new ContainerDefinition(this, 'QueryRunner', {
                     image: ContainerImage.fromAsset(commonFunctionsDirPath + "jdbc-query-runner"),
                     taskDefinition: taskDefinition,
-                    logging: LogDriver.awsLogs({streamPrefix: "Benchmark-QueryRunner", logRetention: RetentionDays.FIVE_DAYS})
+                    logging: LogDriver.awsLogs({
+                        streamPrefix: "Benchmark-QueryRunner",
+                        logRetention: RetentionDays.FIVE_DAYS
+                    })
                 }),
                 command: ["java", "-classpath", "lib/*:.", "com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"],
                 environment: [

@@ -254,6 +254,8 @@
                     "kms:Decrypt"
                   ],
                   "Resource": [
+                    "arn:aws:s3:::redshift-downloads",
+                    "arn:aws:s3:::redshift-downloads/*",
                     {
                       "Fn::Sub": [
                         "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}",

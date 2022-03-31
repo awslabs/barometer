@@ -179,7 +179,7 @@ export class ExperimentRunner extends Construct {
             }).next(new Map(this, 'Parallel table copy', {
                 comment: "Copy table in parallel",
                 itemsPath: "$.tablesToCopy.Payload.paths",
-                maxConcurrency: 5,
+                maxConcurrency: 2,
                 parameters: {
                     "tableDataPath.$": "$$.Map.Item.Value",
                     "platformLambdaOutput.$": "$.platformLambdaOutput",

@@ -121,7 +121,7 @@ export class CommonFunctions extends Construct {
         });
         this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
-            resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn]
+            resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn, "arn:aws:s3:::redshift-downloads", "arn:aws:s3:::redshift-downloads/*"]
         }));
         this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
             actions: ["cloudwatch:PutMetricData"],
@@ -151,7 +151,7 @@ export class CommonFunctions extends Construct {
         });
         this.stepFunctionHelpers.addToRolePolicy(new PolicyStatement({
             actions: ["s3:ListBucket"],
-            resources: [props.dataBucket.bucketArn]
+            resources: [props.dataBucket.bucketArn, "arn:aws:s3:::redshift-downloads"]
         }));
     }
 }

@@ -1,10 +1,38 @@
 {
-  "name": "TPC-DS/v3",
-  "description": "TPC-DS v3",
+  "name": "TPC-DS/v2",
+  "description": "TPC-DS v2",
   "volumes": [
     {
-      "name": "1 GB",
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/volumes/1gb/",
+      "name": "100 GB",
+      "path": "s3://redshift-downloads/TPC-DS/2.13/100GB/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
+    },
+    {
+      "name": "1 TB",
+      "path": "s3://redshift-downloads/TPC-DS/2.13/1TB/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
+    },
+    {
+      "name": "3 TB",
+      "path": "s3://redshift-downloads/TPC-DS/2.13/3TB/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
+    },
+    {
+      "name": "10 TB",
+      "path": "s3://redshift-downloads/TPC-DS/2.13/10TB/",
+      "format": "csv",
+      "compression": "gzip",
+      "delimiter": "|"
+    },
+    {
+      "name": "30 TB",
+      "path": "s3://redshift-downloads/TPC-DS/2.13/30TB/",
       "format": "csv",
       "compression": "gzip",
       "delimiter": "|"
@@ -12,18 +40,18 @@
   ],
   "ddl": {
     "redshift": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/ddl/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v2/ddl/"
     },
     "redshift-spectrum": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/ddl/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v2/ddl/"
     }
   },
   "queries": {
     "redshift": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/benchmarking-queries/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v2/benchmarking-queries/"
     },
     "redshift-spectrum": {
-      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v3/benchmarking-queries/"
+      "path": "s3://#DATA_BUCKET#/datasets/tpc-ds-v2/benchmarking-queries/"
     }
   },
   "supportedPlatforms": [
