@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Sample Template Redshift: Create an Amazon Redshift cluster. **WARNING** This template creates Amazon Redshift Cluster. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Description": "AWS Cloudformation template to provision Redshift platform by aws-barometer",
   "Parameters": {
     "DatabaseName": {
       "Description": "The name of the first database to be created when the redshift cluster is created",
@@ -317,20 +317,37 @@
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "lambda:InvokeFunction"
+                    "lambda:InvokeFunction",
+                    "secretsmanager:GetSecretValue",
+                    "kms:Decrypt",
+                    "redshift-data:ExecuteStatement"
                   ],
                   "Resource": [
                     {
-                      "Fn::ImportValue": "Benchmarking::Exec::QueryFunctionArn"
+                      "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
                     },
                     {
-                      "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
+                      "Ref": "AdminUserSecret"
+                    },
+                    {
+                      "Fn::Sub": [
+                        "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}",
+                        {
+                          "KMSKeyId": {
+                            "Fn::ImportValue": "Benchmarking::KMSKey"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::Sub": "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:${RedshiftCluster}"
                     }
                   ]
                 },
                 {
                   "Effect": "Allow",
                   "Action": [
+                    "redshift-data:DescribeStatement",
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
                     "logs:PutLogEvents"
@@ -375,12 +392,55 @@
             },
             "ProxyFunctionArn": {
               "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
-            },
-            "QueryFunctionArn": {
-              "Fn::ImportValue": "Benchmarking::Exec::QueryFunctionArn"
             }
           }
         }
+      }
+    },
+    "PermissionToInvokeDataCopier": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "DataCopier"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "QueryCompletionRule",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "QueryCompletionRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventBusName": "default",
+        "EventPattern": {
+          "source": [
+            "aws.redshift-data"
+          ],
+          "detail-type": [
+            "Redshift Data Statement Status Change"
+          ],
+          "resources": [
+            {
+              "Fn::Sub": "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:${RedshiftCluster}"
+            }
+          ]
+        },
+        "Targets": [
+          {
+            "Id": "DataCopierFnTarget",
+            "Arn": {
+              "Fn::GetAtt": [
+                "DataCopier",
+                "Arn"
+              ]
+            }
+          }
+        ]
       }
     }
   },

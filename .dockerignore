@@ -8,3 +8,4 @@ assets
 **/cdk.out
 **/target
 source/ui-wizard
+benchmarking-config.json

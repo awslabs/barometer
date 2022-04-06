@@ -48,7 +48,14 @@
         "iam:ListRoleTags",
         "lambda:CreateFunction",
         "lambda:DeleteFunction",
-        "lambda:GetFunction"
+        "lambda:GetFunction",
+        "lambda:RemovePermission",
+        "lambda:AddPermission",
+        "events:PutTargets",
+        "events:RemoveTargets",
+        "events:PutRule",
+        "events:DeleteRule",
+        "events:DescribeRule"
       ],
       "Resource": [
         "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:redshift*",
@@ -57,7 +64,8 @@
         "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:AdminUserSecret-*",
         "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/*",
         "arn:aws:iam::${AWS::AccountId}:role/redshift-*",
-        "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:redshift-*"
+        "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:redshift-*",
+        "arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/redshift-*"
       ]
     },
     {

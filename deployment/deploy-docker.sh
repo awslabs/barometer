@@ -34,26 +34,25 @@ if [[ $1 == "deploy" ]]; then
   cd /build/cdk-stack
   echo "==> Using user $USER_ID and AWS Account: $CDK_DEPLOY_ACCOUNT to deploy aws-barometer in region: $CDK_DEPLOY_REGION"
   echo "==> [Progress 1/6] Bootstrapping CDK stack if not done already"
-  TOOLKIT_STACK_NAME=$(aws cloudformation describe-stacks --stack-name CDKToolkit | jq -r ".Stacks[0].StackName")
+  TOOLKIT_STACK_NAME=$(aws cloudformation describe-stacks --stack-name CDKToolkit --region "$AWS_REGION" | jq -r ".Stacks[0].StackName")
   if test -z "$TOOLKIT_STACK_NAME"; then
     echo "==> [Progress 2/6] Bootstrapping CDK stack as CDKToolkit stack not found for region $CDK_DEPLOY_REGION"
     /build/node_modules/aws-cdk/bin/cdk bootstrap
   fi
   echo "==> [Progress 3/6] Deploying Infrastructure"
   /build/node_modules/aws-cdk/bin/cdk deploy BenchmarkingStack
-  DATA_BUCKET=$(aws cloudformation describe-stacks --stack-name BenchmarkingStack | jq -r '.Stacks[0].Outputs[] | select(.OutputKey == "DataBucketName") | .OutputValue')
+  DATA_BUCKET=$(aws cloudformation describe-stacks --stack-name BenchmarkingStack --region "$AWS_REGION" | jq -r '.Stacks[0].Outputs[] | select(.OutputKey == "DataBucketName") | .OutputValue')
   if test -z "$DATA_BUCKET"; then
     echo "==> [FAILED] Failed to fetch DATA_BUCKET from cloudformation stack. Try re-running deploy"
     exit 1
   fi
   echo "==> [Progress 4/6] Syncing platforms folder to s3://$DATA_BUCKET/platforms"
-  aws s3 sync platforms "s3://$DATA_BUCKET/platforms"
+  aws s3 sync platforms "s3://$DATA_BUCKET/platforms" --region "$AWS_REGION"
   echo "==> [Progress 5/6] Syncing workloads folder to s3://$DATA_BUCKET/workloads"
-  aws s3 sync workloads "s3://$DATA_BUCKET/workloads"
+  aws s3 sync workloads "s3://$DATA_BUCKET/workloads" --region "$AWS_REGION"
   echo "==> [Progress 6/6] Uploading TPC-DS Tools"
-  aws s3 cp ../tools/tpc-ds/TPC-DSGen-software-code-3.2.0rc1.zip "s3://$DATA_BUCKET/tools/TPC-DSGen-software-code-3.2.0rc1.zip"
-  aws s3 cp ../tools/tpc-ds/ddl.sql "s3://$DATA_BUCKET/datasets/tpc-ds-v3/ddl/ddl.sql"
-  aws s3 sync ../tools/tpc-ds/queries "s3://$DATA_BUCKET/datasets/tpc-ds-v3/benchmarking-queries"
+  aws s3 cp ../tools/tpc-ds/ddl.sql "s3://$DATA_BUCKET/datasets/tpc-ds-v3/ddl/ddl.sql" --region "$AWS_REGION"
+  aws s3 sync ../tools/tpc-ds/queries "s3://$DATA_BUCKET/datasets/tpc-ds-v3/benchmarking-queries" --region "$AWS_REGION"
   echo "==> [MANUAL STEP] Please setup cost allocation tag using this link: https://console.aws.amazon.com/billing/home#/tags"
   echo "==> Steps Are"
   echo "==>   1. Select 'AWS-generated cost allocation tags' tab"
