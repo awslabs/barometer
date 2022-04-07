@@ -14,6 +14,7 @@ import {
 } from "@aws-cdk/aws-ec2";
 import {Topic} from "@aws-cdk/aws-sns";
 import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
+import {DataImporter} from "./constructs/data-importer";
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
@@ -102,6 +103,15 @@ export class BenchmarkingStack extends cdk.Stack {
             removalPolicy: RemovalPolicy.DESTROY
         });
 
+        // Manifest s3 bucket
+        let manifestBucket = new Bucket(this, "ManifestBucket", {
+            blockPublicAccess: BlockPublicAccess.BLOCK_ALL, // No public access to the bucket or object within it
+            encryption: BucketEncryption.S3_MANAGED, // Encryption at rest
+            autoDeleteObjects: true,
+            enforceSSL: true, // Encryption in transit
+            removalPolicy: RemovalPolicy.DESTROY
+        });
+
         let sns = new Topic(this, 'StackUpdate', {masterKey: key});
         // DynamoDB table to store task token values for async integrations
         let dataTable = new Table(this, 'DataTable', {
@@ -134,6 +144,7 @@ export class BenchmarkingStack extends cdk.Stack {
             dataTable: dataTable,
             key: key
         });
+        new DataImporter(this, 'DataImporter', {dataBucket: dataBucket,manifestBucket:manifestBucket, encryptionKey: key});
 
         let today = new Date().toISOString().slice(0, 10);
 
