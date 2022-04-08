@@ -46,7 +46,7 @@ AWS Barometer supports below combinations as experiment
     - [Redshift](./source/cdk-stack/platforms/redshift)
     - [Benchmark your own platform](#run-benchmark-only)
 - Supported workloads:
-    - [TPC-DS/v3](./source/cdk-stack/workloads/tpc-ds) (Volumes: 1 GB)
+    - [TPC-DS/v3](./source/cdk-stack/workloads/tpc-ds-v2) (Volumes: 1 GB)
     - [Bring your own workload](#bring-your-own-workload)
 
 ## 🎒 Pre-requisites

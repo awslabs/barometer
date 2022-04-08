@@ -138,19 +138,23 @@ export class BenchmarkingStack extends cdk.Stack {
             vpc: vpc,
             key: key
         });
+        const dataImporter = new DataImporter(this, 'DataImporter', {dataBucket: dataBucket,manifestBucket:manifestBucket, encryptionKey: key});
         const experimentRunner = new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
             benchmarkRunnerWorkflow: benchmarkRunner.workflow,
+            dataImporterWorkflow: dataImporter.workflow,
             dataTable: dataTable,
             key: key
         });
-        new DataImporter(this, 'DataImporter', {dataBucket: dataBucket,manifestBucket:manifestBucket, encryptionKey: key});
 
         let today = new Date().toISOString().slice(0, 10);
 
         new CfnOutput(this, 'DataBucketName', {
             value: dataBucket.bucketName,
             exportName: "Benchmarking::DataBucketName"
+        });
+        new CfnOutput(this, 'ManifestBucketName', {
+            value: manifestBucket.bucketName
         });
         new CfnOutput(this, 'DataBucketArn', {
             value: dataBucket.bucketArn,

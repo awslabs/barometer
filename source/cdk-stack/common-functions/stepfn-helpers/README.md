@@ -42,6 +42,17 @@
 }
 ```
 
+### getS3BucketRegion
+
+```json
+{
+  "method": "getS3BucketRegion",
+  "parameters": {
+    "path": "s3://my-bucket/my-folder"
+  }
+}
+```
+
 ## Environment variables
 
 ## Process
@@ -107,5 +118,15 @@
       "sessionId": "3"
     }
   ]
+}
+```
+
+### getS3BucketRegion
+
+```json
+{
+  "path": "s3://my-bucket/my-folder",
+  "region": "us-east-1",
+  "bucket": "my-bucket"
 }
 ```

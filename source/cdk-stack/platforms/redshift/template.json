@@ -459,6 +459,10 @@
           "Arn"
         ]
       }
+    },
+    "ImportData": {
+      "Description": "Redshift platform import data to Benchmarking::DataBucketName when workload bucket is not in the same region as platform",
+      "Value": "DIFFERENT_REGION"
     }
   }
 }

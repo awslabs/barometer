@@ -1,5 +1,6 @@
 import boto3
 from urllib.parse import urlparse
+import urllib3
 
 s3 = boto3.client("s3")
 
@@ -37,6 +38,15 @@ def get_user_session_as_map_items(params):
     return response
 
 
+def get_s3_bucket_region(params):
+    path = params["path"]
+    http = urllib3.PoolManager()
+    s3_path = urlparse(path, allow_fragments=False)
+    bucket = s3_path.netloc
+    response = http.request('HEAD', "https://" + bucket + ".s3.amazonaws.com")
+    return {"region": response.headers["x-amz-bucket-region"], "bucket": bucket, "path": path}
+
+
 def lambda_handler(event, context):
     if event["method"] == "listS3Paths":
         return list_s3_paths(event["parameters"])
@@ -46,6 +56,9 @@ def lambda_handler(event, context):
 
     if event["method"] == "listS3Directories":
         return list_s3_directories(event["parameters"])
+
+    if event["method"] == "getS3BucketRegion":
+        return get_s3_bucket_region(event["parameters"])
 
 
 def split(a, n):

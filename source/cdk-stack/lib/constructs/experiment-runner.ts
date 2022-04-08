@@ -1,6 +1,7 @@
-import {Construct, Duration} from "@aws-cdk/core";
+import {Aws, Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
 import {
+    CallAwsService,
     DynamoAttributeValue, DynamoDeleteItem,
     DynamoGetItem,
     DynamoPutItem,
@@ -17,6 +18,7 @@ import {Key} from "@aws-cdk/aws-kms";
 interface ExperimentRunnerProps {
     commonFunctions: CommonFunctions;
     benchmarkRunnerWorkflow: StateMachine;
+    dataImporterWorkflow: StateMachine;
     dataTable: Table;
     key: Key;
 }
@@ -118,6 +120,72 @@ export class ExperimentRunner extends Construct {
                 .otherwise(endState));
 
         // Main experiment runner flow
+        let copyDataSetAndProceed = new Choice(this, 'Copy dataset to the platform?', {
+            comment: "Evaluate user choice of copying dataset to the platform"
+        }).when(Condition.booleanEquals("$.platformConfig.loadDataset", true), new DynamoGetItem(this, 'Yes, Get data copy status', {
+            key: {"PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id"))},
+            table: props.dataTable,
+            resultPath: "$.copyStatus"
+        }).next(new Choice(this, 'Data already copied?', {
+            comment: "Check if data already copied or not"
+        }).when(Condition.or(Condition.isNotPresent("$.copyStatus.Item"), Condition.booleanEquals("$.copyStatus.Item.DATA_COPIED.BOOL", false)), new LambdaInvoke(this, 'No, Fetch list of tables to copy', {
+            lambdaFunction: props.commonFunctions.stepFunctionHelpers,
+            payload: TaskInput.fromObject({
+                "method": "listS3Directories",
+                "parameters": {
+                    "basePath.$": "$.workloadConfig.settings.volume.path"
+                }
+            }),
+            comment: "Fetch DDL SQL scripts from S3 path as Map items",
+            resultPath: "$.tablesToCopy",
+        }).next(new Map(this, 'Parallel table copy', {
+            comment: "Copy table in parallel",
+            itemsPath: "$.tablesToCopy.Payload.paths",
+            maxConcurrency: 2,
+            parameters: {
+                "tableDataPath.$": "$$.Map.Item.Value",
+                "platformLambdaOutput.$": "$.platformLambdaOutput",
+                "volume.$": "$.workloadConfig.settings.volume"
+            },
+            resultPath: JsonPath.DISCARD,
+        }).iterator(new LambdaInvoke(this, 'Run data copier', {
+            lambdaFunction: props.commonFunctions.platformLambdaProxy,
+            comment: "Copy dataset from table path to the platform",
+            payload: TaskInput.fromObject({
+                "stackName.$": "$.platformLambdaOutput.stackName",
+                "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
+                "proxyToken.$": "$.tableDataPath",
+                "proxyPayload": {
+                    "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                    "tableDataPath.$": "$.tableDataPath",
+                    "volume.$": "$.volume",
+                    "sessionId": "COPY"
+                },
+                "token": JsonPath.taskToken
+            }),
+            timeout: Duration.hours(1),
+            integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
+            resultPath: JsonPath.DISCARD,
+        }))).next(new DynamoPutItem(this, 'Mark data copy success', {
+            item: {
+                "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
+                "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
+            },
+            table: props.dataTable,
+            resultPath: JsonPath.DISCARD
+        })).next(runBenchmarkingForUsers))
+            .otherwise(runBenchmarkingForUsers)))
+            .otherwise(runBenchmarkingForUsers);
+
+        let dataImporterFlow = new StepFunctionsStartExecution(this, 'Run data import', {
+            stateMachine: props.dataImporterWorkflow,
+            integrationPattern: IntegrationPattern.RUN_JOB,
+            input: TaskInput.fromObject({
+                "manifestFileKey": JsonPath.format("tpc-ds-v2/{}.csv","$.workloadConfig.settings.volume.name")
+            }),
+            resultPath: JsonPath.DISCARD
+        }).next(copyDataSetAndProceed);
+
         const experimentRunnerDefinition = new LambdaInvoke(this, "Create platform if it doesn't exists", {
             lambdaFunction: props.commonFunctions.createDestroyPlatform,
             payload: TaskInput.fromObject({
@@ -158,62 +226,23 @@ export class ExperimentRunner extends Construct {
                     "id.$": "States.Format('{}#{}#copy',$.platformLambdaOutput.stackName,$.workloadConfig.settings.name)"
                 },
                 resultPath: "$.copyKey"
-            })).next(new Choice(this, 'Copy dataset to the platform?', {
-                comment: "Evaluate user choice of copying dataset to the platform"
-            }).when(Condition.booleanEquals("$.platformConfig.loadDataset", true), new DynamoGetItem(this, 'Yes, Get data copy status', {
-                key: {"PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id"))},
-                table: props.dataTable,
-                resultPath: "$.copyStatus"
-            }).next(new Choice(this, 'Data already copied?', {
-                comment: "Check if data already copied or not"
-            }).when(Condition.or(Condition.isNotPresent("$.copyStatus.Item"), Condition.booleanEquals("$.copyStatus.Item.DATA_COPIED.BOOL", false)), new LambdaInvoke(this, 'No, Fetch list of tables to copy', {
-                lambdaFunction: props.commonFunctions.stepFunctionHelpers,
-                payload: TaskInput.fromObject({
-                    "method": "listS3Directories",
-                    "parameters": {
-                        "basePath.$": "$.workloadConfig.settings.volume.path"
-                    }
-                }),
-                comment: "Fetch DDL SQL scripts from S3 path as Map items",
-                resultPath: "$.tablesToCopy",
-            }).next(new Map(this, 'Parallel table copy', {
-                comment: "Copy table in parallel",
-                itemsPath: "$.tablesToCopy.Payload.paths",
-                maxConcurrency: 2,
-                parameters: {
-                    "tableDataPath.$": "$$.Map.Item.Value",
-                    "platformLambdaOutput.$": "$.platformLambdaOutput",
-                    "volume.$": "$.workloadConfig.settings.volume"
-                },
-                resultPath: JsonPath.DISCARD,
-            }).iterator(new LambdaInvoke(this, 'Run data copier', {
-                lambdaFunction: props.commonFunctions.platformLambdaProxy,
-                comment: "Copy dataset from table path to the platform",
-                payload: TaskInput.fromObject({
-                    "stackName.$": "$.platformLambdaOutput.stackName",
-                    "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
-                    "proxyToken.$": "$.tableDataPath",
-                    "proxyPayload": {
-                        "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                        "tableDataPath.$": "$.tableDataPath",
-                        "volume.$": "$.volume",
-                        "sessionId": "COPY"
-                    },
-                    "token": JsonPath.taskToken
-                }),
-                timeout: Duration.hours(1),
-                integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
-                resultPath: JsonPath.DISCARD,
-            }))).next(new DynamoPutItem(this, 'Mark data copy success', {
-                item: {
-                    "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
-                    "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
-                },
-                table: props.dataTable,
-                resultPath: JsonPath.DISCARD
-            })).next(runBenchmarkingForUsers))
-                .otherwise(runBenchmarkingForUsers)))
-                .otherwise(runBenchmarkingForUsers));
+            })).next(new Choice(this, 'Import data to local data bucket?', {comment: "Test if platform requires data to be present in same region locally"})
+                .when(Condition.stringEquals("$.platformLambdaOutput.importData", "ALWAYS"), dataImporterFlow)
+                .when(Condition.stringEquals("$.platformLambdaOutput.importData", "NEVER"), copyDataSetAndProceed)
+                .otherwise(new LambdaInvoke(this, 'Get workload bucket region', {
+                    lambdaFunction: props.commonFunctions.stepFunctionHelpers,
+                    payload: TaskInput.fromObject({
+                        "method": "getS3BucketRegion",
+                        "parameters": {
+                            "path.$": "$.workloadConfig.settings.volume.path"
+                        }
+                    }),
+                    resultPath: "$.workloadBucketRegion",
+                }).next(new Choice(this, 'Conditional import?', {comment: "Validate condition of importing data based on region"})
+                    .when(Condition.and(Condition.stringEquals("$.platformLambdaOutput.importData", "SAME_REGION"), Condition.stringEquals("$.workloadBucketRegion.region", Aws.REGION)), dataImporterFlow)
+                    .when(Condition.and(Condition.stringEquals("$.platformLambdaOutput.importData", "DIFFERENT_REGION"), Condition.not(Condition.stringEquals("$.workloadBucketRegion.region", Aws.REGION))), dataImporterFlow)
+                    .otherwise(copyDataSetAndProceed)
+                )));
 
         // Full workflow step function definition
         const runBenchmarkOnlyChoice = new Choice(this, "Run Benchmark Only?", {
@@ -223,7 +252,8 @@ export class ExperimentRunner extends Construct {
 
         // Define step function flow
         this.workflow = new StateMachine(this, 'Workflow', {
-            definition: runBenchmarkOnlyChoice
+            definition: runBenchmarkOnlyChoice,
+            timeout: Duration.hours(8)
         });
         props.key.grantDecrypt(this.workflow);
 

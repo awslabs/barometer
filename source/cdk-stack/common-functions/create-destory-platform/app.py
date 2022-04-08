@@ -120,7 +120,7 @@ def handle_stack_create_complete(record):
 
 
 def sfn_respond(stack_name, describe_stack_response=None):
-    secret_ids = {"secretIds": [], "stackName": stack_name, "dataCopierLambda": "None"}
+    secret_ids = {"secretIds": [], "stackName": stack_name, "dataCopierLambda": "None", "importData": "NEVER"}
     token = fetch_and_delete_task_token(stack_name)
     if token is not None:
         stack_response = describe_stack_response
@@ -134,6 +134,8 @@ def sfn_respond(stack_name, describe_stack_response=None):
                 secret_ids["secretIds"].append(output["OutputValue"])
             if output["OutputKey"] == "DataCopierLambdaArn":
                 secret_ids["dataCopierLambda"] = output["OutputValue"]
+            if output["OutputKey"] == "ImportData":
+                secret_ids["importData"] = output["OutputValue"]
 
         print("Sending task success to Step function with payload: " + json.dumps(secret_ids))
         sfn.send_task_success(taskToken=token, output=json.dumps(secret_ids))

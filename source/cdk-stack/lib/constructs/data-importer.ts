@@ -69,7 +69,18 @@ export class DataImporter extends Construct {
             .otherwise(pollStatus))
 
         // Create task to submit s3 copy job
-        const dataImporter = new CallAwsService(this, 'Submit s3 copy job', {
+        const dataImporter = new CallAwsService(this, 'Fetch manifest ETag', {
+            action: "headObject",
+            iamResources: [props.manifestBucket.bucketArn + "/*"],
+            service: "s3",
+            iamAction: "s3:GetObject",
+            parameters: {
+                Bucket: props.manifestBucket.bucketName,
+                Key: JsonPath.stringAt("$.manifestFileKey")
+            },
+            integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
+            resultPath: "$.manifestETagOutput"
+        }).next(new CallAwsService(this, 'Submit s3 copy job', {
             action: "createJob",
             service: "s3control",
             iamAction: "s3:CreateJob",
@@ -84,8 +95,8 @@ export class DataImporter extends Construct {
                 Manifest: {
                     Spec: {Format: "S3BatchOperations_CSV_20180820", Fields: ["Bucket", "Key"]},
                     Location: {
-                        ObjectArn: JsonPath.format("{}/{}", props.manifestBucket.bucketArn, JsonPath.stringAt("$.manifestFileName")),
-                        ETag: JsonPath.stringAt("$.manifestETag")
+                        ObjectArn: JsonPath.format("{}/{}", props.manifestBucket.bucketArn, JsonPath.stringAt("$.manifestFileKey")),
+                        ETag: JsonPath.stringAt("$.manifestETagOutput.ETag")
                     }
                 },
                 Report: {
@@ -99,7 +110,7 @@ export class DataImporter extends Construct {
             iamResources: ["*"],
             integrationPattern: IntegrationPattern.REQUEST_RESPONSE,
             resultPath: "$.Job"
-        }).next(pollStatus);
+        })).next(pollStatus);
 
         this.workflow = new StateMachine(this, 'Workflow', {
             definition: dataImporter,
