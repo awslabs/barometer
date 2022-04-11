@@ -13,9 +13,12 @@ def list_s3_directories(params):
     response = {"paths": []}
     if "useImportedIfPresent" in params and params["useImportedIfPresent"]:
         # Use imported dataset if it exists
-        resp = list_s3_directories({"basePath": base_path.replace(s3_path.netloc, data_bucket + "/imported")})
-        if len(resp["paths"]) > 0:
-            return resp
+        try:
+            resp = list_s3_directories({"basePath": base_path.replace(s3_path.netloc, data_bucket + "/imported")})
+            if len(resp["paths"]) > 0:
+                return resp
+        except Exception:
+            print("WARN: Exception listing imported path. Skipping it")
 
     paginator = s3.get_paginator('list_objects')
     for result in paginator.paginate(Bucket=s3_path.netloc, Delimiter='/', Prefix=s3_path.path.lstrip('/')):
