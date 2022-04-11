@@ -147,7 +147,10 @@ export class CommonFunctions extends Construct {
             code: Code.fromAsset(commonFunctionsDirPath + "stepfn-helpers"),
             handler: "app.lambda_handler",
             runtime: Runtime.PYTHON_3_8,
-            timeout: Duration.minutes(1)
+            timeout: Duration.minutes(1),
+            environment: {
+                "DataBucketName": props.dataBucket.bucketName
+            }
         });
         this.stepFunctionHelpers.addToRolePolicy(new PolicyStatement({
             actions: ["s3:ListBucket"],

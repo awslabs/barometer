@@ -1,8 +1,7 @@
 import {Aws, Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
 import {
-    CallAwsService,
-    DynamoAttributeValue, DynamoDeleteItem,
+    DynamoAttributeValue,
     DynamoGetItem,
     DynamoPutItem,
     LambdaInvoke,
@@ -47,6 +46,7 @@ export class ExperimentRunner extends Construct {
                 }
             }),
             comment: "Prepare Map items for users defined in platform times user sessions defined in experiment",
+            resultSelector: {"output.$": "$.Payload"},
             resultPath: "$.userSessionsOutput",
         });
 
@@ -62,11 +62,12 @@ export class ExperimentRunner extends Construct {
                     }
                 }),
                 comment: "Fetch DDL SQL scripts from S3 path as Map items",
+                resultSelector: {"output.$": "$.Payload"},
                 resultPath: "$.queries",
             }))
             .next(new Map(this, 'User sessions', {
                 resultPath: JsonPath.DISCARD,
-                itemsPath: "$.userSessionsOutput.Payload.userSessions",
+                itemsPath: "$.userSessionsOutput.output.userSessions",
                 parameters: {
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "secretId.$": "$$.Map.Item.Value.secretId",
@@ -89,10 +90,10 @@ export class ExperimentRunner extends Construct {
                 comment: "Prepares cloudwatch/quicksight dashboard to show recorded data to the user",
                 payload: TaskInput.fromObject({
                     "stackName.$": "$.platformLambdaOutput.stackName",
-                    "userSessions.$": "$.userSessionsOutput.Payload.userSessions",
+                    "userSessions.$": "$.userSessionsOutput.output.userSessions",
                     "experimentName.$": "States.Format('{}-{}',$.workloadConfig.settings.name, $.platformConfig.name)",
-                    "queries.$": "$.queries.Payload.paths",
-                    "ddlQueries.$": "$.ddlScripts.Payload.paths"
+                    "queries.$": "$.queries.output.paths",
+                    "ddlQueries.$": "$.ddlScripts.output.paths"
                 }),
                 resultPath: JsonPath.DISCARD,
             })).next(new Choice(this, 'Keep infrastructure?', {
@@ -133,14 +134,16 @@ export class ExperimentRunner extends Construct {
             payload: TaskInput.fromObject({
                 "method": "listS3Directories",
                 "parameters": {
-                    "basePath.$": "$.workloadConfig.settings.volume.path"
+                    "basePath.$": "$.workloadConfig.settings.volume.path",
+                    "useImportedIfPresent": true
                 }
             }),
             comment: "Fetch DDL SQL scripts from S3 path as Map items",
+            resultSelector: {"output.$": "$.Payload"},
             resultPath: "$.tablesToCopy",
         }).next(new Map(this, 'Parallel table copy', {
             comment: "Copy table in parallel",
-            itemsPath: "$.tablesToCopy.Payload.paths",
+            itemsPath: "$.tablesToCopy.output.paths",
             maxConcurrency: 2,
             parameters: {
                 "tableDataPath.$": "$$.Map.Item.Value",
@@ -177,14 +180,27 @@ export class ExperimentRunner extends Construct {
             .otherwise(runBenchmarkingForUsers)))
             .otherwise(runBenchmarkingForUsers);
 
-        let dataImporterFlow = new StepFunctionsStartExecution(this, 'Run data import', {
-            stateMachine: props.dataImporterWorkflow,
-            integrationPattern: IntegrationPattern.RUN_JOB,
-            input: TaskInput.fromObject({
-                "manifestFileKey": JsonPath.format("tpc-ds-v2/{}.csv","$.workloadConfig.settings.volume.name")
-            }),
-            resultPath: JsonPath.DISCARD
-        }).next(copyDataSetAndProceed);
+        let dataImporterFlow = new DynamoGetItem(this, 'Fetch data import status', {
+            key: {"PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.workloadConfig.settings.volume.path"))},
+            table: props.dataTable,
+            resultPath: "$.importStatus"
+        }).next(new Choice(this, 'Data is already imported?')
+            .when(Condition.or(Condition.isNotPresent("$.importStatus.Item"), Condition.booleanEquals("$.importStatus.Item.DATA_IMPORTED.BOOL", false)), new StepFunctionsStartExecution(this, 'No, Run data import', {
+                stateMachine: props.dataImporterWorkflow,
+                integrationPattern: IntegrationPattern.RUN_JOB,
+                input: TaskInput.fromObject({
+                    "manifestFileKey": JsonPath.format("tpc-ds-v2/{}.csv", JsonPath.stringAt("$.workloadConfig.settings.volume.name"))
+                }),
+                resultPath: JsonPath.DISCARD
+            }).next(new DynamoPutItem(this, 'Mark data imported', {
+                item: {
+                    "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.workloadConfig.settings.volume.path")),
+                    "DATA_IMPORTED": DynamoAttributeValue.fromBoolean(true)
+                },
+                table: props.dataTable,
+                resultPath: JsonPath.DISCARD
+            })).next(copyDataSetAndProceed))
+            .otherwise(copyDataSetAndProceed));
 
         const experimentRunnerDefinition = new LambdaInvoke(this, "Create platform if it doesn't exists", {
             lambdaFunction: props.commonFunctions.createDestroyPlatform,
@@ -208,6 +224,7 @@ export class ExperimentRunner extends Construct {
                 }
             }),
             comment: "Fetch DDL SQL scripts from S3 path as Map items",
+            resultSelector: {"output.$": "$.Payload"},
             resultPath: "$.ddlScripts",
         }))
             .next(new StepFunctionsStartExecution(this, 'Run all DDLs', {
@@ -238,9 +255,12 @@ export class ExperimentRunner extends Construct {
                         }
                     }),
                     resultPath: "$.workloadBucketRegion",
+                    resultSelector: {
+                        "output.$": "$.Payload"
+                    },
                 }).next(new Choice(this, 'Conditional import?', {comment: "Validate condition of importing data based on region"})
-                    .when(Condition.and(Condition.stringEquals("$.platformLambdaOutput.importData", "SAME_REGION"), Condition.stringEquals("$.workloadBucketRegion.region", Aws.REGION)), dataImporterFlow)
-                    .when(Condition.and(Condition.stringEquals("$.platformLambdaOutput.importData", "DIFFERENT_REGION"), Condition.not(Condition.stringEquals("$.workloadBucketRegion.region", Aws.REGION))), dataImporterFlow)
+                    .when(Condition.and(Condition.stringEquals("$.platformLambdaOutput.importData", "SAME_REGION"), Condition.stringEquals("$.workloadBucketRegion.output.region", Aws.REGION)), dataImporterFlow)
+                    .when(Condition.and(Condition.stringEquals("$.platformLambdaOutput.importData", "DIFFERENT_REGION"), Condition.not(Condition.stringEquals("$.workloadBucketRegion.output.region", Aws.REGION))), dataImporterFlow)
                     .otherwise(copyDataSetAndProceed)
                 )));
 

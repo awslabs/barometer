@@ -1,14 +1,22 @@
 import boto3
 from urllib.parse import urlparse
 import urllib3
+import os
 
 s3 = boto3.client("s3")
+data_bucket = os.environ["DataBucketName"]
 
 
 def list_s3_directories(params):
     base_path = params["basePath"]
     s3_path = urlparse(base_path, allow_fragments=False)
     response = {"paths": []}
+    if "useImportedIfPresent" in params and params["useImportedIfPresent"]:
+        # Use imported dataset if it exists
+        resp = list_s3_directories({"basePath": base_path.replace(s3_path.netloc, data_bucket + "/imported")})
+        if len(resp["paths"]) > 0:
+            return resp
+
     paginator = s3.get_paginator('list_objects')
     for result in paginator.paginate(Bucket=s3_path.netloc, Delimiter='/', Prefix=s3_path.path.lstrip('/')):
         for prefix in result.get('CommonPrefixes'):
