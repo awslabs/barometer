@@ -7,17 +7,17 @@
   "stackName": "redshift-s2",
   "userSessions": [
     {
-      "secretId": "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-3QZzJZ0cQCVl-6JzWbk",
+      "secretId": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:AdminUserSecret-3QZzJZ0cQCVl-6JzWbk",
       "sessionId": "1"
     }
   ],
   "experimentName": "tpc-ds/v3-redshift",
   "queries": [
-    "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/query_1.sql",
-    "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/query_2.sql"
+    "s3://benchmark-bucket/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/query_1.sql",
+    "s3://benchmark-bucket/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/query_2.sql"
   ],
   "ddlQueries": [
-    "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift/ddl.sql"
+    "s3://benchmark-bucket/datasets/tpc-data/tpc-ds-v3/ddl/redshift/ddl.sql"
   ]
 }
 ```

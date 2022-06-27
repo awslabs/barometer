@@ -7,8 +7,8 @@
   "stackName": "redshift-r1",
   "lambdaFunction": "proxy-function-name",
   "proxyPayload": {
-    "secretId": "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-iZMg09kU12As-R8I6Al",
-    "dataset": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb-scale-factor/parquet/",
+    "secretId": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:AdminUserSecret-iZMg09kU12As-R8I6Al",
+    "dataset": "s3://benchmarkingstack-databuckete3889a50/datasets/tpc-data/tpc-ds-v3/1gb-scale-factor/parquet/",
     "sessionId": "TEST"
   },
   "token": "123"

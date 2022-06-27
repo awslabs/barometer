@@ -7,5 +7,4 @@ assets
 **/node_modules
 **/cdk.out
 **/target
-source/ui-wizard
 **/benchmarking-config.json

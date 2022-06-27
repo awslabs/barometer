@@ -26,18 +26,3 @@ build-cli-wizard: # Builds cli-wizard using latest nodejs image
   cache:
     paths:
       - source/cli-wizard/node_modules/
-
-deploy-analytics-004:
-  stage: deploy
-  image: node:latest
-  script:
-    - echo "Deploy to analytics account 004 server"
-    - cd source/cdk-stack
-    - npm install
-    - npm install aws-cdk
-    - export AWS_REGION=$AWS_DEFAULT_REGION
-    - ./node_modules/aws-cdk/bin/cdk deploy BenchmarkingStack --require-approval never
-  environment:
-    name: staging
-    url: https://isengard.amazon.com/federate?account=$ANALYTICS_ACCOUNT&role=Admin
-  when: manual

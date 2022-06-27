@@ -64,7 +64,7 @@ if [[ $1 == "deploy" ]]; then
   echo "==> Steps Are"
   echo "==>   1. Select 'AWS-generated cost allocation tags' tab"
   echo "==>   2. Select box with tag key 'aws:cloudformation:stack-name' & click 'Activate'"
-  echo "==> [SUCCESS] AWS Barometer is ready for running experiments. You can follow [MANUAL STEP] anytime before/after running experiments."
+  echo "==> [SUCCESS] Barometer is ready for running experiments. You can follow [MANUAL STEP] anytime before/after running experiments."
 else
   if [[ $1 == "wizard" ]]; then
     cd /build/cli-wizard && node build/cli.js

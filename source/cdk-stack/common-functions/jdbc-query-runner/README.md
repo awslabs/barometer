@@ -4,8 +4,8 @@
 
 ```json
 {
-  "secretId": "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-f25NzhFuBKvY-UIdGbD",
-  "scriptPath": "s3://benchmarkingstack-databuckete3889a50-1i6jzc7xlfqbx/data/sql/1.sql",
+  "secretId": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:AdminUserSecret-f25NzhFuBKvY-UIdGbD",
+  "scriptPath": "s3://benchmarkingstack-databuckete3889a50/data/sql/1.sql",
   "stackName": "redshift-r1",
   "sessionId": "DDL"
 }
@@ -26,8 +26,8 @@ None
 
 ```json
 {
-  "secretId": "arn:aws:secretsmanager:eu-west-1:215004874051:secret:AdminUserSecret-f25NzhFuBKvY-UIdGbD",
-  "scriptPath": "s3://benchmarkingstack-databuckete3889a50-1i6jzc7xlfqbx/data/sql/1.sql",
+  "secretId": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:AdminUserSecret-f25NzhFuBKvY-UIdGbD",
+  "scriptPath": "s3://benchmarkingstack-databuckete3889a50/data/sql/1.sql",
   "stackName": "redshift-r1",
   "sessionId": "DDL",
   "metrics": {

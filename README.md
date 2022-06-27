@@ -1,12 +1,9 @@
-# AWS Barometer
+# Barometer
 
 > A tool to automate analytic platform evaluations
 
-AWS Barometer helps customers to get data points needed for service selection/service configurations for given workload.
-Benchmarking tool is created by [AWS Prototyping team (EMEA)](https://w.amazon.com/bin/view/AWS_EMEA_Prototyping_Labs)
-based
-on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760aa6dceb39082084f710abccf4d973b4156f1ec912acb2270c918656025731)
-.
+Barometer helps customers to get data points needed for service selection/service configurations for given workload.
+Barometer tool is created by `AWS Prototyping team (EMEA)`
 
 ## 📋 Table of content
 
@@ -24,29 +21,32 @@ on [this narrative](https://amazon.awsapps.com/workdocs/index.html#/document/760
 
 ## 🔰 Description
 
-AWS Barometer will deploy [cdk](https://aws.amazon.com/cdk/) stack which is used to run benchmarking experiments. The
+Barometer will deploy [cdk](https://aws.amazon.com/cdk/) stack which is used to run benchmarking experiments. The
 experiment is a combination of [platform](./source/cdk-stack/platforms) and [workload](./source/cdk-stack/workloads)
-which can be defined using [cli-wizard](./source/cli-wizard) provided by AWS Barometer tool. Example running experiment
+which can be defined using [cli-wizard](./source/cli-wizard) provided by Barometer tool. Example running experiment
 in [Quickstart](#-quickstart).
 
 ## 🛠 Use cases
 
-- Comparison of service performance: Redshift vs Redshift Spectrum
+- Comparison of service performance: Redshift vs Redshift Serverless
 - Comparison of configurations: Redshift dc2 vs ra3 node type
 - Performance impact of feature: Redshift AQUA vs Redshift WLM
-- Right tool for the job selection: Athena vs Redshift for given workload
+- Right tool for the job selection: Athena vs Redshift for your workload
 - [Registering your custom platform](./source/cdk-stack/platforms): Redshift vs My Own Database
 - [Registering your custom workload](./source/cdk-stack/workloads): My own dataset vs Redshift
-- Run benchmarking only
-- Bring your own workload
+- Run benchmarking only on my platform
+- Bring your own workload (dataset, ddl and queries to benchmark)
 
-AWS Barometer supports below combinations as experiment
+Barometer supports below combinations as experiment
 
 - Supported platforms:
     - [Redshift](./source/cdk-stack/platforms/redshift)
     - [Benchmark your own platform](#run-benchmark-only)
+    - [Redshift Serverless using Benchmark your own platform](#run-benchmark-only)
+    - [Redshift Spectrum using Benchmark your own platform](#run-benchmark-only)
+
 - Supported workloads:
-    - [TPC-DS/v3](./source/cdk-stack/workloads/tpc-ds-v2) (Volumes: 1 GB)
+    - [TPC-DS/v2](./source/cdk-stack/workloads/tpc-ds-v2)
     - [Bring your own workload](#bring-your-own-workload)
 
 ## 🎒 Pre-requisites
@@ -56,12 +56,11 @@ AWS Barometer supports below combinations as experiment
 
 ## 🚀 Installing
 
-Clone the repository https://gitlab.aws.dev/aws-emea-prototyping/data-analytics/reusable-assets/aws-barometer and
-run `docker build -t aws-barometer .` in `aws-barometer` directory (root of the git project)
+Clone this repository and run `docker build -t aws-barometer .` in `aws-barometer` directory (root of the git project)
 
 ## 🎮 Deployment
 
-1. Run below command to deploy `aws-barometer` to your aws account.
+1. Run below command to deploy `barometer` to your aws account.
 
 ```shell
 
@@ -132,7 +131,7 @@ steps as prerequisites to use run benchmark only option.
 
 ![](./assets/run_benchmark_only.gif)
 
-### If database and AWS Barometer is in the same VPC
+### If database and Barometer is in the same VPC
 
 1. Create a new secret manager secret having values in below defined json format. All properties are case-sensitive and
    required except `dbClusterIdentifier`
@@ -149,8 +148,8 @@ steps as prerequisites to use run benchmark only option.
 }
 ```
 
-2. Add tag to the secret for AWS Barometer to have permissions to use it Tag name = `ManagedBy`, Tag Value
-   = `BenchmarkingStack`
+2. Add tag to the secret Tag name = `ManagedBy`, Tag Value = `BenchmarkingStack`. This is for Barometer to have
+   permissions to use it
 3. Upload your benchmarking queries to the `DataBucket` (Bucket created by BenchmarkingStack, available as Output) in
    new folder with any name (for example: `my-benchmarking-queries`). Note: the queries can have any name and will be
    executed in sorted order of their names.
@@ -166,7 +165,7 @@ s3://benchmarkingstack-databucket-random-id
 4. Allow network connection from `QueryRunnerSG` (Available as Output of BenchmarkingStack) to your database security
    group
 
-### If database and AWS Barometer is not in the same VPC
+### If database and Barometer is not in the same VPC
 
 In addition to the steps 1,2 and 3 mentioned above (both in the same VPC), follow below steps to
 Establish [VPC Peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html)
@@ -186,7 +185,7 @@ connection between BenchmarkingVPC and the VPC where database is hosted.
 
 ## Bring your own workload
 
-You can bring your own workload for benchmarking to AWS Barometer. In this context, workload is defined as files
+You can bring your own workload for benchmarking to Barometer. In this context, workload is defined as files
 arranged in specific structure on your s3 bucket. To bring your own workload for the benchmarking you need to follow
 below steps as prerequisites.
 
@@ -246,8 +245,8 @@ below steps as prerequisites.
 
 ![](./assets/Benchmarking-tool-architacture-Highlevel.jpg)
 
-1. User deploys AWS Barometer Benchmarking Stack
-2. AWS Barometer Benchmarking stack creates infrastructure & step function workflows
+1. User deploys Barometer Benchmarking Stack
+2. Barometer Benchmarking stack creates infrastructure & step function workflows
 3. User uses [cli-wizard](./source/cli-wizard) to define & run experiments which triggers experiment runner workflow
    internally
 4. Workflow deploys, benchmarks & destroys platform (additional cloudformation stack to deploy service, e.g. Redshift

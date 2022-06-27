@@ -1,6 +1,6 @@
 # Workloads
 
-Workloads is an dataset sitting on S3. Benchmarking tool [CLI](../../cli-wizard)
+Workloads is a dataset sitting on S3. Benchmarking tool [CLI](../../cli-wizard)
 & [benchmarking ui wizard](../../ui-wizard) automatically uses any workloads defined under [this](.) folder to show user
 as a choice while defining experiment.
 
@@ -33,7 +33,7 @@ structure under [this](.) folder.
   "volumes": [
     {
       "name": "1 GB",
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/1gb/",
+      "path": "s3://benchmarkingstack-databuckete3889a50/datasets/tpc-data/tpc-ds-v3/1gb/",
       "format": "csv",
       "compression": "gzip",
       "delimiter": "|"
@@ -41,18 +41,18 @@ structure under [this](.) folder.
   ],
   "ddl": {
     "redshift": {
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift/"
+      "path": "s3://benchmarkingstack-databuckete3889a50/datasets/tpc-data/tpc-ds-v3/ddl/redshift/"
     },
     "redshift-spectrum": {
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/ddl/redshift-spectrum/"
+      "path": "s3://benchmarkingstack-databuckete3889a50/datasets/tpc-data/tpc-ds-v3/ddl/redshift-spectrum/"
     }
   },
   "queries": {
     "redshift": {
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+      "path": "s3://benchmarkingstack-databuckete3889a50/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
     },
     "redshift-spectrum": {
-      "path": "s3://aws-prototype-solution-data-benchmark/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
+      "path": "s3://benchmarkingstack-databuckete3889a50/datasets/tpc-data/tpc-ds-v3/benchmarking-queries/"
     }
   },
   "supportedPlatforms": [

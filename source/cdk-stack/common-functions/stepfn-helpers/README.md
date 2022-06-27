@@ -8,7 +8,7 @@
 {
   "method": "listS3Directories",
   "parameters": {
-    "basePath": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl"
+    "basePath": "s3://benchmarkingstack-databuckete3889a50/tpc/tpc-h/ddl"
   }
 }
 ```
@@ -20,7 +20,7 @@
   "method": "listS3Paths",
   "parameters": {
     "extension": ".sql",
-    "basePath": "s3://benchmarking-tool-shared/tpc/tpc-h/ddl"
+    "basePath": "s3://benchmarkingstack-databuckete3889a50/tpc/tpc-h/ddl"
   }
 }
 ```
@@ -71,8 +71,8 @@
 ```json
 {
   "paths": [
-    "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/sub-dir-1",
-    "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/sub-dir-2"
+    "s3://benchmarkingstack-databuckete3889a50/tpc/tpc-h/ddl/sub-dir-1",
+    "s3://benchmarkingstack-databuckete3889a50/tpc/tpc-h/ddl/sub-dir-2"
   ]
 }
 ```
@@ -82,8 +82,8 @@
 ```json
 {
   "paths": [
-    "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/1.sql",
-    "s3://benchmarking-tool-shared/tpc/tpc-h/ddl/2.sql"
+    "s3://benchmarkingstack-databuckete3889a50/tpc/tpc-h/ddl/1.sql",
+    "s3://benchmarkingstack-databuckete3889a50/tpc/tpc-h/ddl/2.sql"
   ]
 }
 ```
