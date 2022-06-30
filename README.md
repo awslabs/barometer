@@ -53,10 +53,11 @@ Barometer supports below combinations as experiment
 
 - [Docker](https://www.docker.com/): Install docker service and docker cli. This tool uses docker to build image and run
   containers.
+- Minimum disk space of 20 GB for building docker image
 
 ## 🚀 Installing
 
-Clone this repository and run `docker build -t aws-barometer .` in `aws-barometer` directory (root of the git project)
+Clone this repository and run `docker build -t barometer .` in `barometer` directory (root of the git project)
 
 ## 🎮 Deployment
 
@@ -65,39 +66,39 @@ Clone this repository and run `docker build -t aws-barometer .` in `aws-baromete
 ```shell
 
 # Example 1: Passing local aws credentials to the docker container for deployment (deploying in eu-west-1 region)
-docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws aws-barometer deploy eu-west-1
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws barometer deploy eu-west-1
 
 # Example 2: Using AWS profile (ex: dev) to deploy
-docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev aws-barometer deploy eu-west-1
+docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev barometer deploy eu-west-1
 
 
 # Example 3: Passing aws region as environment variable
 docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock \
       -v ~/.aws:/root/.aws -e AWS_PROFILE=dev \
-      -e AWS_REGION=eu-west-1 aws-barometer deploy
+      -e AWS_REGION=eu-west-1 barometer deploy
 
 # Example 4: Using aws secret access key and aws secret id to deploy (with optional session token - temporary credentials)
 docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock \
    -e AWS_ACCESS_KEY_ID=<my-aws-access-key-id> \
    -e AWS_SECRET_ACCESS_KEY=<my-aws-secret-access-key> \
    -e AWS_SESSION_TOKEN=<my-session-token> \
-    aws-barometer deploy eu-west-1
+    barometer deploy eu-west-1
 
 ```
 
-2. Run below command to run `cli-wizard` once `aws-barometer` is successfully deployed to your AWS account.
+2. Run below command to run `cli-wizard` once `barometer` is successfully deployed to your AWS account.
 
 ```shell
 
 # Example 1: Passing local aws credentials to the docker container for running wizard (deployed in eu-west-1 region)
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws \
   --name barometer-wizard \
-  aws-barometer wizard eu-west-1
+  barometer wizard eu-west-1
 
 # Example 2: Using AWS profile (ex: dev) to run wizard
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev \
   --name barometer-wizard \
-  aws-barometer wizard eu-west-1
+  barometer wizard eu-west-1
 
 # Example 3: Using aws secret access key and aws secret id to run wizard (with optional session token - temporary credentials)
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock \
@@ -105,7 +106,7 @@ docker run -it -v /var/run/docker.sock:/var/run/docker.sock \
    -e AWS_SECRET_ACCESS_KEY=<my-aws-secret-access-key> \
    -e AWS_SESSION_TOKEN=<my-session-token> \
    --name barometer-wizard \
-   aws-barometer  wizard eu-west-1
+   barometer  wizard eu-west-1
     
 # Example 4: Reusing wizard configurations 
 docker start -ia barometer-wizard
@@ -114,7 +115,7 @@ docker start -ia barometer-wizard
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws \
   -v ~/storage:/build/cli-wizard/storage \
   --name barometer-wizard \
-  aws-barometer wizard eu-west-1
+  barometer wizard eu-west-1
 ```
 
 ## 🎬 Quickstart

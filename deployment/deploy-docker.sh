@@ -2,10 +2,10 @@
 if [ -z "$1" ]; then
   echo "No argument supplied. Please pass argument 'deploy' or 'wizard'"
   echo "You can also mount your aws config by passing volume switch (-v) or directly setting environment variable as shown below"
-  echo "Usage: docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev aws-barometer deploy <region>"
-  echo "Usage: docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -v ~/storage:/build/cli-wizard/storage aws-barometer wizard <region>"
-  echo "Usage: docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token aws-barometer deploy"
-  echo "Usage: docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token aws-barometer wizard"
+  echo "Usage: docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -e AWS_PROFILE=dev barometer deploy <region>"
+  echo "Usage: docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v ~/.aws:/root/.aws -v ~/storage:/build/cli-wizard/storage barometer wizard <region>"
+  echo "Usage: docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token barometer deploy"
+  echo "Usage: docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e AWS_REGION=eu-west-1 -e AWS_ACCESS_KEY_ID=my-key -e AWS_SECRET_ACCESS_KEY=secret -e AWS_SESSION_TOKEN=my-token barometer wizard"
   exit 1
 fi
 
@@ -32,7 +32,7 @@ export AWS_REGION=$CDK_DEPLOY_REGION
 
 if [[ $1 == "deploy" ]]; then
   cd /build/cdk-stack
-  echo "==> Using user $USER_ID and AWS Account: $CDK_DEPLOY_ACCOUNT to deploy aws-barometer in region: $CDK_DEPLOY_REGION"
+  echo "==> Using user $USER_ID and AWS Account: $CDK_DEPLOY_ACCOUNT to deploy barometer in region: $CDK_DEPLOY_REGION"
   echo "==> [Progress 1/6] Bootstrapping CDK stack if not done already"
   TOOLKIT_STACK_NAME=$(aws cloudformation describe-stacks --stack-name CDKToolkit --region "$AWS_REGION" | jq -r ".Stacks[0].StackName")
   if test -z "$TOOLKIT_STACK_NAME"; then
