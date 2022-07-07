@@ -53,7 +53,7 @@ Barometer supports below combinations as experiment
 
 - [Docker](https://www.docker.com/): Install docker service and docker cli. This tool uses docker to build image and run
   containers.
-- Minimum disk space of 20 GB for building docker image
+- Minimum disk space of 2 GB for building and deploying docker image
 
 ## 🚀 Installing
 
