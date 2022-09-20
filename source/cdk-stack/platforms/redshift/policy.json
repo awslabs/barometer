@@ -14,7 +14,7 @@
       "Resource": [
         "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:redshift*",
         "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:parametergroup:redshift-*",
-        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:subnetgroup:redshift-*",
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:subnetgroup:redshift*",
         "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:AdminUserSecret-*"
       ],
       "Condition": {
@@ -30,9 +30,11 @@
         "redshift:ModifyCluster",
         "redshift:DeleteCluster",
         "redshift:ModifyClusterParameterGroup",
+        "redshift:ResetClusterParameterGroup",
         "redshift:DeleteClusterParameterGroup",
         "redshift:DeleteClusterSubnetGroup",
         "redshift:DescribeLoggingStatus",
+        "redshift:DescribeClusterParameters",
         "secretsmanager:GetSecretValue",
         "secretsmanager:PutSecretValue",
         "ec2:DeleteSecurityGroup",
@@ -51,6 +53,7 @@
         "lambda:GetFunction",
         "lambda:RemovePermission",
         "lambda:AddPermission",
+        "lambda:TagResource",
         "events:PutTargets",
         "events:RemoveTargets",
         "events:PutRule",
@@ -60,7 +63,7 @@
       "Resource": [
         "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:redshift*",
         "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:parametergroup:redshift-*",
-        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:subnetgroup:redshift-*",
+        "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:subnetgroup:redshift*",
         "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:AdminUserSecret-*",
         "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/*",
         "arn:aws:iam::${AWS::AccountId}:role/redshift-*",
@@ -78,7 +81,10 @@
         "ec2:DescribeSecurityGroups",
         "ec2:CreateSecurityGroup",
         "ec2:AuthorizeSecurityGroupIngress",
-        "redshift:DescribeClusters"
+        "redshift:DescribeClusters",
+        "redshift:DescribeClusterParameterGroups",
+        "redshift:DescribeClusterSubnetGroups",
+        "redshift:DescribeTags"
       ],
       "Resource": [
         "*"

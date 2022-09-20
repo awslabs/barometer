@@ -89,7 +89,13 @@
           "GenerateStringKey": "password",
           "PasswordLength": 16,
           "ExcludeCharacters": "\"'@/\\"
-        }
+        },
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
+        ]
       }
     },
     "RedshiftSubnetGroup": {
@@ -103,7 +109,13 @@
               "Fn::ImportValue": "Benchmarking::SubnetIds"
             }
           ]
-        }
+        },
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
+        ]
       }
     },
     "RedshiftSG": {
@@ -122,6 +134,12 @@
             "IpProtocol": "tcp",
             "FromPort": 5439,
             "ToPort": 5439
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
           }
         ]
       }
@@ -189,7 +207,13 @@
         },
         "ClusterParameterGroupName": {
           "Ref": "RedshiftClusterParameterGroup"
-        }
+        },
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
+        ]
       },
       "DeletionPolicy": "Delete"
     },
@@ -214,6 +238,12 @@
           {
             "ParameterName": "enable_user_activity_logging",
             "ParameterValue": "true"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
           }
         ]
       }
@@ -284,6 +314,12 @@
                 }
               ]
             }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
           }
         ]
       }
@@ -357,6 +393,12 @@
               ]
             }
           }
+        ],
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
         ]
       }
     },
@@ -394,7 +436,13 @@
               "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
             }
           }
-        }
+        },
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
+        ]
       }
     },
     "PermissionToInvokeDataCopier": {
