@@ -25,6 +25,24 @@
     },
     {
       "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/redshift.amazonaws.com/AWSServiceRoleForRedshift*",
+      "Condition": {
+        "StringLike": {
+          "iam:AWSServiceName": "redshift.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:AttachRolePolicy",
+        "iam:PutRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/redshift.amazonaws.com/AWSServiceRoleForRedshift*"
+    },
+    {
+      "Effect": "Allow",
       "Action": [
         "redshift:CreateCluster",
         "redshift:ModifyCluster",
