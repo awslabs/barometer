@@ -1,78 +1,30 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS Cloudformation template to provision Redshift platform by Barometer",
+  "Description": "AWS Cloudformation template to provision AuroraServerless platform by Barometer",
   "Parameters": {
-    "DatabaseName": {
-      "Description": "The name of the first database to be created when the redshift cluster is created",
-      "Type": "String",
-      "Default": "defaultdb",
-      "AllowedPattern": "([a-z]|[0-9])+",
-      "ConstraintDescription": "must contain a-z or 0-9 only."
-    },
-    "numberOfNodes": {
-      "Description": "The number of compute nodes in the redshift cluster.  When cluster type is specified as: 1) single-node, the numberOfNodes parameter should be specified as 1, 2) multi-node, the numberOfNodes parameter should be greater than 1",
+    "minCapacity": {
+      "Description": "The minimum capacity for an Aurora DB cluster in serverless DB engine mode.",
       "Type": "Number",
-      "Default": "2"
+      "Default": "4"
     },
-    "featuresAqua": {
-      "Type": "String",
-      "Default": "false",
-      "AllowedValues": [
-        "true",
-        "false"
-      ]
+    "maxCapacity": {
+      "Description": "The maximum capacity for an Aurora DB cluster in serverless DB engine mode.",
+      "Type": "Number",
+      "Default": "32"
     },
-    "featuresWorkloadmanager": {
-      "Description": "Workload manager (WLM)",
+    "engine": {
+      "Description": "Aurora engine name. Can be either aurora-mysql or aurora-postgresql",
       "Type": "String",
-      "Default": "false",
-      "AllowedValues": [
-        "true",
-        "false"
-      ]
-    },
-    "featuresConcurrencyscaling": {
-      "Description": "Concurrency Scaling",
-      "Type": "String",
-      "Default": "false",
-      "AllowedValues": [
-        "true",
-        "false"
-      ]
-    },
-    "nodeType": {
-      "Description": "The node type to be provisioned for the redshift cluster",
-      "Type": "String",
-      "Default": "dc2.large",
-      "AllowedValues": [
-        "ra3.xlplus",
-        "ra3.4xlarge",
-        "ra3.16xlarge",
-        "ds2.xlarge",
-        "ds2.8xlarge",
-        "dc1.large",
-        "dc1.8xlarge",
-        "dc2.large",
-        "dc2.8xlarge"
-      ],
-      "ConstraintDescription": "must be a valid RedShift node type."
+      "Default": "aurora-mysql"
     }
   },
   "Conditions": {
-    "IsSingleNodeCluster": {
+    "IsPostgres": {
       "Fn::Equals": [
         {
-          "Ref": "numberOfNodes"
+          "Ref": "engine"
         },
-        "1"
-      ]
-    },
-    "IsAquaEnabled": {
-      "Fn::Equals": [
-        {
-          "Ref": "featuresAqua"
-        },
-        "true"
+        "aurora-postgresql"
       ]
     }
   },
@@ -98,7 +50,19 @@
         ]
       }
     },
-    "RedshiftSubnetGroup": {
+    "AuroraSecretAttachment": {
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+      "Properties": {
+        "SecretId": {
+          "Ref": "AdminUserSecret"
+        },
+        "TargetId": {
+          "Ref": "AuroraRDSCluster"
+        },
+        "TargetType": "AWS::RDS::DBCluster"
+      }
+    },
+    "AuroraSubnetGroup": {
       "Type": "AWS::Redshift::ClusterSubnetGroup",
       "Properties": {
         "Description": "Redshift cluster subnet group",
@@ -118,22 +82,54 @@
         ]
       }
     },
-    "RedshiftSG": {
+    "AuroraSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "description",
+        "SubnetIds": {
+          "Fn::Split": [
+            ",",
+            {
+              "Fn::ImportValue": "Benchmarking::SubnetIds"
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
+        ]
+      }
+    },
+    "AuroraSG": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "VpcId": {
           "Fn::ImportValue": "Benchmarking::VpcId"
         },
-        "GroupDescription": "Redshift SecurityGroup",
+        "GroupDescription": "Aurora RDS SecurityGroup",
         "SecurityGroupIngress": [
           {
-            "Description": "Allow benchmarking lambda to connect to Redshift",
+            "Description": "Allow benchmarking lambda to connect to Aurora RDS",
             "SourceSecurityGroupId": {
               "Fn::ImportValue": "Benchmarking::Exec::SecurityGroup"
             },
             "IpProtocol": "tcp",
-            "FromPort": 5439,
-            "ToPort": 5439
+            "FromPort": {
+              "Fn::If": [
+                "IsPostgres",
+                5439,
+                3306
+              ]
+            },
+            "ToPort": {
+              "Fn::If": [
+                "IsPostgres",
+                5439,
+                3306
+              ]
+            }
           }
         ],
         "Tags": [
@@ -144,297 +140,37 @@
         ]
       }
     },
-    "RedshiftCluster": {
-      "Type": "AWS::Redshift::Cluster",
+    "AuroraRDSCluster": {
+      "Type": "AWS::RDS::DBCluster",
+      "DeletionPolicy": "Delete",
       "Properties": {
-        "ClusterType": {
-          "Fn::If": [
-            "IsSingleNodeCluster",
-            "single-node",
-            "multi-node"
-          ]
-        },
-        "IamRoles": [
-          {
-            "Fn::GetAtt": [
-              "RedshiftCopyRole",
-              "Arn"
-            ]
-          }
-        ],
-        "PubliclyAccessible": false,
-        "ClusterSubnetGroupName": {
-          "Ref": "RedshiftSubnetGroup"
-        },
-        "VpcSecurityGroupIds": [
-          {
-            "Ref": "RedshiftSG"
-          }
-        ],
-        "NumberOfNodes": {
-          "Fn::If": [
-            "IsSingleNodeCluster",
-            {
-              "Ref": "AWS::NoValue"
-            },
-            {
-              "Ref": "numberOfNodes"
-            }
-          ]
-        },
-        "Encrypted": true,
-        "KmsKeyId": {
-          "Fn::ImportValue": "Benchmarking::KMSKey"
-        },
-        "AquaConfigurationStatus": {
-          "Fn::If": [
-            "IsAquaEnabled",
-            "enabled",
-            "disabled"
-          ]
-        },
-        "NodeType": {
-          "Ref": "nodeType"
-        },
-        "DBName": {
-          "Ref": "DatabaseName"
-        },
         "MasterUsername": {
           "Fn::Sub": "{{resolve:secretsmanager:${AdminUserSecret}::username}}"
         },
         "MasterUserPassword": {
           "Fn::Sub": "{{resolve:secretsmanager:${AdminUserSecret}::password}}"
         },
-        "ClusterParameterGroupName": {
-          "Ref": "RedshiftClusterParameterGroup"
+        "Engine": {
+          "Ref": "engine"
         },
-        "Tags": [
+        "DBSubnetGroupName": {
+          "Ref": "AuroraSubnetGroup"
+        },
+        "VpcSecurityGroupIds": [
           {
-            "Key": "ManagedBy",
-            "Value": "BenchmarkingStack"
-          }
-        ]
-      },
-      "DeletionPolicy": "Delete"
-    },
-    "SecretRedshiftAttachment": {
-      "Type": "AWS::SecretsManager::SecretTargetAttachment",
-      "Properties": {
-        "SecretId": {
-          "Ref": "AdminUserSecret"
-        },
-        "TargetId": {
-          "Ref": "RedshiftCluster"
-        },
-        "TargetType": "AWS::Redshift::Cluster"
-      }
-    },
-    "RedshiftClusterParameterGroup": {
-      "Type": "AWS::Redshift::ClusterParameterGroup",
-      "Properties": {
-        "Description": "Cluster parameter group",
-        "ParameterGroupFamily": "redshift-1.0",
-        "Parameters": [
-          {
-            "ParameterName": "enable_user_activity_logging",
-            "ParameterValue": "true"
+            "Ref": "AuroraSG"
           }
         ],
-        "Tags": [
-          {
-            "Key": "ManagedBy",
-            "Value": "BenchmarkingStack"
-          }
-        ]
-      }
-    },
-    "RedshiftCopyRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  {
-                    "Fn::Sub": "redshift.${AWS::Region}.amazonaws.com"
-                  }
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
+        "StorageEncrypted": true,
+        "KmsKeyId": {
+          "Fn::ImportValue": "Benchmarking::KMSKey"
         },
-        "Path": "/",
-        "Policies": [
-          {
-            "PolicyName": "RedshiftS3ReadPolicy",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "s3:GetObject",
-                    "s3:ListBucket",
-                    "kms:Decrypt"
-                  ],
-                  "Resource": [
-                    "arn:aws:s3:::redshift-downloads",
-                    "arn:aws:s3:::redshift-downloads/*",
-                    {
-                      "Fn::Sub": [
-                        "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}",
-                        {
-                          "KMSKeyId": {
-                            "Fn::ImportValue": "Benchmarking::KMSKey"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "Fn::ImportValue": "Benchmarking::DataBucketArn"
-                    },
-                    {
-                      "Fn::Join": [
-                        "/",
-                        [
-                          {
-                            "Fn::ImportValue": "Benchmarking::DataBucketArn"
-                          },
-                          "*"
-                        ]
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ],
-        "Tags": [
-          {
-            "Key": "ManagedBy",
-            "Value": "BenchmarkingStack"
-          }
-        ]
-      }
-    },
-    "DataCopierLambdaRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "lambda.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/",
-        "Policies": [
-          {
-            "PolicyName": "DataCopierLambdaPolicy",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "lambda:InvokeFunction",
-                    "secretsmanager:GetSecretValue",
-                    "kms:Decrypt",
-                    "redshift-data:ExecuteStatement"
-                  ],
-                  "Resource": [
-                    {
-                      "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
-                    },
-                    {
-                      "Ref": "AdminUserSecret"
-                    },
-                    {
-                      "Fn::Sub": [
-                        "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}",
-                        {
-                          "KMSKeyId": {
-                            "Fn::ImportValue": "Benchmarking::KMSKey"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "Fn::Sub": "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:${RedshiftCluster}"
-                    }
-                  ]
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "redshift-data:DescribeStatement",
-                    "logs:CreateLogGroup",
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents"
-                  ],
-                  "Resource": "*"
-                }
-              ]
-            }
-          }
-        ],
-        "Tags": [
-          {
-            "Key": "ManagedBy",
-            "Value": "BenchmarkingStack"
-          }
-        ]
-      }
-    },
-    "DataCopier": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Description": "Lambda function to copy data from S3 to Redshift cluster",
-        "Code": {
-          "S3Bucket": {
-            "Fn::ImportValue": "Benchmarking::DataBucketName"
+        "ServerlessV2ScalingConfiguration": {
+          "MinCapacity": {
+            "Ref": "minCapacity"
           },
-          "S3Key": "platforms/redshift/functions/data-copier/code.zip"
-        },
-        "Role": {
-          "Fn::GetAtt": [
-            "DataCopierLambdaRole",
-            "Arn"
-          ]
-        },
-        "Handler": "app.lambda_handler",
-        "Runtime": "python3.8",
-        "Timeout": 900,
-        "Environment": {
-          "Variables": {
-            "StackName": {
-              "Ref": "AWS::StackName"
-            },
-            "RedshiftCopyRoleArn": {
-              "Fn::GetAtt": [
-                "RedshiftCopyRole",
-                "Arn"
-              ]
-            },
-            "ProxyFunctionArn": {
-              "Fn::ImportValue": "Benchmarking::Exec::ProxyFunctionArn"
-            }
+          "MaxCapacity": {
+            "Ref": "maxCapacity"
           }
         },
         "Tags": [
@@ -444,73 +180,6 @@
           }
         ]
       }
-    },
-    "PermissionToInvokeDataCopier": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "DataCopier"
-        },
-        "Action": "lambda:InvokeFunction",
-        "Principal": "events.amazonaws.com",
-        "SourceArn": {
-          "Fn::GetAtt": [
-            "QueryCompletionRule",
-            "Arn"
-          ]
-        }
-      }
-    },
-    "QueryCompletionRule": {
-      "Type": "AWS::Events::Rule",
-      "Properties": {
-        "EventBusName": "default",
-        "EventPattern": {
-          "source": [
-            "aws.redshift-data"
-          ],
-          "detail-type": [
-            "Redshift Data Statement Status Change"
-          ],
-          "resources": [
-            {
-              "Fn::Sub": "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:${RedshiftCluster}"
-            }
-          ]
-        },
-        "Targets": [
-          {
-            "Id": "DataCopierFnTarget",
-            "Arn": {
-              "Fn::GetAtt": [
-                "DataCopier",
-                "Arn"
-              ]
-            }
-          }
-        ]
-      }
-    }
-  },
-  "Outputs": {
-    "SecretIdAdminUser": {
-      "Description": "The admin user to use for benchmarking queries",
-      "Value": {
-        "Fn::Sub": "${AdminUserSecret}"
-      }
-    },
-    "DataCopierLambdaArn": {
-      "Description": "Redshift data copier lambda function ARN",
-      "Value": {
-        "Fn::GetAtt": [
-          "DataCopier",
-          "Arn"
-        ]
-      }
-    },
-    "ImportData": {
-      "Description": "Redshift platform import data to Benchmarking::DataBucketName when workload bucket is not in the same region as platform",
-      "Value": "DIFFERENT_REGION"
     }
   }
 }
