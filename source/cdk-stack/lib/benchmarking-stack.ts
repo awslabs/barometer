@@ -14,7 +14,8 @@ import {
 } from "@aws-cdk/aws-ec2";
 import {Topic} from "@aws-cdk/aws-sns";
 import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
-import {DataImporter} from "./constructs/data-importer";
+import {BucketToBucketDataImporter} from "./constructs/bucket-to-bucket-data-importer";
+import {GenericDataCopier} from "./constructs/generic-data-copier";
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
@@ -138,9 +139,14 @@ export class BenchmarkingStack extends cdk.Stack {
             vpc: vpc,
             key: key
         });
-        const dataImporter = new DataImporter(this, 'DataImporter', {dataBucket: dataBucket,manifestBucket:manifestBucket, encryptionKey: key});
+        const dataImporter = new BucketToBucketDataImporter(this, 'DataImporter', {
+            dataBucket: dataBucket,
+            manifestBucket: manifestBucket,
+            encryptionKey: key
+        });
         const experimentRunner = new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
+            genericDataCopier: new GenericDataCopier(this, 'GenericDataCopier', {dataBucket: dataBucket}),
             benchmarkRunnerWorkflow: benchmarkRunner.workflow,
             dataImporterWorkflow: dataImporter.workflow,
             dataTable: dataTable,

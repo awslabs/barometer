@@ -20,7 +20,7 @@ interface DataImporterProps {
     encryptionKey: IKey,
 }
 
-export class DataImporter extends Construct {
+export class BucketToBucketDataImporter extends Construct {
     public readonly workflow: StateMachine;
 
     constructor(scope: Construct, id: string, props: DataImporterProps) {

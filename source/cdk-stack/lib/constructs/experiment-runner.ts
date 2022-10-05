@@ -3,7 +3,7 @@ import {CommonFunctions} from "./common-functions";
 import {
     DynamoAttributeValue,
     DynamoGetItem,
-    DynamoPutItem,
+    DynamoPutItem, GlueStartJobRun,
     LambdaInvoke,
     StepFunctionsStartExecution
 } from "@aws-cdk/aws-stepfunctions-tasks";
@@ -12,10 +12,12 @@ import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
 import {Policy, PolicyStatement} from "@aws-cdk/aws-iam";
 import {Table} from "@aws-cdk/aws-dynamodb";
 import {Key} from "@aws-cdk/aws-kms";
+import {GenericDataCopier} from "./generic-data-copier";
 
 
 interface ExperimentRunnerProps {
     commonFunctions: CommonFunctions;
+    genericDataCopier: GenericDataCopier;
     benchmarkRunnerWorkflow: StateMachine;
     dataImporterWorkflow: StateMachine;
     dataTable: Table;
@@ -121,6 +123,26 @@ export class ExperimentRunner extends Construct {
                 .otherwise(endState));
 
         // Main experiment runner flow
+        let runPlatformDataCopierFn = new LambdaInvoke(this, 'Yes, Run platform provided copier', {
+            lambdaFunction: props.commonFunctions.platformLambdaProxy,
+            comment: "Copy dataset from table path to the platform",
+            payload: TaskInput.fromObject({
+                "stackName.$": "$.platformLambdaOutput.stackName",
+                "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
+                "proxyToken.$": "$.tableDataPath",
+                "proxyPayload": {
+                    "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                    "tableDataPath.$": "$.tableDataPath",
+                    "volume.$": "$.volume",
+                    "sessionId": "COPY"
+                },
+                "token": JsonPath.taskToken
+            }),
+            timeout: Duration.hours(1),
+            integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
+            resultPath: JsonPath.DISCARD,
+        });
+
         let copyDataSetAndProceed = new Choice(this, 'Copy dataset to the platform?', {
             comment: "Evaluate user choice of copying dataset to the platform"
         }).when(Condition.booleanEquals("$.platformConfig.loadDataset", true), new DynamoGetItem(this, 'Yes, Get data copy status', {
@@ -151,32 +173,25 @@ export class ExperimentRunner extends Construct {
                 "volume.$": "$.workloadConfig.settings.volume"
             },
             resultPath: JsonPath.DISCARD,
-        }).iterator(new LambdaInvoke(this, 'Run data copier', {
-            lambdaFunction: props.commonFunctions.platformLambdaProxy,
-            comment: "Copy dataset from table path to the platform",
-            payload: TaskInput.fromObject({
-                "stackName.$": "$.platformLambdaOutput.stackName",
-                "lambdaFunction.$": "$.platformLambdaOutput.dataCopierLambda",
-                "proxyToken.$": "$.tableDataPath",
-                "proxyPayload": {
-                    "secretId.$": "$.platformLambdaOutput.secretIds[0]",
-                    "tableDataPath.$": "$.tableDataPath",
-                    "volume.$": "$.volume",
-                    "sessionId": "COPY"
+        }).iterator(new Choice(this, 'Platform provided copy function?')
+            .when(Condition.isPresent("$.platformLambdaOutput.dataCopierLambda"), runPlatformDataCopierFn)
+            .otherwise(new GlueStartJobRun(this, 'No, Run generic copier', {
+                glueJobName: props.genericDataCopier.job.jobName,
+                arguments: TaskInput.fromObject({
+                    "--SECRET_ID.$": "$.platformLambdaOutput.secretIds[0]",
+                    "--TABLE_DATA_PATH.$": "$.tableDataPath"
+                }),
+                timeout: Duration.hours(1),
+                resultPath: JsonPath.DISCARD,
+            }))))
+            .next(new DynamoPutItem(this, 'Mark data copy success', {
+                item: {
+                    "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
+                    "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
                 },
-                "token": JsonPath.taskToken
-            }),
-            timeout: Duration.hours(1),
-            integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN,
-            resultPath: JsonPath.DISCARD,
-        }))).next(new DynamoPutItem(this, 'Mark data copy success', {
-            item: {
-                "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
-                "DATA_COPIED": DynamoAttributeValue.fromBoolean(true)
-            },
-            table: props.dataTable,
-            resultPath: JsonPath.DISCARD
-        })).next(runBenchmarkingForUsers))
+                table: props.dataTable,
+                resultPath: JsonPath.DISCARD
+            })).next(runBenchmarkingForUsers))
             .otherwise(runBenchmarkingForUsers)))
             .otherwise(runBenchmarkingForUsers);
 
