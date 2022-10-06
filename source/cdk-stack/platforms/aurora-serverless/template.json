@@ -15,6 +15,10 @@
     "engine": {
       "Description": "Aurora engine name. Can be either aurora-mysql or aurora-postgresql",
       "Type": "String",
+      "AllowedValues": [
+        "aurora-mysql",
+        "aurora-postgresql"
+      ],
       "Default": "aurora-mysql"
     }
   },
@@ -63,27 +67,8 @@
       }
     },
     "AuroraSubnetGroup": {
-      "Type": "AWS::Redshift::ClusterSubnetGroup",
-      "Properties": {
-        "Description": "Redshift cluster subnet group",
-        "SubnetIds": {
-          "Fn::Split": [
-            ",",
-            {
-              "Fn::ImportValue": "Benchmarking::SubnetIds"
-            }
-          ]
-        },
-        "Tags": [
-          {
-            "Key": "ManagedBy",
-            "Value": "BenchmarkingStack"
-          }
-        ]
-      }
-    },
-    "AuroraSubnetGroup": {
       "Type": "AWS::RDS::DBSubnetGroup",
+      "DeletionPolicy": "Delete",
       "Properties": {
         "DBSubnetGroupDescription": "description",
         "SubnetIds": {
@@ -179,6 +164,14 @@
             "Value": "BenchmarkingStack"
           }
         ]
+      }
+    }
+  },
+  "Outputs": {
+    "SecretIdAdminUser": {
+      "Description": "The admin user to use for benchmarking queries",
+      "Value": {
+        "Fn::Sub": "${AdminUserSecret}"
       }
     }
   }

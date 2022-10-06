@@ -69,7 +69,7 @@ export class CommonFunctions extends Construct {
         }
 
         this.createDestroyPlatform.addToRolePolicy(new PolicyStatement({
-            actions: ["cloudformation:CreateStack", "cloudformation:DeleteStack", "cloudformation:DescribeStacks", "kms:CreateGrant", "dynamodb:PutItem", "dynamodb:DeleteItem", "s3:GetObject", "s3:ListBucket"],
+            actions: ["cloudformation:CreateStack", "cloudformation:DeleteStack", "cloudformation:DescribeStacks", "kms:CreateGrant", "kms:DescribeKey", "dynamodb:PutItem", "dynamodb:DeleteItem", "s3:GetObject", "s3:ListBucket"],
             resources: resources
         }));
         // Allow platform lambda function to R/W on DataTable

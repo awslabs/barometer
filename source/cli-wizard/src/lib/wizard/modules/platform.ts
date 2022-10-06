@@ -21,6 +21,7 @@ export class PlatformModule extends CLIModule {
             message: 'Which platform would you like to configure ?',
             choices: [
                 {name: PlatformTypeName.REDSHIFT, value: '../modules/platforms/redshift/new'},
+                {name: PlatformTypeName.AURORA_SERVERLESS, value: '../modules/platforms/aurora-serverless/new'},
                 // {name: PlatformTypeName.ATHENA, value: '../modules/platforms/athena/new'},
                 this.getQuestionSeparator(),
                 {name: 'Return to the previous menu', value: 'exit-module'},
