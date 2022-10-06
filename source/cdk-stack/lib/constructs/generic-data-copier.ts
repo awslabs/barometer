@@ -18,6 +18,7 @@ export class GenericDataCopier extends Construct {
         const cdkRootPath: string = path.join(__dirname, '../../');
 
         this.job = new Job(this, 'Job', {
+            maxConcurrentRuns: 5,
             executable: JobExecutable.scalaEtl({
                 className: "GenericDataCopyJob",
                 glueVersion: GlueVersion.V3_0,

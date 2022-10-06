@@ -174,8 +174,7 @@ export class ExperimentRunner extends Construct {
             },
             resultPath: JsonPath.DISCARD,
         }).iterator(new Choice(this, 'Platform provided copy function?')
-            .when(Condition.isPresent("$.platformLambdaOutput.dataCopierLambda"), runPlatformDataCopierFn)
-            .otherwise(new GlueStartJobRun(this, 'No, Run generic copier', {
+            .when(Condition.stringEquals("$.platformLambdaOutput.dataCopierLambda", "None"), new GlueStartJobRun(this, 'No, Run generic copier', {
                 glueJobName: props.genericDataCopier.job.jobName,
                 arguments: TaskInput.fromObject({
                     "--SECRET_ID.$": "$.platformLambdaOutput.secretIds[0]",
@@ -183,7 +182,8 @@ export class ExperimentRunner extends Construct {
                 }),
                 timeout: Duration.hours(1),
                 resultPath: JsonPath.DISCARD,
-            }))))
+            }))
+            .otherwise(runPlatformDataCopierFn)))
             .next(new DynamoPutItem(this, 'Mark data copy success', {
                 item: {
                     "PK": DynamoAttributeValue.fromString(JsonPath.stringAt("$.copyKey.id")),
