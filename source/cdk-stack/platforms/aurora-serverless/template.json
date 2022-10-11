@@ -5,7 +5,7 @@
     "minCapacity": {
       "Description": "The minimum capacity for an Aurora DB cluster in serverless DB engine mode.",
       "Type": "Number",
-      "Default": "4"
+      "Default": "2"
     },
     "maxCapacity": {
       "Description": "The maximum capacity for an Aurora DB cluster in serverless DB engine mode.",
@@ -39,9 +39,9 @@
         "KmsKeyId": {
           "Fn::ImportValue": "Benchmarking::KMSKey"
         },
-        "Description": "Redshift admin user",
+        "Description": "Aurora admin user",
         "GenerateSecretString": {
-          "SecretStringTemplate": "{\"username\": \"admin\"}",
+          "SecretStringTemplate": "{\"username\": \"awsuser\"}",
           "GenerateStringKey": "password",
           "PasswordLength": 16,
           "ExcludeCharacters": "\"'@/\\"
@@ -129,6 +129,13 @@
       "Type": "AWS::RDS::DBCluster",
       "DeletionPolicy": "Delete",
       "Properties": {
+        "EngineVersion": {
+          "Fn::If": [
+            "IsPostgres",
+            "14.4",
+            "8.0.mysql_aurora.3.02.1"
+          ]
+        },
         "MasterUsername": {
           "Fn::Sub": "{{resolve:secretsmanager:${AdminUserSecret}::username}}"
         },
@@ -157,6 +164,25 @@
           "MaxCapacity": {
             "Ref": "maxCapacity"
           }
+        },
+        "Tags": [
+          {
+            "Key": "ManagedBy",
+            "Value": "BenchmarkingStack"
+          }
+        ]
+      }
+    },
+    "AuroraRDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Engine": {
+          "Ref": "engine"
+        },
+        "DBInstanceClass": "db.serverless",
+        "DBClusterIdentifier": {
+          "Ref": "AuroraRDSCluster"
         },
         "Tags": [
           {
