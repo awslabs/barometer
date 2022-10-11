@@ -15,8 +15,6 @@ structure under [this](.) folder.
 |   +-- config.json
 |   +-- template.json
 |   +-- policy.json
-|   +-- driver/
-|       +-- my-platform-jdbc-driver.jar
 |   +-- functions/      (Optional)
 |       +-- my-data-copy-function/
 |           +-- .. source code files ..
@@ -75,7 +73,10 @@ structure under [this](.) folder.
 
 [Benchmarking stack](..) will pass all the parameters defined in `template.json` by accepting them from the user.
 
-- `example_platform/driver/my-platform-jdbc-driver.jar`: Platform must support `jdbc` connection & place driver
-  in `.jar` format to the `driver/` folder
 - `example_platform/functions/function-1`: Platform functions source code will be zipped & copied automatically
-  to `s3://${Benchmarking::DataBucket}/platforms/example_platform/functions/function-1/code.zip` 
+  to `s3://${Benchmarking::DataBucket}/platforms/example_platform/functions/function-1/code.zip`
+
+## How to add new platform support in barometer?
+
+1. Define platform by following above defined steps
+2. Add platform driver `.jar` file url to [drivers.txt](./drivers.txt) file.

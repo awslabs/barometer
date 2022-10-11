@@ -3,7 +3,8 @@ import {CommonFunctions} from "./common-functions";
 import {
     DynamoAttributeValue,
     DynamoGetItem,
-    DynamoPutItem, GlueStartJobRun,
+    DynamoPutItem,
+    GlueStartJobRun,
     LambdaInvoke,
     StepFunctionsStartExecution
 } from "@aws-cdk/aws-stepfunctions-tasks";
@@ -182,6 +183,7 @@ export class ExperimentRunner extends Construct {
                 }),
                 timeout: Duration.hours(1),
                 resultPath: JsonPath.DISCARD,
+                integrationPattern: IntegrationPattern.RUN_JOB
             }))
             .otherwise(runPlatformDataCopierFn)))
             .next(new DynamoPutItem(this, 'Mark data copy success', {

@@ -24,19 +24,13 @@ object GenericDataCopyJob {
     val secretId = args("SECRET_ID")
     val tableDataPath = args("TABLE_DATA_PATH")
 
-    val valueRequest = GetSecretValueRequest.builder()
-      .secretId(secretId)
-      .build();
-    SecretsManagerClient.builder().build().getSecretValue(valueRequest).secretString()
-
-    // TODO parse json and write to the database
     val df = sparkSession.read.parquet(tableDataPath)
+    val splits = tableDataPath.split('/')
     df.write
       .format("jdbc")
-      .option("url", "jdbc:postgresql:dbserver")
-      .option("dbtable", "schema.tablename")
-      .option("user", "username")
-      .option("password", "password")
+      .option("url", secretId)
+      .option("dbtable", splits(splits.length - 2))
+      .option("user", secretId)
       .save()
   }
 }

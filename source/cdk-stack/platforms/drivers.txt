@@ -1,0 +1,4 @@
+https://s3.amazonaws.com/athena-downloads/drivers/JDBC/SimbaAthenaJDBC-2.0.27.1001/AthenaJDBC42_2.0.27.1001.jar
+https://repo1.maven.org/maven2/com/amazon/redshift/redshift-jdbc42/2.1.0.9/redshift-jdbc42-2.1.0.9.jar
+https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.30/mysql-connector-java-8.0.30.jar
+https://repo1.maven.org/maven2/org/postgresql/postgresql/42.5.0/postgresql-42.5.0.jar

@@ -61,8 +61,10 @@ if [[ $1 == "deploy" ]]; then
   echo "==> [Progress 6/7] Uploading TPC-DS Dataset manifest files"
   aws s3 sync ../tools/tpc-ds/manifests/ "s3://$MANIFEST_BUCKET/tpc-ds-v2/" --region "$AWS_REGION"
   echo "==> [Progress 7/7] Uploading JDBC driver libs"
-  aws s3 cp common-functions/jdbc-query-runner/target/dependency/AthenaJDBC42_2.0.27.1001.jar "s3://$DATA_BUCKET/libs/" --region "$AWS_REGION"
-  aws s3 cp common-functions/jdbc-query-runner/target/dependency/redshift-jdbc42-2.1.0.9.jar "s3://$DATA_BUCKET/libs/" --region "$AWS_REGION"
+  while read driver; do
+    echo "Using driver lib ${driver##*/}"
+    aws s3 cp "common-functions/jdbc-query-runner/target/dependency/${driver##*/}" "s3://$DATA_BUCKET/libs/" --region "$AWS_REGION"
+  done <platforms/drivers.txt
   echo "==> [MANUAL STEP] Please setup cost allocation tag using this link: https://console.aws.amazon.com/billing/home#/tags"
   echo "==> Steps Are"
   echo "==>   1. Select 'AWS-generated cost allocation tags' tab"

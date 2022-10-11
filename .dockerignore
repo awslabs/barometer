@@ -1,6 +1,7 @@
 .git
 .idea
 assets
+custom_workload
 *.md
 *.iml
 **/build
