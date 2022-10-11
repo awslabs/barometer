@@ -511,6 +511,10 @@
     "ImportData": {
       "Description": "Redshift platform import data to Benchmarking::DataBucketName when workload bucket is not in the same region as platform",
       "Value": "DIFFERENT_REGION"
+    },
+    "DriverClass": {
+      "Description": "The driver class to make JDBC connection to the Redshift",
+      "Value": "com.aws.benchmarking.jdbcqueryrunner.drivers.AWSSecretsManagerDriverRedshift"
     }
   }
 }

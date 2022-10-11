@@ -41,12 +41,13 @@ structure under [this](.) folder.
   cloudformation template to display choices to the user while defining new platform for the experiment. cloudformation
   template must produce below `Outputs`.
 
-| LogicalId           | Example Value                                                     | Notes                                                                                                                                                                            |
-|---------------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SecretIdAdminUser   | `dataengineer`                                                    | Should export secretId name of secret having user `dataengineer` credentials stored in secretsmanager                                                                            |
-| SecretId`Any`       | `bi-user`                                                         | Should export secretId name of secret having user  `bi-user`  credentials stored in secretsmanager                                                                               |
-| DataCopierLambdaArn | `arn:aws:lambda:region:account-id:function:my-data-copy-function` | Optional - data copy function ARN if data loading is supported by the platform                                                                                                   |
-| ImportData          | `ALWAYS`, `SAME_REGION`, `DIFFERENT_REGION`                       | Optional - Data is imported to [Benchmarking::DataBucketName](../README.md#exported-params) either always, either when workload data bucket region is same as current or when not|
+| LogicalId           | Example Value                                                     | Notes                                                                                                                                                                               |
+|---------------------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SecretIdAdminUser   | `dataengineer`                                                    | Should export secretId name of secret having user `dataengineer` credentials stored in secretsmanager                                                                               |
+| SecretId`Any`       | `bi-user`                                                         | Should export secretId name of secret having user  `bi-user`  credentials stored in secretsmanager                                                                                  |
+| DriverClass         | `com.amazonaws.secretsmanager.sql.AWSSecretsManagerMySQLDriver`   | Any one of the driver class name that platform supports from list [here](https://github.com/aws/aws-secretsmanager-jdbc/tree/master/src/main/java/com/amazonaws/secretsmanager/sql) |
+| DataCopierLambdaArn | `arn:aws:lambda:region:account-id:function:my-data-copy-function` | Optional - data copy function ARN if data loading is supported by the platform                                                                                                      |
+| ImportData          | `ALWAYS`, `SAME_REGION`, `DIFFERENT_REGION`                       | Optional - Data is imported to [Benchmarking::DataBucketName](../README.md#exported-params) either always, either when workload data bucket region is same as current or when not   |
 
 ### Requirements
 

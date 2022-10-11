@@ -73,6 +73,7 @@ export class ExperimentRunner extends Construct {
                 itemsPath: "$.userSessionsOutput.output.userSessions",
                 parameters: {
                     "stackName.$": "$.platformLambdaOutput.stackName",
+                    "driverClass.$": "$.platformLambdaOutput.driverClass",
                     "secretId.$": "$$.Map.Item.Value.secretId",
                     "sessionIds.$": "$$.Map.Item.Value.sessionIds",
                     "basePath.$": "$.workloadConfig.settings.queries.path"
@@ -82,6 +83,7 @@ export class ExperimentRunner extends Construct {
                 integrationPattern: IntegrationPattern.RUN_JOB,
                 input: TaskInput.fromObject({
                     "secretId.$": "$.secretId",
+                    "driverClass.$": "$.driverClass",
                     "sessionIds.$": "$.sessionIds",
                     "stackName.$": "$.stackName",
                     "basePath.$": "$.basePath",
@@ -133,6 +135,7 @@ export class ExperimentRunner extends Construct {
                 "proxyToken.$": "$.tableDataPath",
                 "proxyPayload": {
                     "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                    "driverClass.$": "$.platformLambdaOutput.driverClass",
                     "tableDataPath.$": "$.tableDataPath",
                     "volume.$": "$.volume",
                     "sessionId": "COPY"
@@ -179,6 +182,7 @@ export class ExperimentRunner extends Construct {
                 glueJobName: props.genericDataCopier.job.jobName,
                 arguments: TaskInput.fromObject({
                     "--SECRET_ID.$": "$.platformLambdaOutput.secretIds[0]",
+                    "--DRIVER_CLASS.$": "$.platformLambdaOutput.driverClass",
                     "--TABLE_DATA_PATH.$": "$.tableDataPath"
                 }),
                 timeout: Duration.hours(1),
@@ -249,6 +253,7 @@ export class ExperimentRunner extends Construct {
                 integrationPattern: IntegrationPattern.RUN_JOB,
                 input: TaskInput.fromObject({
                     "secretId.$": "$.platformLambdaOutput.secretIds[0]",
+                    "driverClass.$": "$.platformLambdaOutput.driverClass",
                     "sessionIds": ["DDL"],
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "basePath.$": "$.workloadConfig.settings.ddl.path",

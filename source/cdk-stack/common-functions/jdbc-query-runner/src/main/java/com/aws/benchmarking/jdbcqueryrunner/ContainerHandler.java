@@ -28,6 +28,7 @@ public class ContainerHandler {
         String stackName = Objects.requireNonNull(System.getenv("stackName"), "stackName environment variable not set.");
         String basePath = Objects.requireNonNull(System.getenv("basePath"), "basePath environment variable not set.");
         String extension = Objects.requireNonNull(System.getenv("extension"), "extension environment variable not set.");
+        String driverClass = Objects.requireNonNull(System.getenv("driverClass"), "driverClass environment variable not set.");
 
         // Fetch list of .sql files from S3 bucket
         URI uri = new URI(basePath);
@@ -45,6 +46,7 @@ public class ContainerHandler {
                         if (objectSummary.getKey().toLowerCase().endsWith(extension.toLowerCase())) {
                             Map<String, String> event = new HashMap<>();
                             event.put("secretId", secretId);
+                            event.put("driverClass", driverClass);
                             event.put("sessionId", sessionId);
                             event.put("stackName", stackName);
                             event.put("scriptPath", "s3://" + objectSummary.getBucketName() + "/" + objectSummary.getKey());

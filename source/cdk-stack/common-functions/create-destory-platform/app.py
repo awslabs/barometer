@@ -136,6 +136,8 @@ def sfn_respond(stack_name, describe_stack_response=None):
                 secret_ids["dataCopierLambda"] = output["OutputValue"]
             if output["OutputKey"] == "ImportData":
                 secret_ids["importData"] = output["OutputValue"]
+            if output["OutputKey"] == "DriverClass":
+                secret_ids["driverClass"] = output["OutputValue"]
 
         print("Sending task success to Step function with payload: " + json.dumps(secret_ids))
         sfn.send_task_success(taskToken=token, output=json.dumps(secret_ids))

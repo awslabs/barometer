@@ -87,6 +87,7 @@ export class BenchmarkRunner extends Construct {
                 command: ["java", "-classpath", "lib/*:.", "com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"],
                 environment: [
                     {name: 'secretId', value: JsonPath.stringAt("$.secretId")},
+                    {name: 'driverClass', value: JsonPath.stringAt("$.driverClass")},
                     {name: 'sessionIds', value: JsonPath.jsonToString(JsonPath.stringAt("$.sessionIds"))},
                     {name: 'stackName', value: JsonPath.stringAt("$.stackName")},
                     {name: 'basePath', value: JsonPath.stringAt("$.basePath")},

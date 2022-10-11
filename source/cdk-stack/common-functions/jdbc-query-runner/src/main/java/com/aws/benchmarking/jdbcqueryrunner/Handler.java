@@ -26,20 +26,6 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
     final AmazonCloudWatch cloudWatch = AmazonCloudWatchClientBuilder.defaultClient();
     private static final Map<String, Connection> cachedConnections = new ConcurrentHashMap<>();
 
-    static {
-        // Load all the driver classes
-        try {
-            Class.forName("com.aws.benchmarking.jdbcqueryrunner.drivers.AWSSecretsManagerDriverRedshift");
-//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMariaDBDriver");
-//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMSSQLServerDriver");
-//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerMySQLDriver");
-//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerOracleDriver");
-//            Class.forName("com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public JdbcLambdaResponse handleRequest(Map<String, String> event, Context context) {
         LambdaLogger logger = new LambdaLogger() {
@@ -62,6 +48,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         String query = event.get("query");
         String stackName = event.get("stackName");
         String sessionId = event.get("sessionId");
+        String driverClass = event.get("driverClass");
 
         JdbcLambdaResponse response = new JdbcLambdaResponse();
         response.setScriptPath(scriptPath);
@@ -71,6 +58,7 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         response.setMetrics(new HashMap<>());
 
         try {
+            Class.forName(driverClass);
             if ("true".equalsIgnoreCase(connectionTest) && secretId != null) {
                 getConnection(secretId, sessionId, logger);
                 return response;

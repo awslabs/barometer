@@ -173,6 +173,16 @@
       "Value": {
         "Fn::Sub": "${AdminUserSecret}"
       }
+    },
+    "DriverClass": {
+      "Description": "The driver class to make JDBC connection to the Aurora",
+      "Value": {
+        "Fn::If": [
+          "IsPostgres",
+          "com.amazonaws.secretsmanager.sql.AWSSecretsManagerPostgreSQLDriver",
+          "com.amazonaws.secretsmanager.sql.AWSSecretsManagerMySQLDriver"
+        ]
+      }
     }
   }
 }
