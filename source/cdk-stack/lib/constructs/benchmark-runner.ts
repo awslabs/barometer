@@ -31,13 +31,13 @@ interface BenchmarkRunnerProps {
 export class BenchmarkRunner extends Construct {
 
     public readonly workflow: StateMachine;
-
+    public readonly cluster: Cluster;
     constructor(scope: Construct, id: string, props: BenchmarkRunnerProps) {
         super(scope, id);
 
         const commonFunctionsDirPath: string = path.join(__dirname, '../../common-functions/');
 
-        const ecsCluster = new Cluster(this, 'EcsCluster', {
+        this.cluster = new Cluster(this, 'EcsCluster', {
             enableFargateCapacityProviders: true,
             vpc: props.vpc
         });
@@ -68,7 +68,7 @@ export class BenchmarkRunner extends Construct {
         }));
 
         const benchmarkRunnerDefinition = new EcsRunTask(this, 'Run all queries for session', {
-            cluster: ecsCluster,
+            cluster: this.cluster,
             launchTarget: new EcsFargateLaunchTarget({platformVersion: FargatePlatformVersion.LATEST}),
             taskDefinition: taskDefinition,
             integrationPattern: IntegrationPattern.RUN_JOB,
