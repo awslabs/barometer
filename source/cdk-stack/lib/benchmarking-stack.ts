@@ -169,7 +169,6 @@ export class BenchmarkingStack extends cdk.Stack {
 
         let benchmarkRunner = new BenchmarkRunner(this, 'BenchmarkRunner', {
             dataBucket: dataBucket,
-            jdbcQueryRunnerFunction: commonFunctions.jdbcQueryRunner,
             vpc: vpc,
             key: key
         });
@@ -222,13 +221,10 @@ export class BenchmarkingStack extends cdk.Stack {
             value: key.keyId,
             exportName: "Benchmarking::KMSKey"
         });
+
         new CfnOutput(this, 'QueryRunnerSG', {
-            value: commonFunctions.jdbcQueryRunner.connections.securityGroups.map(sg => sg.securityGroupId).join(","),
+            value: benchmarkRunner.queryRunnerSG.securityGroupId,
             exportName: "Benchmarking::Exec::SecurityGroup"
-        });
-        new CfnOutput(this, 'QueryRunnerLambdaArn', {
-            value: commonFunctions.jdbcQueryRunner.functionArn,
-            exportName: "Benchmarking::Exec::QueryFunctionArn"
         });
         new CfnOutput(this, 'ProxyLambdaArn', {
             value: commonFunctions.platformLambdaProxy.functionArn,

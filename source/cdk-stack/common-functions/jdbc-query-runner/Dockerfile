@@ -1,7 +1,5 @@
-FROM public.ecr.aws/lambda/java:8.al2
-COPY target/classes ${LAMBDA_TASK_ROOT}
-COPY target/dependency/* ${LAMBDA_TASK_ROOT}/lib/
-
-# Entry point for lambda function
-ENTRYPOINT ["/usr/bin/env"]
-CMD [ "/lambda-entrypoint.sh", "com.aws.benchmarking.jdbcqueryrunner.Handler::handleRequest" ]
+FROM openjdk:8-jre-slim
+COPY target/classes /usr/src/app
+COPY target/dependency/* /usr/src/app/lib/
+WORKDIR /usr/src/app
+CMD ["java", "-classpath", "lib/*:.", "com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"]

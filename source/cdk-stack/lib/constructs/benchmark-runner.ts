@@ -2,7 +2,7 @@ import {Aws, Construct} from "@aws-cdk/core";
 import {IntegrationPattern, JsonPath, StateMachine} from "@aws-cdk/aws-stepfunctions";
 import {EcsFargateLaunchTarget, EcsRunTask} from "@aws-cdk/aws-stepfunctions-tasks";
 import {Cluster} from "@aws-cdk/aws-ecs/lib/cluster";
-import {SubnetType, Vpc} from "@aws-cdk/aws-ec2";
+import {SecurityGroup, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
 import {
     ContainerDefinition,
     ContainerImage,
@@ -12,7 +12,6 @@ import {
 } from "@aws-cdk/aws-ecs";
 import {PolicyStatement} from "@aws-cdk/aws-iam";
 import {Bucket} from "@aws-cdk/aws-s3";
-import {IFunction} from "@aws-cdk/aws-lambda";
 import {IKey} from "@aws-cdk/aws-kms";
 import {RetentionDays} from "@aws-cdk/aws-logs";
 import path = require('path');
@@ -21,7 +20,6 @@ import path = require('path');
 interface BenchmarkRunnerProps {
     dataBucket: Bucket;
     vpc: Vpc;
-    jdbcQueryRunnerFunction: IFunction;
     key: IKey;
 }
 
@@ -32,6 +30,8 @@ export class BenchmarkRunner extends Construct {
 
     public readonly workflow: StateMachine;
     public readonly cluster: Cluster;
+    public readonly queryRunnerSG: SecurityGroup;
+
     constructor(scope: Construct, id: string, props: BenchmarkRunnerProps) {
         super(scope, id);
 
@@ -67,13 +67,17 @@ export class BenchmarkRunner extends Construct {
             }
         }));
 
+        this.queryRunnerSG = new SecurityGroup(this, 'queryRunnerSG', {
+            vpc: props.vpc
+        });
+
         const benchmarkRunnerDefinition = new EcsRunTask(this, 'Run all queries for session', {
             cluster: this.cluster,
             launchTarget: new EcsFargateLaunchTarget({platformVersion: FargatePlatformVersion.LATEST}),
             taskDefinition: taskDefinition,
             integrationPattern: IntegrationPattern.RUN_JOB,
             subnets: {subnetType: SubnetType.PRIVATE_ISOLATED},
-            securityGroups: props.jdbcQueryRunnerFunction.connections.securityGroups,
+            securityGroups: [this.queryRunnerSG],
             assignPublicIp: false,
             containerOverrides: [{
                 containerDefinition: new ContainerDefinition(this, 'QueryRunner', {
@@ -84,7 +88,6 @@ export class BenchmarkRunner extends Construct {
                         logRetention: RetentionDays.FIVE_DAYS
                     })
                 }),
-                command: ["java", "-classpath", "lib/*:.", "com.aws.benchmarking.jdbcqueryrunner.ContainerHandler"],
                 environment: [
                     {name: 'secretId', value: JsonPath.stringAt("$.secretId")},
                     {name: 'driverClass', value: JsonPath.stringAt("$.driverClass")},

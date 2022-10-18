@@ -1,4 +1,4 @@
-FROM maven:3-openjdk-8 AS build-java
+FROM maven:3-openjdk-8-slim AS build-java
 COPY source/cdk-stack/common-functions/jdbc-query-runner/src /usr/src/app/src
 COPY source/cdk-stack/common-functions/jdbc-query-runner/pom.xml /usr/src/app
 COPY source/cdk-stack/platforms/drivers.txt /usr/src/app

@@ -1,5 +1,5 @@
 import {Aws, Construct, Duration, Environment} from "@aws-cdk/core";
-import {Code, FileSystem, DockerImageCode, DockerImageFunction, Function, Runtime} from "@aws-cdk/aws-lambda";
+import {Code, FileSystem, Function, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
 import {Policy, PolicyDocument, PolicyStatement} from "@aws-cdk/aws-iam";
@@ -19,7 +19,7 @@ interface CommonFunctionsProps {
     stackUpdateTopic: Topic,
     dataTable: Table,
     key: Key,
-    accessPoint : AccessPoint 
+    accessPoint: AccessPoint
 }
 
 
@@ -31,7 +31,6 @@ export class CommonFunctions extends Construct {
     public readonly createDestroyPlatform: Function;
     public readonly dashboardBuilder: Function;
     public readonly platformLambdaProxy: Function;
-    public readonly jdbcQueryRunner: Function;
     public readonly stepFunctionHelpers: Function;
 
     constructor(scope: Construct, id: string, props: CommonFunctionsProps) {
@@ -115,36 +114,6 @@ export class CommonFunctions extends Construct {
         this.platformLambdaProxy.addToRolePolicy(new PolicyStatement({
             actions: ["dynamodb:PutItem", "dynamodb:DeleteItem", "kms:Decrypt"],
             resources: [props.dataTable.tableArn, props.key.keyArn]
-        }));
-
-        this.jdbcQueryRunner = new DockerImageFunction(this, "jdbcQueryRunnerFn", {
-            code: DockerImageCode.fromImageAsset(commonFunctionsDirPath + "jdbc-query-runner"),
-            vpc: props.vpc,
-            timeout: Duration.minutes(15),
-            memorySize: 256
-        });
-        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
-            actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
-            resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn, "arn:aws:s3:::redshift-downloads", "arn:aws:s3:::redshift-downloads/*"]
-        }));
-        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
-            actions: ["cloudwatch:PutMetricData"],
-            resources: ["*"],
-            conditions: {
-                "StringEquals": {
-                    "cloudwatch:namespace": "Benchmarking"
-                }
-            }
-        }));
-        // Allow lambda function to read secrets from platform stacks
-        this.jdbcQueryRunner.addToRolePolicy(new PolicyStatement({
-            actions: ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"],
-            resources: ["arn:" + Aws.PARTITION + ":secretsmanager:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":secret:*"],
-            conditions: {
-                "StringEquals": {
-                    "secretsmanager:ResourceTag/ManagedBy": "BenchmarkingStack"
-                }
-            }
         }));
 
         this.stepFunctionHelpers = new Function(this, "helpers", {
