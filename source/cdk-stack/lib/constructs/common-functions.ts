@@ -1,9 +1,10 @@
 import {Aws, Construct, Duration, Environment} from "@aws-cdk/core";
-import {Code, DockerImageCode, DockerImageFunction, Function, Runtime} from "@aws-cdk/aws-lambda";
+import {Code, FileSystem, DockerImageCode, DockerImageFunction, Function, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
 import {Policy, PolicyDocument, PolicyStatement} from "@aws-cdk/aws-iam";
 import {Topic} from "@aws-cdk/aws-sns";
+import {AccessPoint} from '@aws-cdk/aws-efs';
 import {Table} from "@aws-cdk/aws-dynamodb";
 import {LambdaSubscription} from "@aws-cdk/aws-sns-subscriptions";
 import * as fs from "fs";
@@ -17,7 +18,8 @@ interface CommonFunctionsProps {
     vpc: Vpc;
     stackUpdateTopic: Topic,
     dataTable: Table,
-    key: Key
+    key: Key,
+    accessPoint : AccessPoint 
 }
 
 
@@ -87,7 +89,9 @@ export class CommonFunctions extends Construct {
                 SummaryDashboardName: "BenchmarkingExperimentsSummary",
                 ExperimentDashboardPrefix: "BenchmarkingExperiment-"
             },
-            timeout: Duration.minutes(1)
+            timeout: Duration.minutes(1),
+            vpc: props.vpc,
+            filesystem: FileSystem.fromEfsAccessPoint(props.accessPoint, '/mnt/grafana'),
         });
         this.dashboardBuilder.addToRolePolicy(new PolicyStatement({
             actions: ["cloudwatch:GetDashboard", "cloudwatch:PutDashboard"],

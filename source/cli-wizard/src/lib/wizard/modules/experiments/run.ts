@@ -48,11 +48,15 @@ export class ExperimentModule extends CLIModule {
         };
         await this.askQuestions(_questions).then(async (answers) => {
             let experiment = this.configuration.experiments[answers.experimentName].settings;
+            //console.log(JSON.stringify(experiment));
+            //console.log(JSON.stringify(answers));
             experiment = JSON.parse(JSON.stringify(experiment)); // Make a copy of the object and operate on it further
             experiment.workloadConfig.settings.ddl = experiment.workloadConfig.settings.ddl[experiment.platformConfig.platformType];
             experiment.workloadConfig.settings.queries = experiment.workloadConfig.settings.queries[experiment.platformConfig.platformType];
             let stepFunctionArn;
             let dataBucketName;
+            let grafanaDashBoardURL;
+            let grafanaAdminPasswordArn;
             try {
                 const commandOutput = await this.cloudFormationClient.send(new DescribeStacksCommand({StackName: "BenchmarkingStack"}));
                 if (commandOutput.Stacks && commandOutput.Stacks[0].Outputs) {
@@ -63,8 +67,14 @@ export class ExperimentModule extends CLIModule {
                         if (commandOutput.Stacks[0].Outputs[i].OutputKey == "DataBucketName") {
                             dataBucketName = commandOutput.Stacks[0].Outputs[i].OutputValue;
                         }
+                        if (commandOutput.Stacks[0].Outputs[i].OutputKey == "GrafanaDashBoardURL") {
+                            grafanaDashBoardURL = commandOutput.Stacks[0].Outputs[i].OutputValue;
+                        }
+                        if (commandOutput.Stacks[0].Outputs[i].OutputKey == "GrafanaAdminPasswordArn") {
+                            grafanaAdminPasswordArn = commandOutput.Stacks[0].Outputs[i].OutputValue;
+                        }
                     }
-                }
+                } 
             } catch (e: any) {
                 if (e.name == "ValidationError") {
                     // Stack doesn't exists
@@ -80,14 +90,24 @@ export class ExperimentModule extends CLIModule {
                 });
                 const output = await this.sfn.send(startExecutionCmd);
                 const region = process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION;
+                const line = '-'.repeat(process.stdout.columns);
+                console.log(line);
+                console.log("EXECUTION"); 
                 console.log("Experiment run started at - " + output.startDate + " in region - " + region);
                 const executionUrl = "https://" + region + ".console.aws.amazon.com/states/home?region=" + region + "#/executions/details/" + output.executionArn;
-                const dashboardUrl = "https://" + region + ".console.aws.amazon.com/cloudwatch/home?region=" + region + "#dashboards:name=BenchmarkingExperiment-"
-                    + experiment.workloadConfig.settings.name.replace("/", "_") + "-"
-                    + experiment.platformConfig.settings.name;
-                console.log("Visit this link to see execution: " + executionUrl);
-                console.log("Visit this link to see dashboard: " + dashboardUrl);
-                await open(executionUrl);
+                console.log("Visit this link to see the execution: " + executionUrl);
+                const dashboardUrl = "https://" + grafanaDashBoardURL + "/d/barometer1/Barometer?orgId=1&from=now-1h&to=now&var-STACK_NAME=" + experiment.platformConfig.platformType +  "-" + experiment.platformConfig.name;//"https://" + region + ".console.aws.amazon.com/cloudwatch/home?region=" + region + "#dashboards:name=BenchmarkingExperiment-"
+                const adminPasswordUrl="https://" + region + ".console.aws.amazon.com/secretsmanager/secret?region=" + region + "&name=" + grafanaAdminPasswordArn; 
+                console.log(line);
+                console.log("VIZUALISATION");
+                console.log("When the execution is finished : ");
+                console.log("1) Open the AWS secret manager : " + adminPasswordUrl);
+                console.log("2) Press the button 'Retrieve secret value' to copy the grafana admin password");
+                console.log("3) Login to the grafana dashboard with the username 'admin' and the password copied previously : " + dashboardUrl);
+                console.log("Notes : Grafana is using a private SSL certificate. So the communication is encrypted but a warning will be raised by the web browser as the certificate cannot be valided. To pass this warning on Firefox, click 'Advanced...' then click on 'Accept the risk and continue'. On Edge, click 'Advanced' and open the dasboard with the URL display on the bottom of the screen. Google will forbid to open Grafana and thus can't be used to visualize the results.");
+                console.log(line);
+                //console.log("Visit this link to see the dashboard: " + dashboardUrl);
+                //await open(executionUrl);
             } else this.printInfo();
 
             return answers;
