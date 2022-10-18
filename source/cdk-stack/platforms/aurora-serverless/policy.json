@@ -26,9 +26,13 @@
         "ec2:CreateTags",
         "rds:CreateDBCluster",
         "rds:DescribeDBClusters",
+        "rds:DeleteDBCluster",
         "rds:CreateDBSubnetGroup",
         "rds:DescribeDBSubnetGroups",
         "rds:DeleteDBSubnetGroup",
+        "rds:CreateDBInstance",
+        "rds:DescribeDBInstances",
+        "rds:DeleteDBInstance",
         "rds:AddTagsToResource",
         "rds:ListTagsForResource"
       ],
@@ -36,6 +40,7 @@
         "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:AdminUserSecret-*",
         "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/*",
         "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:aurora-serverless-*",
+        "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:db:aurora-serverless-*",
         "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:subgrp:aurora-serverless-*"
       ]
     },

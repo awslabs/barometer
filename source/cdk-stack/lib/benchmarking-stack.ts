@@ -17,9 +17,8 @@ import {Topic} from "@aws-cdk/aws-sns";
 import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
 import {BucketToBucketDataImporter} from "./constructs/bucket-to-bucket-data-importer";
 import {GenericDataCopier} from "./constructs/generic-data-copier";
-import {DataImporter} from "./constructs/data-importer";
 //import * as efs from '@aws-cdk/aws-efs';
-import {AccessPoint,LifecyclePolicy,PerformanceMode,ThroughputMode,FileSystem} from '@aws-cdk/aws-efs';
+import {AccessPoint, FileSystem, LifecyclePolicy, PerformanceMode, ThroughputMode} from '@aws-cdk/aws-efs';
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
@@ -34,15 +33,15 @@ export class BenchmarkingStack extends cdk.Stack {
             maxAzs: 2,
             natGateways: 0,
             subnetConfiguration: [
-            {
-                name: "Public",
-                subnetType: SubnetType.PUBLIC
-
-            },
-            {
-                name: "Private",
-                subnetType: SubnetType.PRIVATE_ISOLATED
-            }],
+                {
+                    name: "Public",
+                    subnetType: SubnetType.PUBLIC
+                },
+                {
+                    name: "Private",
+                    subnetType: SubnetType.PRIVATE_ISOLATED
+                }
+            ],
             gatewayEndpoints: {
                 "S3": {
                     service: GatewayVpcEndpointAwsService.S3,
@@ -112,13 +111,13 @@ export class BenchmarkingStack extends cdk.Stack {
             fileSystem: fileSystem,
             path: '/var/lib/grafana',
             posixUser: {
-            gid: '1000',
-            uid: '1000'
+                gid: '1000',
+                uid: '1000'
             },
             createAcl: {
-            ownerGid: '1000',
-            ownerUid: '1000',
-            permissions: '755'
+                ownerGid: '1000',
+                ownerUid: '1000',
+                permissions: '755'
             }
         });
 
@@ -182,9 +181,9 @@ export class BenchmarkingStack extends cdk.Stack {
 
         let visualization = new Visualization(this, 'Visualization', {
             vpc: vpc,
-            cluster : benchmarkRunner.cluster,
+            cluster: benchmarkRunner.cluster,
             filesystem: fileSystem,
-            accesspoint : accessPoint,
+            accesspoint: accessPoint,
         });
 
         fileSystem.connections.allowDefaultPortFrom(visualization.service);
