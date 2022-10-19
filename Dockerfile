@@ -3,7 +3,7 @@ COPY source/cdk-stack/common-functions/jdbc-query-runner/src /usr/src/app/src
 COPY source/cdk-stack/common-functions/jdbc-query-runner/pom.xml /usr/src/app
 COPY source/cdk-stack/platforms/drivers.txt /usr/src/app
 RUN mvn -f /usr/src/app/pom.xml clean package && \
- wget -P /usr/src/app/target/dependency/ -i /usr/src/app/drivers.txt
+    cat /usr/src/app/drivers.txt | while read f; do curl -O --output-dir /usr/src/app/target/dependency/ "${f}"; done;
 
 FROM node:17-alpine AS build-cdk
 COPY source/cdk-stack /build/cdk-stack

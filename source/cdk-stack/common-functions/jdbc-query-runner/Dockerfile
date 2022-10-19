@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-slim
+FROM --platform=linux/amd64 openjdk:8-jre-slim
 COPY target/classes /usr/src/app
 COPY target/dependency/* /usr/src/app/lib/
 WORKDIR /usr/src/app

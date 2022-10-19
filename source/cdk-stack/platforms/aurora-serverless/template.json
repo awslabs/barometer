@@ -145,6 +145,7 @@
         "Engine": {
           "Ref": "engine"
         },
+        "DatabaseName": "dev",
         "DBSubnetGroupName": {
           "Ref": "AuroraSubnetGroup"
         },

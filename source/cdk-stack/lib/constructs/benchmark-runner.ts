@@ -5,10 +5,10 @@ import {Cluster} from "@aws-cdk/aws-ecs/lib/cluster";
 import {SecurityGroup, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
 import {
     ContainerDefinition,
-    ContainerImage,
+    ContainerImage, CpuArchitecture,
     FargatePlatformVersion,
     FargateTaskDefinition,
-    LogDriver
+    LogDriver, OperatingSystemFamily
 } from "@aws-cdk/aws-ecs";
 import {PolicyStatement} from "@aws-cdk/aws-iam";
 import {Bucket} from "@aws-cdk/aws-s3";
@@ -42,7 +42,14 @@ export class BenchmarkRunner extends Construct {
             vpc: props.vpc
         });
 
-        const taskDefinition = new FargateTaskDefinition(this, 'QueryRunnerTask', {cpu: 512, memoryLimitMiB: 1024});
+        const taskDefinition = new FargateTaskDefinition(this, 'QueryRunnerTask', {
+            cpu: 512,
+            memoryLimitMiB: 1024,
+            runtimePlatform: {
+                cpuArchitecture: CpuArchitecture.X86_64,
+                operatingSystemFamily: OperatingSystemFamily.LINUX
+            }
+        });
         taskDefinition.addToTaskRolePolicy(new PolicyStatement({
             actions: ["s3:GetObject", "s3:ListBucket", "kms:Decrypt"],
             resources: [props.dataBucket.bucketArn, props.dataBucket.bucketArn + "/*", props.key.keyArn, "arn:aws:s3:::redshift-downloads", "arn:aws:s3:::redshift-downloads/*"]
