@@ -2,7 +2,7 @@ import {Aws, Construct} from "@aws-cdk/core";
 import {IntegrationPattern, JsonPath, StateMachine} from "@aws-cdk/aws-stepfunctions";
 import {EcsFargateLaunchTarget, EcsRunTask} from "@aws-cdk/aws-stepfunctions-tasks";
 import {Cluster} from "@aws-cdk/aws-ecs/lib/cluster";
-import {SecurityGroup, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
+import {Port, SecurityGroup, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
 import {
     ContainerDefinition,
     ContainerImage, CpuArchitecture,
@@ -77,6 +77,7 @@ export class BenchmarkRunner extends Construct {
         this.queryRunnerSG = new SecurityGroup(this, 'queryRunnerSG', {
             vpc: props.vpc
         });
+        this.queryRunnerSG.addIngressRule(this.queryRunnerSG, Port.allTcp(), "Allow intranet self traffic routing")
 
         const benchmarkRunnerDefinition = new EcsRunTask(this, 'Run all queries for session', {
             cluster: this.cluster,

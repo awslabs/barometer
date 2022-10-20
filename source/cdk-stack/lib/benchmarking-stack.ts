@@ -189,7 +189,11 @@ export class BenchmarkingStack extends cdk.Stack {
 
         const experimentRunner = new ExperimentRunner(this, 'ExperimentRunner', {
             commonFunctions: commonFunctions,
-            genericDataCopier: new GenericDataCopier(this, 'GenericDataCopier', {dataBucket: dataBucket}),
+            genericDataCopier: new GenericDataCopier(this, 'GenericDataCopier', {
+                dataBucket: dataBucket,
+                vpc: vpc,
+                queryRunnerSG: benchmarkRunner.queryRunnerSG
+            }),
             benchmarkRunnerWorkflow: benchmarkRunner.workflow,
             dataImporterWorkflow: dataImporter.workflow,
             dataTable: dataTable,
