@@ -1,4 +1,4 @@
-https://repo1.maven.org/maven2/com/amazonaws/secretsmanager/aws-secretsmanager-jdbc/1.0.7/aws-secretsmanager-jdbc-1.0.7.jar
+https://repo1.maven.org/maven2/com/amazonaws/secretsmanager/aws-secretsmanager-jdbc/1.0.9/aws-secretsmanager-jdbc-1.0.9.jar
 https://repo1.maven.org/maven2/com/amazonaws/secretsmanager/aws-secretsmanager-caching-java/1.0.2/aws-secretsmanager-caching-java-1.0.2.jar
 https://s3.amazonaws.com/athena-downloads/drivers/JDBC/SimbaAthenaJDBC-2.0.27.1001/AthenaJDBC42_2.0.27.1001.jar
 https://repo1.maven.org/maven2/com/amazon/redshift/redshift-jdbc42/2.1.0.9/redshift-jdbc42-2.1.0.9.jar
