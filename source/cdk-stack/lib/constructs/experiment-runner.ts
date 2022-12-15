@@ -182,7 +182,6 @@ export class ExperimentRunner extends Construct {
                 glueJobName: props.genericDataCopier.job.jobName,
                 arguments: TaskInput.fromObject({
                     "--SECRET_ID.$": "$.platformLambdaOutput.secretIds[0]",
-                    "--DRIVER_CLASS.$": "$.platformLambdaOutput.driverClass",
                     "--TABLE_DATA_PATH.$": "$.tableDataPath"
                 }),
                 timeout: Duration.hours(1),

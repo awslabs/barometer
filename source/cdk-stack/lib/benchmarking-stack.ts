@@ -192,7 +192,8 @@ export class BenchmarkingStack extends cdk.Stack {
             genericDataCopier: new GenericDataCopier(this, 'GenericDataCopier', {
                 dataBucket: dataBucket,
                 vpc: vpc,
-                queryRunnerSG: benchmarkRunner.queryRunnerSG
+                queryRunnerSG: benchmarkRunner.queryRunnerSG,
+                key: key
             }),
             benchmarkRunnerWorkflow: benchmarkRunner.workflow,
             dataImporterWorkflow: dataImporter.workflow,

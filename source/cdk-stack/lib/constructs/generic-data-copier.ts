@@ -1,15 +1,16 @@
 import {Aws, Construct} from "@aws-cdk/core";
-import {Code, Connection, ConnectionType, GlueVersion, Job, JobExecutable} from "@aws-cdk/aws-glue";
+import {Code, Connection, ConnectionType, GlueVersion, Job, JobExecutable, PythonVersion} from "@aws-cdk/aws-glue";
 import {IBucket} from "@aws-cdk/aws-s3";
 import {PolicyStatement} from "@aws-cdk/aws-iam";
 import {IVpc, SecurityGroup} from "@aws-cdk/aws-ec2";
 import path = require('path');
-import fs = require('fs');
+import {IKey} from "@aws-cdk/aws-kms";
 
 interface GenericDataCopierProps {
     dataBucket: IBucket
     vpc: IVpc
     queryRunnerSG: SecurityGroup
+    key: IKey
 }
 
 export class GenericDataCopier extends Construct {
@@ -22,12 +23,6 @@ export class GenericDataCopier extends Construct {
         // Path to cdk root folder
         const cdkRootPath: string = path.join(__dirname, '../../');
 
-        const extraJars: Array<Code> = []
-        fs.readFileSync(cdkRootPath + "platforms/drivers.txt", "utf-8").split(/\r?\n/).forEach(line => {
-            if (line)
-                extraJars.push(Code.fromBucket(props.dataBucket, "libs/" + line.split('/').pop()));
-        });
-
         this.job = new Job(this, 'Job', {
             maxConcurrentRuns: 5,
             connections: [new Connection(this, 'connection', {
@@ -36,11 +31,10 @@ export class GenericDataCopier extends Construct {
                 subnet: props.vpc.isolatedSubnets[0],
                 securityGroups: [props.queryRunnerSG]
             })],
-            executable: JobExecutable.scalaEtl({
-                className: "GenericDataCopyJob",
+            executable: JobExecutable.pythonEtl({
+                pythonVersion: PythonVersion.THREE,
                 glueVersion: GlueVersion.V3_0,
-                script: Code.fromAsset(cdkRootPath + "GenericDataCopyJob.scala"),
-                extraJars: extraJars
+                script: Code.fromAsset(cdkRootPath + "GenericDataCopyJob.py")
             })
         });
         this.job.grantPrincipal.addToPrincipalPolicy(new PolicyStatement({
@@ -52,5 +46,6 @@ export class GenericDataCopier extends Construct {
                 }
             }
         }));
+        props.key.grantDecrypt(this.job);
     }
 }
