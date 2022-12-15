@@ -30,6 +30,11 @@ public class ContainerHandler {
         String extension = Objects.requireNonNull(System.getenv("extension"), "extension environment variable not set.");
         String driverClass = Objects.requireNonNull(System.getenv("driverClass"), "driverClass environment variable not set.");
 
+        String workloadConfigName = Objects.requireNonNull(System.getenv("workloadConfigName"), "workloadConfigName environment variable not set.");
+        String platformConfigName = Objects.requireNonNull(System.getenv("platformConfigName"), "platformConfigName environment variable not set.");
+        String platformConfigPlatformType = Objects.requireNonNull(System.getenv("platformConfigPlatformType"), "platformConfigPlatformType environment variable not set.");
+        String experimentName = Objects.requireNonNull(System.getenv("experimentName"), "experimentName environment variable not set.");
+        
         // Fetch list of .sql files from S3 bucket
         URI uri = new URI(basePath);
         String bucketName = uri.getHost();
@@ -49,6 +54,10 @@ public class ContainerHandler {
                             event.put("driverClass", driverClass);
                             event.put("sessionId", sessionId);
                             event.put("stackName", stackName);
+                            event.put("workloadConfigName", workloadConfigName);
+                            event.put("platformConfigName", platformConfigName);
+                            event.put("platformConfigPlatformType", platformConfigPlatformType);
+                            event.put("experimentName", experimentName);
                             event.put("scriptPath", "s3://" + objectSummary.getBucketName() + "/" + objectSummary.getKey());
                             handler.handleRequest(event, null);
                         }

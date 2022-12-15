@@ -42,20 +42,28 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
 
         if (context != null)
             logger = context.getLogger();
-        String connectionTest = event.get("connectionTest");
-        String secretId = event.get("secretId");
-        String scriptPath = event.get("scriptPath");
-        String query = event.get("query");
-        String stackName = event.get("stackName");
-        String sessionId = event.get("sessionId");
+            String connectionTest = event.get("connectionTest");
+            String secretId = event.get("secretId");
+            String scriptPath = event.get("scriptPath");
+            String query = event.get("query");
+            String stackName = event.get("stackName");
+            String sessionId = event.get("sessionId");
         String driverClass = event.get("driverClass");
+            String workloadConfigName = event.get("workloadConfigName");
+            String platformConfigName = event.get("platformConfigName");
+            String platformConfigPlatformType = event.get("platformConfigPlatformType");
+            String experimentName = event.get("experimentName");
 
-        JdbcLambdaResponse response = new JdbcLambdaResponse();
-        response.setScriptPath(scriptPath);
-        response.setSecretId(secretId);
-        response.setSessionId(sessionId);
-        response.setStackName(stackName);
-        response.setMetrics(new HashMap<>());
+            JdbcLambdaResponse response = new JdbcLambdaResponse();
+            response.setScriptPath(scriptPath);
+            response.setSecretId(secretId);
+            response.setSessionId(sessionId);
+            response.setStackName(stackName);
+            response.setWorkloadConfigName(workloadConfigName);
+            response.setPlatformConfigName(platformConfigName);
+            response.setPlatformConfigPlatformType(platformConfigPlatformType);
+            response.setExperimentName(experimentName);
+            response.setMetrics(new HashMap<>());
 
         try {
             Class.forName(driverClass);
@@ -121,6 +129,10 @@ public class Handler implements RequestHandler<Map<String, String>, JdbcLambdaRe
         dimensions.add(new Dimension().withName("SESSION_ID").withValue(response.getSessionId()));
         dimensions.add(new Dimension().withName("SECRET_ID").withValue(response.getSecretId()));
         dimensions.add(new Dimension().withName("STACK_NAME").withValue(response.getStackName()));
+        dimensions.add(new Dimension().withName("WORKLOAD_CONFIG_NAME").withValue(response.getWorkloadConfigName()));
+        dimensions.add(new Dimension().withName("PLATFORM_CONFIG_NAME").withValue(response.getPlatformConfigName()));
+        dimensions.add(new Dimension().withName("PLATFORM_CONFIG_PLATFORM_TYPE").withValue(response.getPlatformConfigPlatformType()));
+        dimensions.add(new Dimension().withName("EXPERIMENT_NAME").withValue(response.getExperimentName()));
         String scriptPath = response.getScriptPath();
         dimensions.add(new Dimension().withName("SCRIPT_PATH").withValue(scriptPath == null ? "DIRECT_QUERY" : scriptPath));
 

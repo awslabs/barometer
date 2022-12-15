@@ -98,7 +98,7 @@ export class ExperimentModule extends CLIModule {
             settings.concurrentSessionCount = answers.concurrentSessionCount;
             settings.executionMode = ExecutionMode.SEQUENTIAL;
             settings.keepInfrastructure = answers.keepInfrastructure;
-
+            settings.experimentName=answers.name;
             const entry = new ExperimentConfiguration();
             entry.name = answers.name;
             entry.platformType = settings.platformConfig.platformType;
