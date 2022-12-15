@@ -22,7 +22,7 @@ export class ExperimentSettings implements IExperimentSettings {
     concurrentSessionCount!: number;
     executionMode!: ExecutionMode;
     keepInfrastructure!: boolean;
-
+    experimentName!: string;
     workloadConfig!: IWorkloadConfiguration;
     platformConfig!: IPlatformConfiguration;
 }

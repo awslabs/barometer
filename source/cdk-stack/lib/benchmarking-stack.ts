@@ -173,14 +173,9 @@ export class BenchmarkingStack extends cdk.Stack {
             key: key
         });
 
-        let visualization = new Visualization(this, 'Visualization', { 
-            vpc: vpc,
-            cluster : benchmarkRunner.cluster,
-            filesystem: fileSystem,
-            accesspoint : accessPoint,
-        });
-
-        fileSystem.connections.allowDefaultPortFrom(visualization.service);
+        let visualization = new Visualization(this, 'Visualization', {accountid: process.env.CDK_DEFAULT_ACCOUNT});
+        let aaa = process.env.CDK_DEFAULT_ACCOUNT
+        //fileSystem.connections.allowDefaultPortFrom(visualization.service);
 
         const dataImporter = new DataImporter(this, 'DataImporter', {dataBucket: dataBucket,manifestBucket:manifestBucket, encryptionKey: key});
         const experimentRunner = new ExperimentRunner(this, 'ExperimentRunner', {
@@ -233,14 +228,18 @@ export class BenchmarkingStack extends cdk.Stack {
         });
         new CfnOutput(this, 'CostExplorer', {
             value: "https://console.aws.amazon.com/cost-management/home?#/custom?groupBy=Service&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&excludeCategorizedResources=false&excludeForecast=false&timeRangeOption=Custom&granularity=Daily&reportName=&reportType=CostUsage&isTemplate=true&startDate=" + today + "&endDate=" + today + "&filter=%5B%7B%22dimension%22:%22TagKeyValue%22,%22values%22:null,%22include%22:true,%22children%22:%5B%7B%22dimension%22:%22aws:cloudformation:stack-name%22,%22values%22:%5B%22BenchmarkingStack%22%5D,%22include%22:true,%22children%22:null%7D%5D%7D,%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack"
-        });
-        new CfnOutput(this, 'GrafanaDashBoardURL', {
-            value: visualization.applicationloadbalancer.loadBalancerDnsName,
-            exportName: "Benchmarking::Exec::GrafanaDashBoardURL"
         }); 
-        new CfnOutput(this, 'GrafanaAdminPasswordArn', {
-            value: visualization.grafanaadminpasswordarn,//.secretFullArn!
-            exportName: "Benchmarking::Exec::GrafanaAdminPasswordArn"
-        });
+        new CfnOutput(this, 'MetricsBucketName', {
+            value: visualization.metricsbucket,
+            exportName: "Benchmarking::MetricsBucketName"
+        }); 
+         new CfnOutput(this, 'QuickSightDashboardID', {
+            value: visualization.dashboardid,
+            exportName: "Benchmarking::QuickSightDashboardID"
+        }); 
+        // new CfnOutput(this, 'GrafanaAdminPasswordArn', {
+        //     value: visualization.grafanaadminpasswordarn,//.secretFullArn!
+        //     exportName: "Benchmarking::Exec::GrafanaAdminPasswordArn"
+        // });
     }
 }

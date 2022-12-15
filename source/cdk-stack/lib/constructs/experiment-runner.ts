@@ -72,7 +72,11 @@ export class ExperimentRunner extends Construct {
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "secretId.$": "$$.Map.Item.Value.secretId",
                     "sessionIds.$": "$$.Map.Item.Value.sessionIds",
-                    "basePath.$": "$.workloadConfig.settings.queries.path"
+                    "basePath.$": "$.workloadConfig.settings.queries.path",
+                    "workloadConfigName.$": "$.workloadConfig.name",
+                    "platformConfigName.$": "$.platformConfig.name",
+                    "platformConfigPlatformType.$": "$.platformConfig.platformType",
+                    "experimentName.$": "$.experimentName",
                 }
             }).iterator(new StepFunctionsStartExecution(this, 'Run Benchmarking', {
                 stateMachine: props.benchmarkRunnerWorkflow,
@@ -82,7 +86,11 @@ export class ExperimentRunner extends Construct {
                     "sessionIds.$": "$.sessionIds",
                     "stackName.$": "$.stackName",
                     "basePath.$": "$.basePath",
-                    "extension": ".sql"
+                    "extension": ".sql",
+                    "workloadConfigName.$": "$.workloadConfigName",
+                    "platformConfigName.$": "$.platformConfigName",
+                    "platformConfigPlatformType.$": "$.platformConfigPlatformType",
+                    "experimentName.$": "$.experimentName"
                 }),
                 resultPath: JsonPath.DISCARD
             }))).next(new LambdaInvoke(this, 'Prepare Dashboards', {
@@ -235,7 +243,11 @@ export class ExperimentRunner extends Construct {
                     "sessionIds": ["DDL"],
                     "stackName.$": "$.platformLambdaOutput.stackName",
                     "basePath.$": "$.workloadConfig.settings.ddl.path",
-                    "extension": ".sql"
+                    "extension": ".sql",
+                    "workloadConfigName.$": "$.workloadConfig.name",
+                    "platformConfigName.$": "$.platformConfig.name",
+                    "platformConfigPlatformType.$": "$.platformConfig.platformType",
+                    "experimentName.$": "$.experimentName"
                 }),
                 resultPath: JsonPath.DISCARD
             })).next(new Pass(this, 'Prepare unique copy key', {

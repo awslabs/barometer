@@ -8,6 +8,11 @@ public class JdbcLambdaResponse {
     private String query;
     private String sessionId;
     private String stackName;
+    private String workloadconfigname;
+    private String platformconfigname;
+    private String platformconfigplatformtype;
+    private String experimentname;
+    
     private Map<String, Double> metrics;
 
     public String getSecretId() {
@@ -21,11 +26,39 @@ public class JdbcLambdaResponse {
     public String getScriptPath() {
         return scriptPath;
     }
-
     public void setScriptPath(String scriptPath) {
         this.scriptPath = scriptPath;
     }
+ 
+    public String getWorkloadConfigName() {
+        return workloadconfigname;
+    }
+    public void setWorkloadConfigName(String workloadConfigName) {
+        this.workloadconfigname = workloadConfigName;
+    }
+    
+    public String getPlatformConfigName() {
+        return platformconfigname;
+    }
+    public void setPlatformConfigName(String platformConfigName) {
+        this.platformconfigname = platformConfigName;
+    }
+    
+    public String getPlatformConfigPlatformType() {
+        return platformconfigplatformtype;
+    }
+    public void setPlatformConfigPlatformType(String platformConfigPlatformType) {
+        this.platformconfigplatformtype = platformConfigPlatformType;
+    }
+    
+    public String getExperimentName() {
+        return experimentname;
+    }
+    public void setExperimentName(String experimentName) {
+        this.experimentname = experimentName;
+    }
 
+     
     public Map<String, Double> getMetrics() {
         return metrics;
     }

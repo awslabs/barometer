@@ -90,7 +90,11 @@ export class BenchmarkRunner extends Construct {
                     {name: 'sessionIds', value: JsonPath.jsonToString(JsonPath.stringAt("$.sessionIds"))},
                     {name: 'stackName', value: JsonPath.stringAt("$.stackName")},
                     {name: 'basePath', value: JsonPath.stringAt("$.basePath")},
-                    {name: 'extension', value: JsonPath.stringAt("$.extension")}
+                    {name: 'extension', value: JsonPath.stringAt("$.extension")},
+                    {name: 'workloadConfigName', value: JsonPath.stringAt("$.workloadConfigName")},
+                    {name: 'platformConfigName', value: JsonPath.stringAt("$.platformConfigName")},
+                    {name: 'platformConfigPlatformType', value: JsonPath.stringAt("$.platformConfigPlatformType")},
+                    {name: 'experimentName', value: JsonPath.stringAt("$.experimentName")}
                 ]
             }],
             resultPath: JsonPath.DISCARD
