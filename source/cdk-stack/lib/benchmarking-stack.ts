@@ -23,8 +23,13 @@ import {AccessPoint, FileSystem, LifecyclePolicy, PerformanceMode, ThroughputMod
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
  */
+
+interface BenchmarkingStackProps extends cdk.StackProps {
+  quicksightadminregion: string;
+} 
+ 
 export class BenchmarkingStack extends cdk.Stack {
-    constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    constructor(scope: cdk.Construct, id: string, props: BenchmarkingStackProps) {
         super(scope, id, props);
         // Define new VPC for query runner lambda
         let vpc = new Vpc(this, 'BenchmarkingVPC', {
@@ -155,7 +160,8 @@ export class BenchmarkingStack extends cdk.Stack {
             encryption: TableEncryption.CUSTOMER_MANAGED,
             encryptionKey: key,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            removalPolicy: RemovalPolicy.DESTROY
+            removalPolicy: RemovalPolicy.DESTROY,
+            tableName: "BenchmarkingStack-DataTable"
         });
 
         let commonFunctions = new CommonFunctions(this, 'CommonFunctions', {
@@ -179,8 +185,8 @@ export class BenchmarkingStack extends cdk.Stack {
             encryptionKey: key
         });
 
-        let visualization = new Visualization(this, 'Visualization', {accountid: process.env.CDK_DEFAULT_ACCOUNT});
-        let aaa = process.env.CDK_DEFAULT_ACCOUNT
+        let visualization = new Visualization(this, 'Visualization', {key: key,quicksightAdminRegion: props.quicksightadminregion});
+        //let aaa = process.env.CDK_DEFAULT_ACCOUNT
         //fileSystem.connections.allowDefaultPortFrom(visualization.service);
 
         const experimentRunner = new ExperimentRunner(this, 'ExperimentRunner', {

@@ -138,10 +138,12 @@ export class ExperimentModule extends CLIModule {
                     console.log("VIZUALISATION");
                     console.log("When the execution is finished : ");
                     console.log("1) Set the query result location of Athena if it is not yet already done. For support, see the paragraph 'Specifying a query result location using the Athena console' from the online documentation : https://docs.aws.amazon.com/athena/latest/ug/querying.html#query-results-specify-location-console");
-                    console.log("2) Create a QuickSight user account (see the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/signing-in.html");
-                    console.log("3) Add your QuickSight user account to the barometer QuickSight group (https://" + process.env.CDK_DEFAULT_REGION + ".quicksight.aws.amazon.com/sn/console/groups). For support, see the paragraph 'To add a user to a group' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/creating-quicksight-groups.html");
-                    console.log("4) Grant access to the S3 bucket named " + metricsBucketName  + " for QuickSight (https://" + process.env.CDK_DEFAULT_REGION + ".quicksight.aws.amazon.com/sn/console/resources). For support, see the paragraph 'To authorize Amazon QuickSight to access your Amazon S3 bucket' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/troubleshoot-connect-S3.html");
-                    console.log("5) Open the QuickSight report for the barometer : https://eu-west-1.quicksight.aws.amazon.com/sn/dashboards/" + quickSightDashboardID);                  
+                    console.log("2) Activate the user-defined tags 'PlatformStackName' & 'ManagedBy' in the billing console. For support, see the online documentation : https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html");
+                    console.log("3) Create a QuickSight user account (see the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/signing-in.html");
+                    console.log("4) Add your QuickSight user account to the barometer QuickSight group (https://" + region + ".quicksight.aws.amazon.com/sn/console/groups). For support, see the paragraph 'To add a user to a group' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/creating-quicksight-groups.html");
+                    console.log("5) Grant access to the S3 bucket named " + metricsBucketName  + " for QuickSight (https://" + region + ".quicksight.aws.amazon.com/sn/console/resources). For support, see the paragraph 'To authorize Amazon QuickSight to access your Amazon S3 bucket' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/troubleshoot-connect-S3.html");
+                    console.log("6) Open the QuickSight report for the barometer : https://" + region + ".quicksight.aws.amazon.com/sn/dashboards/" + quickSightDashboardID);    
+                    console.log("Note : up to 24 hours are needed to get the daily cost.");    
                     console.log(line);
                             //await open(executionUrl);
                 } else this.printInfo();

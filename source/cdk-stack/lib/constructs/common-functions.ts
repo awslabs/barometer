@@ -1,12 +1,14 @@
 import {Aws, Construct, Duration, Environment} from "@aws-cdk/core";
-import {Code, FileSystem, Function, Runtime} from "@aws-cdk/aws-lambda";
+import {Code, FileSystem,  IFunction,Function, Runtime} from "@aws-cdk/aws-lambda";
 import {Bucket} from "@aws-cdk/aws-s3";
 import {Vpc} from "@aws-cdk/aws-ec2";
-import {Policy, PolicyDocument, PolicyStatement} from "@aws-cdk/aws-iam";
+import {Policy, PolicyDocument, PolicyStatement,ManagedPolicy} from "@aws-cdk/aws-iam";
+import * as events from '@aws-cdk/aws-events';
+import * as eventstargets from "@aws-cdk/aws-events-targets"; 
 import {Topic} from "@aws-cdk/aws-sns";
 import {AccessPoint} from '@aws-cdk/aws-efs';
 import {Table} from "@aws-cdk/aws-dynamodb";
-import {LambdaSubscription} from "@aws-cdk/aws-sns-subscriptions";
+import {LambdaSubscription} from "@aws-cdk/aws-sns-subscriptions";  
 import * as fs from "fs";
 import {Key} from "@aws-cdk/aws-kms";
 import {Utils} from "../utils";
@@ -22,7 +24,6 @@ interface CommonFunctionsProps {
     accessPoint: AccessPoint
 }
 
-
 /**
  * Defines all common lambda functions
  */
@@ -32,7 +33,7 @@ export class CommonFunctions extends Construct {
     public readonly dashboardBuilder: Function;
     public readonly platformLambdaProxy: Function;
     public readonly stepFunctionHelpers: Function;
-
+   // public readonly costExplorerIntegration: Function;
     constructor(scope: Construct, id: string, props: CommonFunctionsProps) {
         super(scope, id);
         // Path to common-functions root folder
@@ -80,23 +81,27 @@ export class CommonFunctions extends Construct {
         // Subscribe to stack create/delete progress events
         props.stackUpdateTopic.addSubscription(new LambdaSubscription(this.createDestroyPlatform));
 
-        this.dashboardBuilder = new Function(this, "dashboardBuilder", {
-            code: Code.fromAsset(commonFunctionsDirPath + "dashboard-builder"),
-            handler: "app.lambda_handler",
-            runtime: Runtime.PYTHON_3_8,
-            environment: {
-                SummaryDashboardName: "BenchmarkingExperimentsSummary",
-                ExperimentDashboardPrefix: "BenchmarkingExperiment-"
-            },
-            timeout: Duration.minutes(1),
-            vpc: props.vpc,
-            filesystem: FileSystem.fromEfsAccessPoint(props.accessPoint, '/mnt/grafana'),
-        });
-        this.dashboardBuilder.addToRolePolicy(new PolicyStatement({
-            actions: ["cloudwatch:GetDashboard", "cloudwatch:PutDashboard"],
-            resources: ["arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperimentsSummary", "arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperiment-*"]
-        }));
+        // this.dashboardBuilder = new Function(this, "dashboardBuilder", {
+        //     code: Code.fromAsset(commonFunctionsDirPath + "dashboard-builder"),
+        //     handler: "app.lambda_handler",
+        //     runtime: Runtime.PYTHON_3_8,
+        //     environment: {
+        //         SummaryDashboardName: "BenchmarkingExperimentsSummary",
+        //         ExperimentDashboardPrefix: "BenchmarkingExperiment-"
+        //     },
+        //     timeout: Duration.minutes(1),
+        //     vpc: props.vpc,
+        //     filesystem: FileSystem.fromEfsAccessPoint(props.accessPoint, '/mnt/grafana'),
+        // });
+        // this.dashboardBuilder.addToRolePolicy(new PolicyStatement({
+        //     actions: ["cloudwatch:GetDashboard", "cloudwatch:PutDashboard"],
+        //     resources: ["arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperimentsSummary", "arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperiment-*"]
+        // }));
 
+        
+        //const ILambdaCostExplorer=Function.fromFunctionArn(this, 'Function', this.costExplorerIntegration.functionArn); 
+        //rule.addTarget(new targets.LambdaFunction(this.costExplorerIntegration));  
+ 
         this.platformLambdaProxy = new Function(this, "platformLambdaProxy", {
             code: Code.fromAsset(commonFunctionsDirPath + "platform-lambda-proxy"),
             handler: "app.lambda_handler",

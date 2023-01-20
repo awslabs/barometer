@@ -98,18 +98,7 @@ export class ExperimentRunner extends Construct {
                     "experimentName.$": "$.experimentName"
                 }),
                 resultPath: JsonPath.DISCARD
-            }))).next(new LambdaInvoke(this, 'Prepare Dashboards', {
-                lambdaFunction: props.commonFunctions.dashboardBuilder,
-                comment: "Prepares cloudwatch/quicksight dashboard to show recorded data to the user",
-                payload: TaskInput.fromObject({
-                    "stackName.$": "$.platformLambdaOutput.stackName",
-                    "userSessions.$": "$.userSessionsOutput.output.userSessions",
-                    "experimentName.$": "States.Format('{}-{}',$.workloadConfig.settings.name, $.platformConfig.name)",
-                    "queries.$": "$.queries.output.paths",
-                    "ddlQueries.$": "$.ddlScripts.output.paths"
-                }),
-                resultPath: JsonPath.DISCARD,
-            })).next(new Choice(this, 'Keep infrastructure?', {
+            }))).next(new Choice(this, 'Keep infrastructure?', {
                 comment: "Take decision based on user's choice of keeping infrastructure after experiment run"
             }).when(Condition.booleanEquals("$.keepInfrastructure", false), new DynamoPutItem(this, 'Unmark data copy success', {
                 item: {

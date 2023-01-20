@@ -94,7 +94,7 @@
           {
             "Key": "ManagedBy",
             "Value": "BenchmarkingStack"
-          }
+          } 
         ]
       }
     },
@@ -212,6 +212,10 @@
           {
             "Key": "ManagedBy",
             "Value": "BenchmarkingStack"
+          },
+          {
+            "Key": "PlatformStackName",
+            "Value": { "Fn::Sub": "${AWS::StackName}"   }  
           }
         ]
       },

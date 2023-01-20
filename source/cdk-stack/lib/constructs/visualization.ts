@@ -14,7 +14,10 @@ import * as logs from '@aws-cdk/aws-logs';
 //import * as r53 from '@aws-cdk/aws-route53';  
 //import {Code, FileSystem,DockerImageCode, DockerImageFunction, Function, Runtime} from "@aws-cdk/aws-lambda";
 import * as cr from '@aws-cdk/custom-resources';
-//import * as iot from '@aws-cdk/aws-iot';
+import * as lambda  from "@aws-cdk/aws-lambda";
+import * as events from '@aws-cdk/aws-events';
+import * as eventstargets from "@aws-cdk/aws-events-targets"; 
+import {Policy, PolicyDocument, PolicyStatement,ManagedPolicy} from "@aws-cdk/aws-iam";
 //import * as secretsmanager from '@aws-cdk/aws-secretsmanager';
 //import {ApplicationProtocol,IListenerCertificate,ListenerCertificate,ApplicationLoadBalancer} from "@aws-cdk/aws-elasticloadbalancingv2";
 //import * as elbv2 from "@aws-cdk/aws-elasticloadbalancingv2"; 
@@ -27,28 +30,68 @@ import * as firehose from '@aws-cdk/aws-kinesisfirehose';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as destinations from '@aws-cdk/aws-kinesisfirehose-destinations';
 import * as glue from '@aws-cdk/aws-glue';
+import {Bucket} from "@aws-cdk/aws-s3";
 import * as quicksight from '@aws-cdk/aws-quicksight';
+import {Key} from "@aws-cdk/aws-kms";
+import {Utils} from "../utils";
+
+interface VisualizationProps { 
+    key: Key, 
+    quicksightAdminRegion: string
+}
 
 export class Visualization extends Construct { 
 
     public readonly metricsbucket : string;
     public readonly dashboardid : string;
-    constructor(scope: Construct, id: string, props: {} ) { 
+    constructor(scope: Construct, id: string, props: VisualizationProps ) { 
         const commonFunctionsDirPath: string = path.join(__dirname, '../../common-functions/');
         super(scope, id);
         
-        // QuickSight Dashbaord
+        // QuickSight Dashboard
         const database =new glue.Database(this, 'barometerdatabase', {
           databaseName: 'barometer',
         });
        
         const bucketmetrics = new s3.Bucket(this, 'BucketMetricsCloudWatch');
         this.metricsbucket=bucketmetrics.bucketName;
+        
+        const costexplorertablename = 'costexplorer';
+        const costexplorertable =new glue.Table(this, 'costexplorertable', {
+          database: database,
+          tableName: costexplorertablename, 
+          bucket: bucketmetrics,
+          s3Prefix: 'costexplorer',
+          columns: [{
+            name: 'stack_name',
+            type: glue.Schema.STRING,
+          },{
+            name: 'time_period_start',
+            type: glue.Schema.DATE,
+          },{
+            name: 'time_period_end',
+            type: glue.Schema.DATE,
+          },{
+            name: 'service_type',
+            type: glue.Schema.STRING,
+          },{
+            name: 'service_name',
+            type: glue.Schema.STRING,
+          },{
+            name: 'amortized_cost_usd',
+            type: glue.Schema.DOUBLE,
+          },{
+            name: 'blended_cost_usd',
+            type: glue.Schema.DOUBLE,
+          }], 
+          dataFormat: glue.DataFormat.JSON,
+        });   
         const gluemetrictablename = 'cloudwatchmetrics';
         new glue.Table(this, 'cloudwatchmetricstable', {
           database: database,
           tableName: gluemetrictablename,
-          bucket: bucketmetrics,
+          bucket: bucketmetrics, 
+          s3Prefix: 'cloudwatchmetrics',
           columns: [{
             name: 'metric_stream_name',
             type: glue.Schema.STRING,
@@ -117,10 +160,12 @@ export class Visualization extends Construct {
         });  
         
         const cfnMetricStreamFirehose = new firehose.DeliveryStream(this, 'CloudWatchMetricsDeliveryStream', {
-            destinations: [new destinations.S3Bucket(bucketmetrics, { bufferingInterval: Duration.minutes(1)  })]//,
-            //dataOutputPrefix: 'BarometerMetrics',
-            //errorOutputPrefix: 'BarometerFailures'
-        });
+            destinations: [new destinations.S3Bucket(bucketmetrics, { 
+                                                                    bufferingInterval: Duration.minutes(1)  ,
+                                                                    dataOutputPrefix: 'cloudwatchmetrics/!{timestamp:yyyy/MM/dd/}',
+                                                                    errorOutputPrefix: 'cloudwatchmetricsfailures/!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd/}',
+                                                                    })]
+                                                                  });
         const metricStreamRole = new iam.Role(this, 'MetricStreamRole', {
             assumedBy: new iam.ServicePrincipal('streams.metrics.cloudwatch.amazonaws.com'),
         });
@@ -140,58 +185,38 @@ export class Visualization extends Construct {
             namespace: 'Benchmarking',
           }],
           name: 'BarometerStream'
+        }); 
+        
+        const costExplorerIntegration = new lambda.Function(this, "costexplorerintegration", {
+            code: lambda.Code.fromAsset(commonFunctionsDirPath + "costexplorer-integration"),
+            handler: "app.lambda_handler",
+            runtime: lambda.Runtime.PYTHON_3_8,
+            environment: { DataBucketName: bucketmetrics.bucketName},
+            timeout: Duration.minutes(1) 
+        }); 
+        costExplorerIntegration.addToRolePolicy(new PolicyStatement({
+            actions: ["ce:GetCostAndUsage","ce:GetCostForecast","ce:GetAnomalies","ce:GetSavingsPlansUtilizationDetails"],
+            resources: ["*"]
+        }));
+        costExplorerIntegration.addToRolePolicy(new PolicyStatement({
+            actions: ["s3:PutObject"],
+            resources: ["arn:aws:s3:::" + bucketmetrics.bucketName + "/*"]
+        }));
+        costExplorerIntegration.addToRolePolicy(new PolicyStatement({
+            actions: ["cloudformation:ListStacks", "cloudformation:DescribeStacks"],
+            resources: ["*"]
+        })); 
+        costExplorerIntegration.addToRolePolicy(new PolicyStatement({
+            actions: ["kms:GenerateDataKey"],
+            resources: [props.key.keyArn]
+        })); 
+        const rule = new events.Rule(this, 'ScheduleRuleLambdaCostExplorer', {
+        schedule: events.Schedule.cron({ minute: '1', hour: '0' }),
+        targets: [new eventstargets.LambdaFunction(costExplorerIntegration)]
         });
         
         const QuickSightGroupName='barometer'
-        const quicksightCreateGroupCall: cr.AwsSdkCall = { 
-            service: "QuickSight", 
-            action: "createGroup", 
-            parameters: {  AwsAccountId: Aws.ACCOUNT_ID ,
-                          GroupName: QuickSightGroupName, 
-                          Namespace: 'default', }, 
-            physicalResourceId: cr.PhysicalResourceId.of(`quicksightcreategroupname`), //
-          }; 
 
-        const quicksightCreategroup = new cr.AwsCustomResource( 
-            this, 
-            "QuickSightCreateGroup", 
-            {  
-                policy: cr.AwsCustomResourcePolicy.fromStatements([ 
-                new iam.PolicyStatement({ 
-                    effect: iam.Effect.ALLOW, 
-                    resources: ["*"], 
-                    actions: ["quicksight:CreateGroup"], 
-                }), 
-                ]), 
-                logRetention: logs.RetentionDays.ONE_DAY, 
-                onCreate: quicksightCreateGroupCall, 
-            } 
-        ) ; 
-        
-         const quicksightDeleteGroupCall: cr.AwsSdkCall = { 
-            service: "QuickSight", 
-            action: "deleteGroup", 
-            parameters: {  AwsAccountId: Aws.ACCOUNT_ID , 
-                          GroupName: QuickSightGroupName, 
-                          Namespace: 'default',}, 
-            physicalResourceId: cr.PhysicalResourceId.of(`quicksightdeletegroupname`), //
-          }; 
-
-        const quicksightDeletegroup = new cr.AwsCustomResource( 
-            this, 
-            "QuickSightDeleteGroup", 
-            {  
-                policy: cr.AwsCustomResourcePolicy.fromStatements([ 
-                new iam.PolicyStatement({ 
-                    effect: iam.Effect.ALLOW, 
-                    resources: ["*"], 
-                    actions: ["quicksight:DeleteGroup"], 
-                }), 
-                ]), 
-                logRetention: logs.RetentionDays.ONE_DAY, 
-                onDelete: quicksightDeleteGroupCall, 
-            } 
-        ) ; 
         
         const cfnDataSource = new quicksight.CfnDataSource(this, 'MyCfnDataSource',  {
                   awsAccountId: Aws.ACCOUNT_ID ,//props.accountid,
@@ -212,12 +237,66 @@ export class Visualization extends Construct {
                           "quicksight:DeleteDataSource",
                           "quicksight:UpdateDataSource" 
                       ],     
-                    principal:"arn:aws:quicksight:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",// ":namespace/default",//":user/default/Admin/hennette-Isengard",// + userArn.split("/")[1] ,//Admin/hennette-Isengard",//userArn
+                    principal:"arn:aws:quicksight:" + props.quicksightAdminRegion + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",// ":namespace/default",//":user/default/Admin/hennette-Isengard",// + userArn.split("/")[1] ,//Admin/hennette-Isengard",//userArn
                   } ],
         });
-        cfnDataSource.node.addDependency(quicksightCreategroup);
+        //cfnDataSource.node.addDependency(quicksightCreategroup);
+        const datasetidentifiercostexplorer = 'barometercostexplorer'
+        const cfnDataSetCostExplorer = new quicksight.CfnDataSet(this, 'DataSetCostExplorer', /* all optional props */ {
+                  awsAccountId: Aws.ACCOUNT_ID , 
+                  dataSetId: datasetidentifiercostexplorer, 
+                  importMode: 'DIRECT_QUERY', 
+                  name: datasetidentifiercostexplorer,
+                  permissions: [{
+                    actions: [                
+                      "quicksight:CreateIngestion",
+                      "quicksight:PassDataSet",
+                      "quicksight:DescribeIngestion",
+                      "quicksight:UpdateDataSet",
+                      "quicksight:DeleteDataSet",
+                      "quicksight:DescribeDataSet",
+                      "quicksight:CancelIngestion",
+                      "quicksight:ListIngestions",
+                      "quicksight:DescribeDataSetPermissions",
+                      "quicksight:UpdateDataSetPermissions"
+                      ],
+                    principal: "arn:aws:quicksight:" +  props.quicksightAdminRegion + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",//":user/default/Admin/hennette-Isengard",
+                  } ],
+                  physicalTableMap: {
+                    physicalTableMapKey: {
+                      customSql: {
+                        columns: [{
+                          name: 'stack_name',
+                          type: 'STRING',
+                        },{
+                          name: 'time_period_start',
+                          type: 'DATETIME',
+                        },{
+                          name: 'time_period_end',
+                          type: 'DATETIME',
+                        },{
+                          name: 'service_type',
+                          type: 'STRING',
+                        },{
+                          name: 'service_name',
+                          type: 'STRING',
+                        },{
+                          name: 'amortized_cost_usd',
+                          type: 'DECIMAL',
+                        },{
+                          name: 'blended_cost_usd',
+                          type: 'DECIMAL',
+                        }],
+                        dataSourceArn: cfnDataSource.attrArn,
+                        name: 'BarometerCostExplorer',
+                        sqlQuery: 'SELECT stack_name,time_period_start,time_period_end,service_type,CASE service_name WHEN \'Amazon Relational Database Service\' THEN \'Amazon Aurora Serverless\' ELSE service_name END as service_name,amortized_cost_usd,blended_cost_usd FROM "barometer"."' + costexplorertablename + '" WHERE service_name=\'Amazon Redshift\' or service_name=\'Amazon Aurora\'',
+                      }, 
+                    },
+                  }, 
+                });
+        
         const datasetidentifier = 'barometermetricscdk'
-        const cfnDataSet = new quicksight.CfnDataSet(this, 'MyCfnDataSet', /* all optional props */ {
+        const cfnDataSet = new quicksight.CfnDataSet(this, 'DataSetMetrics', /* all optional props */ {
                   awsAccountId: Aws.ACCOUNT_ID , 
                   dataSetId: datasetidentifier, 
                   importMode: 'DIRECT_QUERY', 
@@ -235,7 +314,7 @@ export class Visualization extends Construct {
                       "quicksight:DescribeDataSetPermissions",
                       "quicksight:UpdateDataSetPermissions"
                       ],
-                    principal: "arn:aws:quicksight:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",//":user/default/Admin/hennette-Isengard",
+                    principal: "arn:aws:quicksight:" + props.quicksightAdminRegion + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",//":user/default/Admin/hennette-Isengard",
                   } ],
                   physicalTableMap: {
                     physicalTableMapKey: {
@@ -298,7 +377,7 @@ export class Visualization extends Construct {
                           "Name": "barometer",
                           "Permissions": [
                               {
-                                  "Principal": "arn:aws:quicksight:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",
+                                  "Principal": "arn:aws:quicksight:" + props.quicksightAdminRegion + ":" + Aws.ACCOUNT_ID + ":group/default/barometer",
                                   "Actions": [
                                       "quicksight:DescribeDashboard",
                                       "quicksight:ListDashboardVersions",
@@ -311,7 +390,7 @@ export class Visualization extends Construct {
                                   ]
                               },
                               {
-                                "Principal": "arn:aws:quicksight:" + Aws.REGION + ":" + Aws.ACCOUNT_ID + ":namespace/default",
+                                "Principal": "arn:aws:quicksight:" + props.quicksightAdminRegion + ":" + Aws.ACCOUNT_ID + ":namespace/default",
                                 "Actions": [
                                     "quicksight:DescribeDashboard",
                                     "quicksight:ListDashboardVersions",
@@ -337,6 +416,10 @@ export class Visualization extends Construct {
                           },
                           "Definition": {
                               "DataSetIdentifierDeclarations": [
+                                  {
+                                      "Identifier": datasetidentifiercostexplorer,
+                                      "DataSetArn": cfnDataSetCostExplorer.attrArn
+                                  },
                                   {
                                       "Identifier": datasetidentifier,
                                       "DataSetArn": cfnDataSet.attrArn
@@ -1077,20 +1160,579 @@ export class Visualization extends Construct {
                                           }
                                       ],
                                       "ContentType": "INTERACTIVE"
-                                  }
-                              ],
-                              "CalculatedFields": [],
-                              "ParameterDeclarations": [
+                                  }, 
                                   {
-                                      "StringParameterDeclaration": {
-                                          "ParameterValueType": "MULTI_VALUED",
-                                          "Name": "experimentname",
-                                          "DefaultValues": {},
-                                          "ValueWhenUnset": {
-                                              "ValueWhenUnsetOption": "RECOMMENDED_VALUE"
-                                          }
-                                      }
-                                  }
+                                    "SheetId": "612337e6-zzzz-484f-b892-b8f5b087abf8_b1425ad0-421a-4d59-9b72-c6245cfc762a",
+                                    "Name": "Daily Costs",
+                                    "ParameterControls": [
+                                        {
+                                            "Dropdown": {
+                                                "ParameterControlId": "6e86f93e-zzzz-4ca8-a9b7-ddb3871de479",
+                                                "Title": "Stack Name",
+                                                "SourceParameterName": "stackname",
+                                                "DisplayOptions": {
+                                                    "SelectAllOptions": {
+                                                        "Visibility": "VISIBLE"
+                                                    },
+                                                    "TitleOptions": {
+                                                        "Visibility": "VISIBLE",
+                                                        "FontConfiguration": {
+                                                            "FontSize": {
+                                                                "Relative": "MEDIUM"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "Type": "MULTI_SELECT",
+                                                "SelectableValues": {
+                                                    "LinkToDataSetColumn": {
+                                                        "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                        "ColumnName": "stack_name"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "Visuals": [
+                                        {
+                                            "LineChartVisual": {
+                                                "VisualId": "612337e6-zzzz-484f-b892-b8f5b087abf8_1ee7f769-328d-4802-8a86-dcc767dae7af",
+                                                "Title": {
+                                                    "Visibility": "VISIBLE",
+                                                    "FormatText": {
+                                                        "RichText": "<visual-title>\n  <b>Line charts - Daily costs in $ by stack name</b>\n</visual-title>"
+                                                    }
+                                                },
+                                                "Subtitle": {
+                                                    "Visibility": "VISIBLE"
+                                                },
+                                                "ChartConfiguration": {
+                                                    "FieldWells": {
+                                                        "LineChartAggregatedFieldWells": {
+                                                            "Category": [
+                                                                {
+                                                                    "DateDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.time_period_start.1.1673947320246",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "time_period_start"
+                                                                        },
+                                                                        "HierarchyId": "physicalTableMapKey.time_period_start.1.1673947320246"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "Values": [
+                                                                {
+                                                                    "NumericalMeasureField": {
+                                                                        "FieldId": "physicalTableMapKey.amortized_cost_usd.2.1673947334689",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "amortized_cost_usd"
+                                                                        },
+                                                                        "AggregationFunction": {
+                                                                            "SimpleNumericalAggregation": "SUM"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "Colors": [
+                                                                {
+                                                                    "CategoricalDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.stack_name.0.1673947320246",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "stack_name"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    },
+                                                    "SortConfiguration": {
+                                                        "CategorySort": [
+                                                            {
+                                                                "FieldSort": {
+                                                                    "FieldId": "physicalTableMapKey.time_period_start.1.1673947320246",
+                                                                    "Direction": "DESC"
+                                                                }
+                                                            }
+                                                        ],
+                                                        "CategoryItemsLimitConfiguration": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        },
+                                                        "ColorItemsLimitConfiguration": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        },
+                                                        "SmallMultiplesLimitConfiguration": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        }
+                                                    },
+                                                    "Type": "LINE",
+                                                    "PrimaryYAxisLabelOptions": {
+                                                        "AxisLabelOptions": [
+                                                            {
+                                                                "CustomLabel": "cost ($)",
+                                                                "ApplyTo": {
+                                                                    "FieldId": "physicalTableMapKey.amortized_cost_usd.2.1673947334689",
+                                                                    "Column": {
+                                                                        "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                        "ColumnName": "amortized_cost_usd"
+                                                                    }
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    "Legend": {
+                                                        "Position": "BOTTOM"
+                                                    },
+                                                    "DataLabels": {
+                                                        "Visibility": "HIDDEN",
+                                                        "Overlap": "DISABLE_OVERLAP"
+                                                    },
+                                                    "Tooltip": {
+                                                        "TooltipVisibility": "VISIBLE",
+                                                        "SelectedTooltipType": "DETAILED",
+                                                        "FieldBasedTooltip": {
+                                                            "AggregationVisibility": "HIDDEN",
+                                                            "TooltipTitleType": "PRIMARY_VALUE",
+                                                            "TooltipFields": [
+                                                                {
+                                                                    "FieldTooltipItem": {
+                                                                        "FieldId": "physicalTableMapKey.stack_name.0.1673947320246",
+                                                                        "Visibility": "VISIBLE"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "FieldTooltipItem": {
+                                                                        "FieldId": "physicalTableMapKey.time_period_start.1.1673947320246",
+                                                                        "Visibility": "VISIBLE"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "FieldTooltipItem": {
+                                                                        "FieldId": "physicalTableMapKey.amortized_cost_usd.2.1673947334689",
+                                                                        "Visibility": "VISIBLE"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                "Actions": [],
+                                                "ColumnHierarchies": [
+                                                    {
+                                                        "DateTimeHierarchy": {
+                                                            "HierarchyId": "physicalTableMapKey.time_period_start.1.1673947320246"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "PieChartVisual": {
+                                                "VisualId": "612337e6-zzzz-484f-b892-b8f5b087abf8_60552e29-e398-429b-857c-895911b96d0a",
+                                                "Title": {
+                                                    "Visibility": "VISIBLE",
+                                                    "FormatText": {
+                                                        "RichText": "<visual-title>\n  <b>Pie Chart - Costs by stack name</b>\n</visual-title>"
+                                                    }
+                                                },
+                                                "Subtitle": {
+                                                    "Visibility": "VISIBLE"
+                                                },
+                                                "ChartConfiguration": {
+                                                    "FieldWells": {
+                                                        "PieChartAggregatedFieldWells": {
+                                                            "Category": [
+                                                                {
+                                                                    "CategoricalDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.stack_name.0.1674031366692",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "stack_name"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "Values": [
+                                                                {
+                                                                    "NumericalMeasureField": {
+                                                                        "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031370217",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "amortized_cost_usd"
+                                                                        },
+                                                                        "AggregationFunction": {
+                                                                            "SimpleNumericalAggregation": "SUM"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    },
+                                                    "SortConfiguration": {
+                                                        "CategorySort": [
+                                                            {
+                                                                "FieldSort": {
+                                                                    "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031370217",
+                                                                    "Direction": "DESC"
+                                                                }
+                                                            }
+                                                        ],
+                                                        "CategoryItemsLimit": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        },
+                                                        "SmallMultiplesLimitConfiguration": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        }
+                                                    },
+                                                    "DonutOptions": {
+                                                        "ArcOptions": {
+                                                            "ArcThickness": "LARGE"
+                                                        }
+                                                    },
+                                                    "ValueLabelOptions": {
+                                                        "AxisLabelOptions": [
+                                                            {
+                                                                "CustomLabel": "cost",
+                                                                "ApplyTo": {
+                                                                    "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031370217",
+                                                                    "Column": {
+                                                                        "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                        "ColumnName": "amortized_cost_usd"
+                                                                    }
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    "Legend": {
+                                                        "Position": "BOTTOM"
+                                                    },
+                                                    "DataLabels": {
+                                                        "Visibility": "VISIBLE",
+                                                        "CategoryLabelVisibility": "VISIBLE",
+                                                        "MeasureLabelVisibility": "VISIBLE",
+                                                        "Position": "OUTSIDE",
+                                                        "LabelFontConfiguration": {
+                                                            "FontSize": {
+                                                                "Relative": "LARGE"
+                                                            }
+                                                        },
+                                                        "Overlap": "DISABLE_OVERLAP"
+                                                    },
+                                                    "Tooltip": {
+                                                        "TooltipVisibility": "VISIBLE",
+                                                        "SelectedTooltipType": "DETAILED",
+                                                        "FieldBasedTooltip": {
+                                                            "AggregationVisibility": "HIDDEN",
+                                                            "TooltipTitleType": "PRIMARY_VALUE",
+                                                            "TooltipFields": [
+                                                                {
+                                                                    "FieldTooltipItem": {
+                                                                        "FieldId": "physicalTableMapKey.stack_name.0.1674031366692",
+                                                                        "Visibility": "VISIBLE"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "FieldTooltipItem": {
+                                                                        "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031370217",
+                                                                        "Visibility": "VISIBLE"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                "Actions": [],
+                                                "ColumnHierarchies": []
+                                            }
+                                        },
+                                        {
+                                            "TableVisual": {
+                                                "VisualId": "612337e6-zzzz-484f-b892-b8f5b087abf8_034abdd8-0550-418a-9666-f6d3f9aafa96",
+                                                "Title": {
+                                                    "Visibility": "VISIBLE",
+                                                    "FormatText": {
+                                                        "RichText": "<visual-title>\n  <b>Raw data</b>\n</visual-title>"
+                                                    }
+                                                },
+                                                "Subtitle": {
+                                                    "Visibility": "VISIBLE"
+                                                },
+                                                "ChartConfiguration": {
+                                                    "FieldWells": {
+                                                        "TableAggregatedFieldWells": {
+                                                            "GroupBy": [
+                                                                {
+                                                                    "DateDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.time_period_start.2.1674031767483",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "time_period_start"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "CategoricalDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.stack_name.1.1674031544329",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "stack_name"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "CategoricalDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.service_name.3.1674031808742",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "service_name"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "Values": [
+                                                                {
+                                                                    "NumericalMeasureField": {
+                                                                        "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031535184",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "amortized_cost_usd"
+                                                                        },
+                                                                        "AggregationFunction": {
+                                                                            "SimpleNumericalAggregation": "SUM"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    },
+                                                    "SortConfiguration": {},
+                                                    "TableOptions": {
+                                                        "HeaderStyle": {
+                                                            "TextWrap": "WRAP",
+                                                            "Height": 25
+                                                        }
+                                                    },
+                                                    "FieldOptions": {
+                                                        "SelectedFieldOptions": [
+                                                            {
+                                                                "FieldId": "physicalTableMapKey.time_period_start.2.1674031767483",
+                                                                "Width": "149px",
+                                                                "CustomLabel": "Day"
+                                                            },
+                                                            {
+                                                                "FieldId": "physicalTableMapKey.stack_name.1.1674031544329",
+                                                                "CustomLabel": "Stack Name"
+                                                            },
+                                                            {
+                                                                "FieldId": "physicalTableMapKey.service_name.3.1674031808742",
+                                                                "CustomLabel": "Service Name"
+                                                            },
+                                                            {
+                                                                "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031535184",
+                                                                "CustomLabel": "Cost ($)"
+                                                            }
+                                                        ],
+                                                        "Order": []
+                                                    }
+                                                },
+                                                "Actions": []
+                                            }
+                                        },
+                                        {
+                                            "ComboChartVisual": {
+                                                "VisualId": "612337e6-zzzz-484f-b892-b8f5b087abf8_4534e565-a928-4b8d-ae33-b1e1e7cdf4ba",
+                                                "Title": {
+                                                    "Visibility": "VISIBLE",
+                                                    "FormatText": {
+                                                        "RichText": "<visual-title>\n  <b>Vertical stacked bar charts - Daily costs in $ by stack name</b>\n</visual-title>"
+                                                    }
+                                                },
+                                                "Subtitle": {
+                                                    "Visibility": "VISIBLE"
+                                                },
+                                                "ChartConfiguration": {
+                                                    "FieldWells": {
+                                                        "ComboChartAggregatedFieldWells": {
+                                                            "Category": [
+                                                                {
+                                                                    "DateDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.time_period_start.2.1674032210697",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "time_period_start"
+                                                                        },
+                                                                        "HierarchyId": "physicalTableMapKey.time_period_start.2.1674032210697"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "BarValues": [
+                                                                {
+                                                                    "NumericalMeasureField": {
+                                                                        "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031709969",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "amortized_cost_usd"
+                                                                        },
+                                                                        "AggregationFunction": {
+                                                                            "SimpleNumericalAggregation": "SUM"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "Colors": [
+                                                                {
+                                                                    "CategoricalDimensionField": {
+                                                                        "FieldId": "physicalTableMapKey.stack_name.2.1674031713826",
+                                                                        "Column": {
+                                                                            "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                            "ColumnName": "stack_name"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "LineValues": []
+                                                        }
+                                                    },
+                                                    "SortConfiguration": {
+                                                        "CategorySort": [
+                                                            {
+                                                                "FieldSort": {
+                                                                    "FieldId": "physicalTableMapKey.time_period_start.2.1674032210697",
+                                                                    "Direction": "ASC"
+                                                                }
+                                                            }
+                                                        ],
+                                                        "CategoryItemsLimit": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        },
+                                                        "ColorItemsLimit": {
+                                                            "OtherCategories": "INCLUDE"
+                                                        }
+                                                    },
+                                                    "BarsArrangement": "STACKED",
+                                                    "PrimaryYAxisLabelOptions": {
+                                                        "AxisLabelOptions": [
+                                                            {
+                                                                "CustomLabel": "cost ($)",
+                                                                "ApplyTo": {
+                                                                    "FieldId": "physicalTableMapKey.amortized_cost_usd.1.1674031709969",
+                                                                    "Column": {
+                                                                        "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                                        "ColumnName": "amortized_cost_usd"
+                                                                    }
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    "Legend": {
+                                                        "Position": "BOTTOM"
+                                                    },
+                                                    "BarDataLabels": {
+                                                        "Visibility": "HIDDEN",
+                                                        "Overlap": "DISABLE_OVERLAP"
+                                                    }
+                                                },
+                                                "Actions": [],
+                                                "ColumnHierarchies": [
+                                                    {
+                                                        "DateTimeHierarchy": {
+                                                            "HierarchyId": "physicalTableMapKey.time_period_start.2.1674032210697"
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ],
+                                    "Layouts": [
+                                        {
+                                            "Configuration": {
+                                                "GridLayout": {
+                                                    "Elements": [
+                                                        {
+                                                            "ElementId": "612337e6-zzzz-484f-b892-b8f5b087abf8_1ee7f769-328d-4802-8a86-dcc767dae7af",
+                                                            "ElementType": "VISUAL",
+                                                            "ColumnIndex": 0,
+                                                            "ColumnSpan": 34,
+                                                            "RowIndex": 0,
+                                                            "RowSpan": 12
+                                                        },
+                                                        {
+                                                            "ElementId": "612337e6-zzzz-484f-b892-b8f5b087abf8_4534e565-a928-4b8d-ae33-b1e1e7cdf4ba",
+                                                            "ElementType": "VISUAL",
+                                                            "ColumnIndex": 0,
+                                                            "ColumnSpan": 34,
+                                                            "RowIndex": 12,
+                                                            "RowSpan": 12
+                                                        },
+                                                        {
+                                                            "ElementId": "612337e6-zzzz-484f-b892-b8f5b087abf8_60552e29-e398-429b-857c-895911b96d0a",
+                                                            "ElementType": "VISUAL",
+                                                            "ColumnIndex": 0,
+                                                            "ColumnSpan": 16,
+                                                            "RowIndex": 24,
+                                                            "RowSpan": 12
+                                                        },
+                                                        {
+                                                            "ElementId": "612337e6-zzzz-484f-b892-b8f5b087abf8_034abdd8-0550-418a-9666-f6d3f9aafa96",
+                                                            "ElementType": "VISUAL",
+                                                            "ColumnIndex": 16,
+                                                            "ColumnSpan": 18,
+                                                            "RowIndex": 24,
+                                                            "RowSpan": 12
+                                                        }
+                                                    ],
+                                                    "CanvasSizeOptions": {
+                                                        "ScreenCanvasSizeOptions": {
+                                                            "ResizeOption": "FIXED",
+                                                            "OptimizedViewPortWidth": "1600px"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "ContentType": "INTERACTIVE"
+                                }
+                            ],
+                            "CalculatedFields": [],
+                            "ParameterDeclarations": [
+                                {
+                                    "StringParameterDeclaration": {
+                                        "ParameterValueType": "MULTI_VALUED",
+                                        "Name": "experimentname",
+                                        "DefaultValues": {},
+                                        "ValueWhenUnset": {
+                                            "ValueWhenUnsetOption": "RECOMMENDED_VALUE"
+                                        }
+                                    }
+                                },
+                                {
+                                    "StringParameterDeclaration": {
+                                        "ParameterValueType": "MULTI_VALUED",
+                                        "Name": "stackname",
+                                        "DefaultValues": {
+                                            "DynamicValue": {
+                                                "UserNameColumn": {
+                                                    "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                    "ColumnName": "stack_name"
+                                                },
+                                                "GroupNameColumn": {
+                                                    "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                    "ColumnName": "stack_name"
+                                                },
+                                                "DefaultValueColumn": {
+                                                    "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                    "ColumnName": "stack_name"
+                                                }
+                                            }
+                                        },
+                                        "ValueWhenUnset": {
+                                            "ValueWhenUnsetOption": "RECOMMENDED_VALUE"
+                                        }
+                                    }
+                                } 
                               ],
                               "FilterGroups": [
                                   {
@@ -1125,6 +1767,39 @@ export class Visualization extends Construct {
                                       },
                                       "Status": "ENABLED",
                                       "CrossDataset": "ALL_DATASETS"
+                                  },
+                                  {
+                                      "FilterGroupId": "d550a5a8-zzzz-478e-add1-d5b73febdc38",
+                                      "Filters": [
+                                          {
+                                              "CategoryFilter": {
+                                                  "FilterId": "00537814-zzzz-42f0-b6a3-5b106fc88bc2",
+                                                  "Column": {
+                                                      "DataSetIdentifier": datasetidentifiercostexplorer,
+                                                      "ColumnName": "stack_name"
+                                                  },
+                                                  "Configuration": {
+                                                      "CustomFilterConfiguration": {
+                                                          "MatchOperator": "EQUALS",
+                                                          "ParameterName": "stackname",
+                                                          "NullOption": "NON_NULLS_ONLY"
+                                                      }
+                                                  }
+                                              }
+                                          }
+                                      ],
+                                      "ScopeConfiguration": {
+                                          "SelectedSheets": {
+                                              "SheetVisualScopingConfigurations": [
+                                                  {
+                                                      "SheetId": "612337e6-zzzz-484f-b892-b8f5b087abf8_b1425ad0-421a-4d59-9b72-c6245cfc762a",
+                                                      "Scope": "ALL_VISUALS"
+                                                  }
+                                              ]
+                                          }
+                                      },
+                                      "Status": "ENABLED",
+                                      "CrossDataset": "SINGLE_DATASET"
                                   }
                               ],
                               "AnalysisDefaults": {
