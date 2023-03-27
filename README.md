@@ -184,7 +184,7 @@ connection between BenchmarkingVPC and the VPC where database is hosted.
 8. Add new route with Destination = `10.0.0.0/16` and Target = Peering connection id (starts with `pcx-`)
 9. Follow last `step 4 - allow network connection` from `both in the same VPC` above.
 
-## Bring your own workload
+## Bring your own workload (BYOW)
 
 You can bring your own workload for benchmarking to Barometer. In this context, workload is defined as files
 arranged in specific structure on your s3 bucket. To bring your own workload for the benchmarking you need to follow
@@ -239,6 +239,23 @@ below steps as prerequisites.
    import workload if structure validation is successful.
 3. Wizard will print `bucket policy` while importing your workload. Please update your s3 bucket's bucket policy with
    printed one.
+
+### BYOW sample
+
+In this project, you can find a BYOW example (custom-workload directory). You can create the same structure as mentioned above, by copying these 3 directories (SQL and DDL statements, and dataset) to your S3 bucket. After this, you can run this workload using the Barometer cli-wizard, to configure it as a *"BYOW from S3"* workload.
+
+#### custom-workload/benchmarking-queries/redshift
+- Contains 5 SQL *OLAP-like* queries (.sql files). 
+- It disables the Redshift query results cache 
+- It tags the sessions for better monitoring.
+
+#### custom-workload/ddl/redshift
+- It creates three tables: one Fact table and two dimensions.
+- It doesn't specify any Distribution Styles, nor Sort keys. Redshift will create these automatically, based on the workloads. You're free to change these, to analyze their query plans and performance.
+
+#### custom-workload/volumes/small
+- A small (less than 30MB) dataset, containing the data for the 3 tables above in Apache Parquet format.
+
 
 ## Architecture
 
