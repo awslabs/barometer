@@ -1,18 +1,20 @@
-import {Aws, Construct, Duration} from "@aws-cdk/core";
+import {IBucket} from "aws-cdk-lib/aws-s3";
+import {Construct} from "constructs";
 import {
-    Chain,
     Choice,
     Condition, Fail,
     IntegrationPattern,
-    JsonPath, Pass,
+    JsonPath,
+    Pass,
     StateMachine,
     Wait,
     WaitTime
-} from "@aws-cdk/aws-stepfunctions";
-import {CallAwsService} from "@aws-cdk/aws-stepfunctions-tasks";
-import {IBucket} from "@aws-cdk/aws-s3";
-import {IKey} from "@aws-cdk/aws-kms";
-import {Effect, PolicyStatement, Role, ServicePrincipal} from "@aws-cdk/aws-iam";
+} from "aws-cdk-lib/aws-stepfunctions";
+import {PolicyStatement, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
+import {IKey} from "aws-cdk-lib/aws-kms";
+import {Aws, Duration} from "aws-cdk-lib";
+import {CallAwsService} from "aws-cdk-lib/aws-stepfunctions-tasks";
+
 
 interface DataImporterProps {
     dataBucket: IBucket;

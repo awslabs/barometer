@@ -1,17 +1,16 @@
-import {Aws, Construct, Duration, Environment} from "@aws-cdk/core";
-import {Code, FileSystem,  IFunction,Function, Runtime} from "@aws-cdk/aws-lambda";
-import {Bucket} from "@aws-cdk/aws-s3";
-import {Vpc} from "@aws-cdk/aws-ec2";
-import {Policy, PolicyDocument, PolicyStatement,ManagedPolicy} from "@aws-cdk/aws-iam";
-import * as events from '@aws-cdk/aws-events';
-import * as eventstargets from "@aws-cdk/aws-events-targets"; 
-import {Topic} from "@aws-cdk/aws-sns";
-import {AccessPoint} from '@aws-cdk/aws-efs';
-import {Table} from "@aws-cdk/aws-dynamodb";
-import {LambdaSubscription} from "@aws-cdk/aws-sns-subscriptions";  
 import * as fs from "fs";
-import {Key} from "@aws-cdk/aws-kms";
 import {Utils} from "../utils";
+import {Construct} from "constructs";
+import {AccessPoint} from "aws-cdk-lib/aws-efs";
+import {Key} from "aws-cdk-lib/aws-kms";
+import {Table} from "aws-cdk-lib/aws-dynamodb";
+import {Topic} from "aws-cdk-lib/aws-sns";
+import {Vpc} from "aws-cdk-lib/aws-ec2";
+import {Bucket} from "aws-cdk-lib/aws-s3";
+import {Code, Function, Runtime} from "aws-cdk-lib/aws-lambda";
+import {Aws, Duration, Environment} from "aws-cdk-lib";
+import {Policy, PolicyDocument, PolicyStatement} from "aws-cdk-lib/aws-iam";
+import {LambdaSubscription} from "aws-cdk-lib/aws-sns-subscriptions";
 import path = require('path');
 
 interface CommonFunctionsProps {
@@ -33,7 +32,8 @@ export class CommonFunctions extends Construct {
     public readonly dashboardBuilder: Function;
     public readonly platformLambdaProxy: Function;
     public readonly stepFunctionHelpers: Function;
-   // public readonly costExplorerIntegration: Function;
+
+    // public readonly costExplorerIntegration: Function;
     constructor(scope: Construct, id: string, props: CommonFunctionsProps) {
         super(scope, id);
         // Path to common-functions root folder
@@ -98,10 +98,10 @@ export class CommonFunctions extends Construct {
         //     resources: ["arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperimentsSummary", "arn:aws:cloudwatch::" + Aws.ACCOUNT_ID + ":dashboard/BenchmarkingExperiment-*"]
         // }));
 
-        
+
         //const ILambdaCostExplorer=Function.fromFunctionArn(this, 'Function', this.costExplorerIntegration.functionArn); 
         //rule.addTarget(new targets.LambdaFunction(this.costExplorerIntegration));  
- 
+
         this.platformLambdaProxy = new Function(this, "platformLambdaProxy", {
             code: Code.fromAsset(commonFunctionsDirPath + "platform-lambda-proxy"),
             handler: "app.lambda_handler",

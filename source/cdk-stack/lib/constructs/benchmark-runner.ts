@@ -1,19 +1,22 @@
-import {Aws, Construct} from "@aws-cdk/core";
-import {IntegrationPattern, JsonPath, StateMachine} from "@aws-cdk/aws-stepfunctions";
-import {EcsFargateLaunchTarget, EcsRunTask} from "@aws-cdk/aws-stepfunctions-tasks";
-import {Cluster} from "@aws-cdk/aws-ecs/lib/cluster";
-import {Port, SecurityGroup, SubnetType, Vpc} from "@aws-cdk/aws-ec2";
+import {Port, SecurityGroup, SubnetType, Vpc} from 'aws-cdk-lib/aws-ec2';
+import {IKey} from "aws-cdk-lib/aws-kms";
+import {Bucket} from "aws-cdk-lib/aws-s3";
+import {Construct} from "constructs";
+import {IntegrationPattern, JsonPath, StateMachine} from "aws-cdk-lib/aws-stepfunctions";
 import {
+    Cluster,
     ContainerDefinition,
-    ContainerImage, CpuArchitecture,
+    ContainerImage,
+    CpuArchitecture,
     FargatePlatformVersion,
     FargateTaskDefinition,
-    LogDriver, OperatingSystemFamily
-} from "@aws-cdk/aws-ecs";
-import {PolicyStatement} from "@aws-cdk/aws-iam";
-import {Bucket} from "@aws-cdk/aws-s3";
-import {IKey} from "@aws-cdk/aws-kms";
-import {RetentionDays} from "@aws-cdk/aws-logs";
+    LogDriver,
+    OperatingSystemFamily
+} from "aws-cdk-lib/aws-ecs";
+import {PolicyStatement} from "aws-cdk-lib/aws-iam";
+import {EcsFargateLaunchTarget, EcsRunTask} from "aws-cdk-lib/aws-stepfunctions-tasks";
+import {Aws} from "aws-cdk-lib";
+import {RetentionDays} from "aws-cdk-lib/aws-logs";
 import path = require('path');
 
 

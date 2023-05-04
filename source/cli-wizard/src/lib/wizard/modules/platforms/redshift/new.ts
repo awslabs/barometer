@@ -1,4 +1,3 @@
-import {NodeType} from '@aws-cdk/aws-redshift';
 import {Configuration} from '../../../../impl/configuration';
 
 import {
@@ -8,6 +7,7 @@ import {
 } from '../../../../impl/platforms/redshift/new';
 import {CLIModule} from '../../../common/cli-module';
 import {CLIModuleQuestions} from '../../../common/cli-prompts';
+import {NodeType} from "@aws-cdk/aws-redshift-alpha";
 
 export class Module {
     public static getInstance(configuration: Configuration): RedshiftModule {

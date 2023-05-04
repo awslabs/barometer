@@ -1,4 +1,3 @@
-import {NodeType} from '@aws-cdk/aws-redshift';
 import {PlatformType} from '../../../interface/platform';
 import {
     IRedshiftFeatures,
@@ -6,6 +5,7 @@ import {
     IRedshiftSettings
 } from '../../../interface/platforms/redshift/new';
 import {PlatformConfiguration} from '../../platform';
+import {NodeType} from "@aws-cdk/aws-redshift-alpha";
 
 export class RedshiftPlatformConfiguration extends PlatformConfiguration implements IRedshiftPlatformConfiguration {
     settings!: RedshiftSettings;

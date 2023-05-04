@@ -1,35 +1,35 @@
-import * as cdk from '@aws-cdk/core';
-import {CfnOutput, RemovalPolicy} from '@aws-cdk/core';
-import {BlockPublicAccess, Bucket, BucketEncryption} from "@aws-cdk/aws-s3";
-import {Key} from "@aws-cdk/aws-kms";
 import {CommonFunctions} from "./constructs/common-functions";
 import {ExperimentRunner} from "./constructs/experiment-runner";
 import {BenchmarkRunner} from "./constructs/benchmark-runner";
 import {Visualization} from "./constructs/visualization";
+import {BucketToBucketDataImporter} from "./constructs/bucket-to-bucket-data-importer";
+import {GenericDataCopier} from "./constructs/generic-data-copier";
+//import * as efs from '@aws-cdk/aws-efs';
+import {CfnOutput, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {
     GatewayVpcEndpointAwsService,
     InterfaceVpcEndpoint,
     InterfaceVpcEndpointAwsService,
     SubnetType,
     Vpc
-} from "@aws-cdk/aws-ec2";
-import {Topic} from "@aws-cdk/aws-sns";
-import {AttributeType, BillingMode, Table, TableEncryption} from "@aws-cdk/aws-dynamodb";
-import {BucketToBucketDataImporter} from "./constructs/bucket-to-bucket-data-importer";
-import {GenericDataCopier} from "./constructs/generic-data-copier";
-//import * as efs from '@aws-cdk/aws-efs';
-import {AccessPoint, FileSystem, LifecyclePolicy, PerformanceMode, ThroughputMode} from '@aws-cdk/aws-efs';
+} from "aws-cdk-lib/aws-ec2";
+import {Construct} from "constructs";
+import {AttributeType, BillingMode, Table, TableEncryption} from "aws-cdk-lib/aws-dynamodb";
+import {Topic} from "aws-cdk-lib/aws-sns";
+import {BlockPublicAccess, Bucket, BucketEncryption} from "aws-cdk-lib/aws-s3";
+import {Key} from "aws-cdk-lib/aws-kms";
+import {AccessPoint, FileSystem, LifecyclePolicy, PerformanceMode, ThroughputMode} from "aws-cdk-lib/aws-efs";
 
 /**
  * Defines benchmarking tool core infrastructure (Benchmarking Framework)
  */
 
-interface BenchmarkingStackProps extends cdk.StackProps {
-  quicksightadminregion: string;
-} 
- 
-export class BenchmarkingStack extends cdk.Stack {
-    constructor(scope: cdk.Construct, id: string, props: BenchmarkingStackProps) {
+interface BenchmarkingStackProps extends StackProps {
+    quicksightadminregion: string;
+}
+
+export class BenchmarkingStack extends Stack {
+    constructor(scope: Construct, id: string, props: BenchmarkingStackProps) {
         super(scope, id, props);
         // Define new VPC for query runner lambda
         let vpc = new Vpc(this, 'BenchmarkingVPC', {
@@ -41,7 +41,7 @@ export class BenchmarkingStack extends cdk.Stack {
                 {
                     name: "Public",
                     subnetType: SubnetType.PUBLIC
-                 
+
                 },
                 {
                     name: "Private",
@@ -185,7 +185,10 @@ export class BenchmarkingStack extends cdk.Stack {
             encryptionKey: key
         });
 
-        let visualization = new Visualization(this, 'Visualization', {key: key,quicksightAdminRegion: props.quicksightadminregion});
+        let visualization = new Visualization(this, 'Visualization', {
+            key: key,
+            quicksightAdminRegion: props.quicksightadminregion
+        });
         //let aaa = process.env.CDK_DEFAULT_ACCOUNT
         //fileSystem.connections.allowDefaultPortFrom(visualization.service);
 
@@ -247,7 +250,7 @@ export class BenchmarkingStack extends cdk.Stack {
             value: visualization.metricsbucket,
             exportName: "Benchmarking::MetricsBucketName"
         });
-         new CfnOutput(this, 'QuickSightDashboardID', {
+        new CfnOutput(this, 'QuickSightDashboardID', {
             value: visualization.dashboardid,
             exportName: "Benchmarking::QuickSightDashboardID"
         });
