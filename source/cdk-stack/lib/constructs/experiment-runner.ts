@@ -1,5 +1,18 @@
-import {Aws, Construct, Duration} from "@aws-cdk/core";
 import {CommonFunctions} from "./common-functions";
+import {GenericDataCopier} from "./generic-data-copier";
+import {
+    Choice,
+    Condition,
+    IntegrationPattern,
+    JsonPath,
+    Map,
+    Pass,
+    StateMachine,
+    TaskInput
+} from "aws-cdk-lib/aws-stepfunctions";
+import {Table} from "aws-cdk-lib/aws-dynamodb";
+import {Key} from "aws-cdk-lib/aws-kms";
+import {Construct} from "constructs";
 import {
     DynamoAttributeValue,
     DynamoGetItem,
@@ -7,13 +20,9 @@ import {
     GlueStartJobRun,
     LambdaInvoke,
     StepFunctionsStartExecution
-} from "@aws-cdk/aws-stepfunctions-tasks";
-import {Choice, Condition, IntegrationPattern, JsonPath, Map, Pass, StateMachine} from "@aws-cdk/aws-stepfunctions";
-import {TaskInput} from "@aws-cdk/aws-stepfunctions/lib/input";
-import {Policy, PolicyStatement} from "@aws-cdk/aws-iam";
-import {Table} from "@aws-cdk/aws-dynamodb";
-import {Key} from "@aws-cdk/aws-kms";
-import {GenericDataCopier} from "./generic-data-copier";
+} from "aws-cdk-lib/aws-stepfunctions-tasks";
+import {Aws, Duration} from "aws-cdk-lib";
+import {Policy, PolicyStatement} from "aws-cdk-lib/aws-iam";
 
 
 interface ExperimentRunnerProps {

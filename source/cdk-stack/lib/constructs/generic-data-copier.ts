@@ -1,10 +1,19 @@
-import {Aws, Construct} from "@aws-cdk/core";
-import {Code, Connection, ConnectionType, GlueVersion, Job, JobExecutable, PythonVersion} from "@aws-cdk/aws-glue";
-import {IBucket} from "@aws-cdk/aws-s3";
-import {PolicyStatement} from "@aws-cdk/aws-iam";
-import {IVpc, SecurityGroup} from "@aws-cdk/aws-ec2";
 import path = require('path');
-import {IKey} from "@aws-cdk/aws-kms";
+import {IBucket} from "aws-cdk-lib/aws-s3";
+import {IVpc, SecurityGroup} from "aws-cdk-lib/aws-ec2";
+import {IKey} from "aws-cdk-lib/aws-kms";
+import {Construct} from "constructs";
+import {PolicyStatement} from "aws-cdk-lib/aws-iam";
+import {Aws} from "aws-cdk-lib";
+import {
+    Code,
+    Connection,
+    ConnectionType,
+    GlueVersion,
+    Job,
+    JobExecutable,
+    PythonVersion
+} from "@aws-cdk/aws-glue-alpha";
 
 interface GenericDataCopierProps {
     dataBucket: IBucket

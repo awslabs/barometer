@@ -2,8 +2,6 @@ import {CLIModule} from '../../common/cli-module';
 import {Configuration} from '../../../impl/configuration';
 import {CloudFormationClient, DescribeStacksCommand} from "@aws-sdk/client-cloudformation";
 import {SFN, StartExecutionCommand} from "@aws-sdk/client-sfn";
-import open from "open";
-import {ValidationError} from "@aws-cdk/core";
 
 export class Module {
     public static getInstance(configuration: Configuration): ExperimentModule {
@@ -56,9 +54,9 @@ export class ExperimentModule extends CLIModule {
             let stepFunctionArn;
             let dataBucketName;
             let metricsBucketName;
-            let quickSightDashboardID; 
+            let quickSightDashboardID;
             try {
-                const commandOutput = await this.cloudFormationClient.send(new DescribeStacksCommand({StackName: "BenchmarkingStack"})); 
+                const commandOutput = await this.cloudFormationClient.send(new DescribeStacksCommand({StackName: "BenchmarkingStack"}));
                 if (commandOutput.Stacks && commandOutput.Stacks[0].Outputs) {
                     for (let i = 0; i < commandOutput.Stacks[0].Outputs.length; i++) {
                         console.log(commandOutput.Stacks[0].Outputs[i].OutputKey);
@@ -73,10 +71,10 @@ export class ExperimentModule extends CLIModule {
                         }
                         if (commandOutput.Stacks[0].Outputs[i].OutputKey == "QuickSightDashboardID") {
                             quickSightDashboardID = commandOutput.Stacks[0].Outputs[i].OutputValue;
-                        } 
+                        }
                     }
 
-                } 
+                }
             } catch (e: any) {
                 if (e.name == "ValidationError") {
                     // Stack doesn't exists
@@ -94,7 +92,7 @@ export class ExperimentModule extends CLIModule {
                 const region = process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION;
                 const line = '-'.repeat(process.stdout.columns);
                 console.log(line);
-                console.log("EXECUTION"); 
+                console.log("EXECUTION");
                 console.log("Experiment run started at - " + output.startDate + " in region - " + region);
                 const executionUrl = "https://" + region + ".console.aws.amazon.com/states/home?region=" + region + "#/executions/details/" + output.executionArn;
                 console.log("Visit this link to see the execution: " + executionUrl);
@@ -107,9 +105,9 @@ export class ExperimentModule extends CLIModule {
                 console.log("2) Activate the user-defined tags 'PlatformStackName' & 'ManagedBy' in the billing console. For support, see the online documentation : https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html");
                 console.log("3) Create a QuickSight user account (see the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/signing-in.html");
                 console.log("4) Add your QuickSight user account to the barometer QuickSight group (https://" + region + ".quicksight.aws.amazon.com/sn/console/groups). For support, see the paragraph 'To add a user to a group' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/creating-quicksight-groups.html");
-                console.log("5) Grant access to the S3 bucket named " + metricsBucketName  + " for QuickSight (https://" + region + ".quicksight.aws.amazon.com/sn/console/resources). For support, see the paragraph 'To authorize Amazon QuickSight to access your Amazon S3 bucket' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/troubleshoot-connect-S3.html");
-                console.log("6) Open the QuickSight report for the barometer : https://" + region + ".quicksight.aws.amazon.com/sn/dashboards/" + quickSightDashboardID);    
-                console.log("Note : up to 24 hours are needed to get the daily cost."); 
+                console.log("5) Grant access to the S3 bucket named " + metricsBucketName + " for QuickSight (https://" + region + ".quicksight.aws.amazon.com/sn/console/resources). For support, see the paragraph 'To authorize Amazon QuickSight to access your Amazon S3 bucket' from the online documentation : https://docs.aws.amazon.com/quicksight/latest/user/troubleshoot-connect-S3.html");
+                console.log("6) Open the QuickSight report for the barometer : https://" + region + ".quicksight.aws.amazon.com/sn/dashboards/" + quickSightDashboardID);
+                console.log("Note : up to 24 hours are needed to get the daily cost.");
                 console.log(line);
                 //console.log("Visit this link to see the dashboard: " + dashboardUrl);
                 //await open(executionUrl);
