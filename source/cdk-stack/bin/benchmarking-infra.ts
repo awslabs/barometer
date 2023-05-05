@@ -12,7 +12,7 @@ var quicksightadminregion = (process.env.CDK_DEFAULT_REGION as string)
 
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-quicksight/classes/describeaccountsettingscommand.html
 // https://github.com/aws/aws-sdk-js-v3#getting-started
-const quicksightClient = new QuickSightClient({region: "eu-central-1"});
+const quicksightClient = new QuickSightClient({region: process.env.CDK_DEPLOY_REGION});
 // const client = new QuickSightClient(config);
 // const command = new DescribeAccountSettingsCommand(input);
 // const response = await client.send(command);
