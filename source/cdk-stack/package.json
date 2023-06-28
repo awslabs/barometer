@@ -40,7 +40,7 @@
     "@aws-cdk/aws-stepfunctions": "1.188.0",
     "@aws-cdk/aws-stepfunctions-tasks": "1.204.0",
     "@aws-cdk/core": "1.188.0",
-    "@aws-sdk/client-quicksight": "^3.350.0",
+    "@aws-sdk/client-quicksight": "^3.360.0",
     "@aws-sdk/types": "^3.226.0",
     "source-map-support": "^0.5.21"
   },
